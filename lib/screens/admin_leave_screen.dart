@@ -388,10 +388,10 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
 
         {
           'employee_name': leaveData['employeeName'],
-          'employee_email': "siddheshwarshingare1999@gmail.com",
-          // 'employee_email': leaveData['employeeEmail'], // actual employee email
+          //'employee_email': "siddheshwarshingare1999@gmail.com",
+          'employee_email': leaveData['employeeEmail'], // actual employee email
           'leave_type': leaveData['leaveType'],
- 
+
           'from_date': (leaveData['fromDate'] as Timestamp)
               .toDate()
               .toString()

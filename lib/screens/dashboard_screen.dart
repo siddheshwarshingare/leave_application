@@ -6,6 +6,7 @@ import 'package:leave_application/screens/employee_attedance_screen.dart';
 import 'package:leave_application/screens/leave_history_screen.dart';
 import 'package:leave_application/screens/leave_screen.dart';
 import 'package:leave_application/screens/notification.dart';
+import 'package:leave_application/screens/profile_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'login_screen.dart';
 
@@ -404,76 +405,71 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                     const Spacer(),
-
-                    Stack(
-                      children: [
-                        InkWell(
-                          onTap: () async {
-                            await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const NotificationScreen(),
-                              ),
-                            );
-
-                            setState(() {});
-                          },
-                          child: Container(
-                            height: 42,
-                            width: 42,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: const [
-                                BoxShadow(color: Colors.black12, blurRadius: 8),
-                              ],
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ProfileScreen(),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        height: 62,
+                        width: 62,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(.08),
+                              blurRadius: 12,
+                              offset: const Offset(0, 5),
                             ),
-                            child: const Icon(Icons.notifications_none),
+                          ],
+                        ),
+                        child: CircleAvatar(
+                          radius: 30,
+                          backgroundColor: const Color(0xffE8F0FE),
+                          child: Text(
+                            name.isNotEmpty ? name[0].toUpperCase() : "U",
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xff2563EB),
+                            ),
                           ),
                         ),
-
-                        StreamBuilder<QuerySnapshot>(
-                          stream: FirebaseFirestore.instance
-                              .collection('notifications')
-                              .where(
-                                'uid',
-                                isEqualTo:
-                                    FirebaseAuth.instance.currentUser!.uid,
-                              )
-                              .where('isRead', isEqualTo: false)
-                              .snapshots(),
-                          builder: (context, snapshot) {
-                            int count = snapshot.data?.docs.length ?? 0;
-
-                            if (count == 0) {
-                              return const SizedBox();
-                            }
-
-                            return Positioned(
-                              right: 0,
-                              top: 0,
-                              child: Container(
-                                height: 18,
-                                width: 18,
-                                decoration: const BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    "$count",
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
+                      ),
                     ),
+
+                    //     Container(
+                    //   height: 62,
+                    //   width: 62,
+                    //   decoration: BoxDecoration(
+                    //     shape: BoxShape.circle,
+                    //     color: Colors.white,
+                    //     boxShadow: [
+                    //       BoxShadow(
+                    //         color: Colors.black.withOpacity(.08),
+                    //         blurRadius: 12,
+                    //         offset: const Offset(0, 5),
+                    //       ),
+                    //     ],
+                    //   ),
+                    //   child: CircleAvatar(
+                    //     radius: 30,
+                    //     backgroundColor: const Color(0xffE8F0FE),
+                    //     child: Text(
+                    //       name.isNotEmpty ? name[0].toUpperCase() : "U",
+                    //       style: const TextStyle(
+                    //         fontSize: 26,
+                    //         fontWeight: FontWeight.bold,
+                    //         color: Color(0xff2563EB),
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
                   ],
                 ),
                 const SizedBox(height: 11),
@@ -545,33 +541,74 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ],
                       ),
                     ),
+                    Stack(
+                      children: [
+                        InkWell(
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const NotificationScreen(),
+                              ),
+                            );
 
-                    Container(
-                      height: 62,
-                      width: 62,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(.08),
-                            blurRadius: 12,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: CircleAvatar(
-                        radius: 30,
-                        backgroundColor: const Color(0xffE8F0FE),
-                        child: Text(
-                          name.isNotEmpty ? name[0].toUpperCase() : "U",
-                          style: const TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xff2563EB),
+                            setState(() {});
+                          },
+                          child: Container(
+                            height: 42,
+                            width: 42,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: const [
+                                BoxShadow(color: Colors.black12, blurRadius: 8),
+                              ],
+                            ),
+                            child: const Icon(Icons.notifications_none),
                           ),
                         ),
-                      ),
+
+                        StreamBuilder<QuerySnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection('notifications')
+                              .where(
+                                'uid',
+                                isEqualTo:
+                                    FirebaseAuth.instance.currentUser!.uid,
+                              )
+                              .where('isRead', isEqualTo: false)
+                              .snapshots(),
+                          builder: (context, snapshot) {
+                            int count = snapshot.data?.docs.length ?? 0;
+
+                            if (count == 0) {
+                              return const SizedBox();
+                            }
+
+                            return Positioned(
+                              right: 0,
+                              top: 0,
+                              child: Container(
+                                height: 18,
+                                width: 18,
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    "$count",
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ),
