@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "246922721396",
+    "project_id": "leaveapplication-8c052",
+    "storage_bucket": "leaveapplication-8c052.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:246922721396:android:6779637c3a6856fb297921",
+        "android_client_info": {
+          "package_name": "com.example.leave_application"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD9vh0bc_uf_zTw0ZTHf5HRSGR6FnEMaPw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
