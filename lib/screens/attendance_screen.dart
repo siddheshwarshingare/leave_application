@@ -13,18 +13,26 @@ class AttendanceScreen extends StatefulWidget {
   State<AttendanceScreen> createState() => _AttendanceScreenState();
 }
 
+class _Punch {
+  final String type;
+  final DateTime time;
+
+  _Punch({required this.type, required this.time});
+}
+
 class _AttendanceScreenState extends State<AttendanceScreen> {
+  List<_Punch> _todayPunches = [];
   Timer? timer;
-
+  bool isOnBreak = false;
+  bool isProcessing = false;
   bool isClockedIn = false;
-
   DateTime? clockInTime;
-
   Duration elapsed = Duration.zero;
-
   String workingHours = "0h 0m";
   List<Map<String, dynamic>> history = [];
   bool isLoadingHistory = true;
+  final List<Map<String, dynamic>> tempHistory = [];
+
   @override
   void initState() {
     super.initState();
@@ -32,18 +40,169 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     loadTodayHistory();
   }
 
+  void _calculateCurrentStatus(List<_Punch> punches) {
+    bool clockedIn = false;
+    bool onBreak = false;
+
+    for (final punch in punches) {
+      switch (punch.type) {
+        case "IN":
+          clockedIn = true;
+          onBreak = false;
+          break;
+
+        case "BREAK_IN":
+          if (clockedIn) {
+            onBreak = true;
+          }
+          break;
+
+        case "BREAK_OUT":
+          if (clockedIn) {
+            onBreak = false;
+          }
+          break;
+
+        case "OUT":
+          clockedIn = false;
+          onBreak = false;
+          break;
+      }
+    }
+
+    isClockedIn = clockedIn;
+    isOnBreak = onBreak;
+  }
+
+  Duration _calculateWorkingTime(List<_Punch> punches, {DateTime? now}) {
+    final currentTime = now ?? DateTime.now();
+
+    Duration total = Duration.zero;
+
+    DateTime? workStart;
+    DateTime? breakStart;
+
+    Duration breakDuration = Duration.zero;
+
+    for (final punch in punches) {
+      final time = punch.time;
+
+      switch (punch.type) {
+        // ------------------------------------------------------
+        // CLOCK IN
+        // ------------------------------------------------------
+
+        case "IN":
+          if (workStart == null) {
+            workStart = time;
+            breakDuration = Duration.zero;
+            breakStart = null;
+          }
+          break;
+
+        // ------------------------------------------------------
+        // BREAK IN
+        // ------------------------------------------------------
+
+        case "BREAK_IN":
+          if (workStart != null && breakStart == null) {
+            breakStart = time;
+          }
+          break;
+
+        // ------------------------------------------------------
+        // BREAK OUT
+        // ------------------------------------------------------
+
+        case "BREAK_OUT":
+          if (workStart != null && breakStart != null) {
+            if (time.isAfter(breakStart!)) {
+              breakDuration += time.difference(breakStart!);
+            }
+
+            breakStart = null;
+          }
+          break;
+
+        // ------------------------------------------------------
+        // CLOCK OUT
+        // ------------------------------------------------------
+
+        case "OUT":
+          if (workStart != null) {
+            Duration currentBreak = breakDuration;
+
+            if (breakStart != null) {
+              if (time.isAfter(breakStart!)) {
+                currentBreak += time.difference(breakStart!);
+              }
+            }
+
+            Duration sessionDuration =
+                time.difference(workStart) - currentBreak;
+
+            if (sessionDuration.isNegative) {
+              sessionDuration = Duration.zero;
+            }
+
+            total += sessionDuration;
+
+            workStart = null;
+            breakStart = null;
+            breakDuration = Duration.zero;
+          }
+
+          break;
+      }
+    }
+
+    // ----------------------------------------------------------
+    // CURRENT OPEN SESSION
+    // ----------------------------------------------------------
+
+    if (workStart != null) {
+      Duration currentBreak = breakDuration;
+
+      if (breakStart != null) {
+        currentBreak += currentTime.difference(breakStart!);
+      }
+
+      Duration liveDuration = currentTime.difference(workStart) - currentBreak;
+
+      if (liveDuration.isNegative) {
+        liveDuration = Duration.zero;
+      }
+
+      total += liveDuration;
+    }
+
+    return total;
+  }
+
   Future<void> loadTodayHistory() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
 
+      // ----------------------------------------------------------
+      // USER NOT LOGGED IN
+      // ----------------------------------------------------------
       if (user == null) {
-        debugPrint("No logged-in user");
+        if (!mounted) return;
+
+        setState(() {
+          history = [];
+          _todayPunches = [];
+          elapsed = Duration.zero;
+          workingHours = "0h 0m";
+          isClockedIn = false;
+          isOnBreak = false;
+          isLoadingHistory = false;
+        });
+
+        timer?.cancel();
         return;
       }
 
-      final uid = user.uid;
-
-      // Firebase date format: yyyy-MM-dd
       final now = DateTime.now();
 
       final date =
@@ -51,71 +210,132 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           "${now.month.toString().padLeft(2, '0')}-"
           "${now.day.toString().padLeft(2, '0')}";
 
-      debugPrint("Loading attendance for UID: $uid");
-      debugPrint("Loading attendance for date: $date");
-
+      // ----------------------------------------------------------
+      // GET TODAY ATTENDANCE DOCUMENT
+      // ----------------------------------------------------------
       final snapshot = await FirebaseFirestore.instance
-          .collection('attendance')
-          .where('uid', isEqualTo: uid)
-          .where('date', isEqualTo: date)
+          .collection("attendance")
+          .where("uid", isEqualTo: user.uid)
+          .where("date", isEqualTo: date)
           .limit(1)
           .get();
 
-      debugPrint("Attendance documents found: ${snapshot.docs.length}");
-
+      // ----------------------------------------------------------
+      // NO ATTENDANCE RECORD FOR TODAY
+      // ----------------------------------------------------------
       if (snapshot.docs.isEmpty) {
         if (!mounted) return;
 
         setState(() {
           history = [];
+          _todayPunches = [];
+          elapsed = Duration.zero;
+          workingHours = "0h 0m";
+          isClockedIn = false;
+          isOnBreak = false;
           isLoadingHistory = false;
         });
 
+        timer?.cancel();
         return;
       }
 
       final attendanceDoc = snapshot.docs.first;
 
-      debugPrint("Attendance ID: ${attendanceDoc.id}");
-
+      // ----------------------------------------------------------
+      // GET TODAY'S PUNCHES
+      // ----------------------------------------------------------
       final punchesSnapshot = await FirebaseFirestore.instance
-          .collection('attendance')
+          .collection("attendance")
           .doc(attendanceDoc.id)
-          .collection('punches')
-          .orderBy('time')
+          .collection("punches")
+          .orderBy("time")
           .get();
 
-      debugPrint("Punch records found: ${punchesSnapshot.docs.length}");
-
+      final List<_Punch> punches = [];
       final List<Map<String, dynamic>> tempHistory = [];
 
-      for (final punchDoc in punchesSnapshot.docs) {
-        final data = punchDoc.data();
+      // ----------------------------------------------------------
+      // CONVERT FIREBASE PUNCHES
+      // ----------------------------------------------------------
+      for (final doc in punchesSnapshot.docs) {
+        final data = doc.data();
 
-        final timestamp = data['time'] as Timestamp;
+        final type = data["type"]?.toString() ?? "";
 
-        final punchTime = timestamp.toDate();
+        final timestamp = data["time"];
 
-        debugPrint("Punch: ${data['type']} - $punchTime");
+        if (timestamp is! Timestamp) {
+          continue;
+        }
 
-        tempHistory.add({"type": data['type'], "time": punchTime});
+        final time = timestamp.toDate();
+
+        punches.add(_Punch(type: type, time: time));
+
+        tempHistory.add({"type": type, "time": time});
       }
 
+      // ----------------------------------------------------------
+      // CALCULATE WORKING TIME
+      // ----------------------------------------------------------
+      final calculatedTime = _calculateWorkingTime(
+        punches,
+        now: DateTime.now(),
+      );
+
+      // ----------------------------------------------------------
+      // CALCULATE CURRENT STATUS
+      // ----------------------------------------------------------
+      _calculateCurrentStatus(punches);
+
+      // ----------------------------------------------------------
+      // UPDATE UI
+      // ----------------------------------------------------------
       if (!mounted) return;
 
       setState(() {
         history = tempHistory;
+
+        // IMPORTANT:
+        // Save today's punches here.
+        // startTimer() and _hasOpenWorkSession()
+        // depend on this list.
+        _todayPunches = punches;
+
+        elapsed = calculatedTime;
+
+        workingHours =
+            "${calculatedTime.inHours}h "
+            "${calculatedTime.inMinutes % 60}m";
+
         isLoadingHistory = false;
       });
+
+      // ----------------------------------------------------------
+      // START / STOP LIVE TIMER
+      // ----------------------------------------------------------
+      if (_hasOpenWorkSession()) {
+        startTimer();
+      } else {
+        timer?.cancel();
+      }
     } catch (e) {
-      debugPrint("Today's history error: $e");
+      debugPrint("Attendance loading error: $e");
 
       if (!mounted) return;
 
       setState(() {
         history = [];
+        _todayPunches = [];
+        elapsed = Duration.zero;
+        workingHours = "0h 0m";
+        isClockedIn = false;
+        isOnBreak = false;
         isLoadingHistory = false;
       });
+
+      timer?.cancel();
     }
   }
 
@@ -131,15 +351,105 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     }
   }
 
+  Future<void> _refreshLiveWorkingTime() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) return;
+
+    final now = DateTime.now();
+
+    final date =
+        "${now.year}-"
+        "${now.month.toString().padLeft(2, '0')}-"
+        "${now.day.toString().padLeft(2, '0')}";
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection("attendance")
+        .where("uid", isEqualTo: user.uid)
+        .where("date", isEqualTo: date)
+        .limit(1)
+        .get();
+
+    if (snapshot.docs.isEmpty) return;
+
+    final attendanceDoc = snapshot.docs.first;
+
+    final punchesSnapshot = await FirebaseFirestore.instance
+        .collection("attendance")
+        .doc(attendanceDoc.id)
+        .collection("punches")
+        .orderBy("time")
+        .get();
+
+    final List<_Punch> punches = [];
+
+    for (final doc in punchesSnapshot.docs) {
+      final data = doc.data();
+
+      final timestamp = data["time"];
+
+      if (timestamp is Timestamp) {
+        punches.add(
+          _Punch(
+            type: data["type"]?.toString() ?? "",
+            time: timestamp.toDate(),
+          ),
+        );
+      }
+    }
+
+    final duration = _calculateWorkingTime(punches, now: now);
+
+    _calculateCurrentStatus(punches);
+
+    if (!mounted) return;
+
+    setState(() {
+      elapsed = duration;
+
+      workingHours =
+          "${duration.inHours}h "
+          "${duration.inMinutes % 60}m";
+    });
+  }
+
+  bool _hasOpenWorkSession() {
+    bool working = false;
+
+    for (final punch in _todayPunches) {
+      if (punch.type == "IN") {
+        working = true;
+      } else if (punch.type == "OUT") {
+        working = false;
+      }
+    }
+
+    return working;
+  }
+
   void startTimer() {
     timer?.cancel();
 
     timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (clockInTime != null) {
-        setState(() {
-          elapsed = DateTime.now().difference(clockInTime!);
-        });
+      if (!_hasOpenWorkSession()) {
+        timer?.cancel();
+        return;
       }
+
+      final duration = _calculateWorkingTime(
+        _todayPunches,
+        now: DateTime.now(),
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        elapsed = duration;
+
+        workingHours =
+            "${duration.inHours}h "
+            "${duration.inMinutes % 60}m";
+      });
     });
   }
 
@@ -156,65 +466,198 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   Future<void> handlePunchIn() async {
-    try {
-      bool allowed = await AttendanceService.canMarkAttendance();
+    if (isProcessing) return;
 
-      // if (!allowed) {
-      //   ScaffoldMessenger.of(context).showSnackBar(
-      //     const SnackBar(content: Text("You are outside office location")),
-      //   );
-      //   return;
-      // }
+    try {
+      setState(() {
+        isProcessing = true;
+      });
+
+      final allowed = await AttendanceService.canMarkAttendance();
+
+      if (!allowed) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("You are outside office location")),
+        );
+
+        return;
+      }
 
       await AttendanceService.punchIn();
 
-      setState(() {
-        isClockedIn = true;
-        clockInTime = DateTime.now();
-        elapsed = Duration.zero;
-      });
+      await loadTodayHistory();
 
       startTimer();
-      await loadTodayHistory();
+
+      if (!mounted) return;
 
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Punch In Successful")));
+      ).showSnackBar(const SnackBar(content: Text("Clock In Successful")));
     } catch (e) {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) {
+        setState(() {
+          isProcessing = false;
+        });
+      }
     }
   }
 
   Future<void> handlePunchOut() async {
-    try {
-      bool allowed = await AttendanceService.canMarkAttendance();
+    if (isProcessing) return;
 
-      // if (!allowed) {
-      //   ScaffoldMessenger.of(context).showSnackBar(
-      //     const SnackBar(content: Text("You are outside office location")),
-      //   );
-      //   return;
-      // }
+    if (isOnBreak) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please end your break before Clock Out")),
+      );
+
+      return;
+    }
+
+    try {
+      setState(() {
+        isProcessing = true;
+      });
+
+      final allowed = await AttendanceService.canMarkAttendance();
+
+      if (!allowed) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("You are outside office location")),
+        );
+
+        return;
+      }
 
       await AttendanceService.punchOut();
 
       timer?.cancel();
 
-      setState(() {
-        isClockedIn = false;
-      });
-
-      await loadAttendance();
       await loadTodayHistory();
+
+      if (!mounted) return;
+
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Punch Out Successful")));
+      ).showSnackBar(const SnackBar(content: Text("Clock Out Successful")));
     } catch (e) {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) {
+        setState(() {
+          isProcessing = false;
+        });
+      }
+    }
+  }
+
+  Future<void> handleBreakOut() async {
+    if (isProcessing) return;
+
+    if (!isOnBreak) return;
+
+    try {
+      setState(() {
+        isProcessing = true;
+      });
+
+      final allowed = await AttendanceService.canMarkAttendance();
+
+      if (!allowed) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("You are outside office location")),
+        );
+
+        return;
+      }
+
+      await AttendanceService.breakOut();
+
+      await loadTodayHistory();
+
+      startTimer();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Break Ended")));
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) {
+        setState(() {
+          isProcessing = false;
+        });
+      }
+    }
+  }
+
+  Future<void> handleBreakIn() async {
+    if (isProcessing) return;
+
+    if (!isClockedIn) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("You must Clock In before taking a break"),
+        ),
+      );
+
+      return;
+    }
+
+    if (isOnBreak) return;
+
+    try {
+      setState(() {
+        isProcessing = true;
+      });
+
+      final allowed = await AttendanceService.canMarkAttendance();
+
+      if (!allowed) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("You are outside office location")),
+        );
+
+        return;
+      }
+
+      await AttendanceService.breakIn();
+
+      await loadTodayHistory();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Break Started")));
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) {
+        setState(() {
+          isProcessing = false;
+        });
+      }
     }
   }
 
@@ -463,8 +906,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        Color.fromARGB(255, 72, 139, 220),
-                        Color.fromARGB(255, 51, 131, 222),
+                        // Color.fromARGB(255, 238, 83, 60),
+                        // Color.fromARGB(255, 230, 61, 39),
+                        Color(0xFF2563EB),
+                        Color(0xFF60A5FA),
                       ],
                     ),
                     borderRadius: BorderRadius.only(
@@ -551,8 +996,14 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Color.fromARGB(255, 230, 79, 97),
-                          Color(0xffFB7185),
+                          //Color.fromARGB(255, 175, 199, 227),
+                          // Color.fromARGB(255, 181, 212, 247),
+                          //   Color.fromARGB(255, 219, 107, 120),
+                          //  Color.fromARGB(255, 212, 120, 134),
+                          Color.fromARGB(255, 216, 92, 73),
+                          Color.fromARGB(255, 211, 75, 57),
+                          // Color(0xFF2563EB),
+                          //  Color(0xFF60A5FA),
                         ],
                       ),
                       boxShadow: [
@@ -764,13 +1215,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                 : Icons.login_rounded,
                             colors: isClockedIn
                                 ? const [
-                                    Color.fromARGB(255, 221, 77, 77),
-                                    Color(0xFFFCA5A5),
+                                    Color(0xFF2563EB),
+                                    Color(0xFF60A5FA),
                                   ] // Clock Out
-                                : const [
-                                    Color.fromARGB(255, 51, 87, 235),
-                                    Color(0xFFA5B4FC),
-                                  ],
+                                : const [Color(0xFFEF4444), Color(0xFFFCA5A5)],
                             onTap: () {
                               if (isClockedIn) {
                                 handlePunchOut();
@@ -805,28 +1253,65 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                             ),
                           ),
                         ),
-
-                        // BREAK
                         Expanded(
                           child: Opacity(
                             opacity: isClockedIn ? 1 : .45,
                             child: IgnorePointer(
                               ignoring: !isClockedIn,
                               child: _buildActionCircle(
-                                title: "Break In",
-                                subtitle: "Take Break",
-                                icon: Icons.free_breakfast_rounded,
-                                colors: const [
-                                  Color.fromARGB(255, 224, 124, 9),
-                                  Color(0xFFFDBA74),
-                                ],
+                                title: isOnBreak ? "Break Out" : "Break In",
+
+                                subtitle: isOnBreak
+                                    ? "Resume Work"
+                                    : "Take Break",
+
+                                icon: isOnBreak
+                                    ? Icons.play_arrow_rounded
+                                    : Icons.free_breakfast_rounded,
+
+                                colors: isOnBreak
+                                    ? const [
+                                        Color(0xFFF59E0B),
+                                        Color(0xFFFCD34D),
+                                      ]
+                                    : const [
+                                        Color(0xFF10B981),
+                                        Color(0xFF6EE7B7),
+                                      ],
+
                                 onTap: () {
-                                  // Break functionality here
+                                  if (isOnBreak) {
+                                    handleBreakOut();
+                                  } else {
+                                    handleBreakIn();
+                                  }
                                 },
                               ),
                             ),
                           ),
                         ),
+
+                        // BREAK
+                        // Expanded(
+                        //   child: Opacity(
+                        //     opacity: isClockedIn ? 1 : .45,
+                        //     child: IgnorePointer(
+                        //       ignoring: !isClockedIn,
+                        //       child: _buildActionCircle(
+                        //         title: "Break In",
+                        //         subtitle: "Take Break",
+                        //         icon: Icons.free_breakfast_rounded,
+                        //         colors: const [
+                        //           Color.fromARGB(255, 224, 124, 9),
+                        //           Color(0xFFFDBA74),
+                        //         ],
+                        //         onTap: () {
+                        //           // Break functionality here
+                        //         },
+                        //       ),
+                        //     ),
+                        //   ),
+                        // ),
                       ],
                     ),
                   ),

@@ -91,10 +91,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           .collection('toatl_leave')
           .doc(uid)
           .get();
-
-      //    int clLeave = int.tryParse(leaveData['Cl'].toString()) ?? 0;
-      //int slLeave = int.tryParse(leaveData['Sl'].toString()) ?? 0;
-
       int total = clLeave + slLeave;
 
       // 2. USED LEAVE = ONLY FROM REQUESTS
@@ -422,142 +418,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                     const Spacer(),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ProfileScreen(),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        height: 62,
-                        width: 62,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(.08),
-                              blurRadius: 12,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                        ),
-                        child: CircleAvatar(
-                          radius: 30,
-                          backgroundColor: const Color(0xffE8F0FE),
-                          child: Text(
-                            name.isNotEmpty ? name[0].toUpperCase() : "U",
-                            style: const TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xff2563EB),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    //     Container(
-                    //   height: 62,
-                    //   width: 62,
-                    //   decoration: BoxDecoration(
-                    //     shape: BoxShape.circle,
-                    //     color: Colors.white,
-                    //     boxShadow: [
-                    //       BoxShadow(
-                    //         color: Colors.black.withOpacity(.08),
-                    //         blurRadius: 12,
-                    //         offset: const Offset(0, 5),
-                    //       ),
-                    //     ],
-                    //   ),
-                    //   child: CircleAvatar(
-                    //     radius: 30,
-                    //     backgroundColor: const Color(0xffE8F0FE),
-                    //     child: Text(
-                    //       name.isNotEmpty ? name[0].toUpperCase() : "U",
-                    //       style: const TextStyle(
-                    //         fontSize: 26,
-                    //         fontWeight: FontWeight.bold,
-                    //         color: Color(0xff2563EB),
-                    //       ),
-                    //     ),
-                    //   ),
-                    // ),
-                  ],
-                ),
-                const SizedBox(height: 11),
-
-                ///================ GREETING =================
-                // Row(
-                //   children: [
-                //     Expanded(
-                //       child: Column(
-                //         crossAxisAlignment: CrossAxisAlignment.start,
-                //         children: [
-                //           Text(
-                //             "Hi, $name 👋",
-                //             style: const TextStyle(
-                //               fontSize: 28,
-                //               fontWeight: FontWeight.bold,
-                //             ),
-                //           ),
-
-                //           const SizedBox(height: 6),
-
-                //           const Text(
-                //             "Have a nice day!",
-                //             style: TextStyle(color: Colors.grey, fontSize: 16),
-                //           ),
-                //         ],
-                //       ),
-                //     ),
-
-                //     CircleAvatar(
-                //       radius: 28,
-                //       backgroundColor: Colors.blue.shade100,
-                //       child: const Icon(
-                //         Icons.person,
-                //         size: 30,
-                //         color: Colors.blue,
-                //       ),
-                //     ),
-                //   ],
-                // ),
-                Divider(color: Colors.grey.shade300, thickness: 1),
-                const SizedBox(height: 11),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Hi, $name 👋",
-                            style: const TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xff1F2937),
-                            ),
-                          ),
-
-                          const SizedBox(height: 6),
-
-                          const Text(
-                            "Have a nice day!",
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: Colors.grey,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                     Stack(
                       children: [
                         InkWell(
@@ -629,6 +489,145 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 11),
+
+                ///================ GREETING =================
+                // Row(
+                //   children: [
+                //     Expanded(
+                //       child: Column(
+                //         crossAxisAlignment: CrossAxisAlignment.start,
+                //         children: [
+                //           Text(
+                //             "Hi, $name 👋",
+                //             style: const TextStyle(
+                //               fontSize: 28,
+                //               fontWeight: FontWeight.bold,
+                //             ),
+                //           ),
+
+                //           const SizedBox(height: 6),
+
+                //           const Text(
+                //             "Have a nice day!",
+                //             style: TextStyle(color: Colors.grey, fontSize: 16),
+                //           ),
+                //         ],
+                //       ),
+                //     ),
+
+                //     CircleAvatar(
+                //       radius: 28,
+                //       backgroundColor: Colors.blue.shade100,
+                //       child: const Icon(
+                //         Icons.person,
+                //         size: 30,
+                //         color: Colors.blue,
+                //       ),
+                //     ),
+                //   ],
+                // ),
+                Divider(color: Colors.grey.shade300, thickness: 1),
+                const SizedBox(height: 11),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 95,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            colors: [Color(0xFF7034E6), Color(0xFF8B4DE8)],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            // TEXT
+                            Positioned(
+                              left: 16,
+                              top: 14,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Hi, $name 👋",
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 5),
+
+                                  const Text(
+                                    "Have a great day at work!",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            // PROFILE
+                            Positioned(
+                              right: 8,
+                              top: 14,
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const ProfileScreen(),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  width: 60,
+                                  height: 60,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.white,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(.18),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  padding: const EdgeInsets.all(3),
+                                  child: CircleAvatar(
+                                    backgroundColor: const Color(0xffE8F0FE),
+                                    child: Text(
+                                      name.isNotEmpty
+                                          ? name[0].toUpperCase()
+                                          : "U",
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xff2563EB),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
 
                 const SizedBox(height: 11),
 
@@ -673,8 +672,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       title: "CL Leave",
                       value: clLeave.toString(),
                       icon: Icons.event_available,
-                      startColor: const Color(0xffA7F3D0),
-                      endColor: const Color(0xff6EE7B7),
+                      startColor: const Color.fromARGB(255, 198, 230, 215),
+                      endColor: const Color.fromARGB(255, 215, 239, 229),
                     ),
 
                     const SizedBox(width: 12),
@@ -683,8 +682,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       title: "SL Leave",
                       value: slLeave.toString(),
                       icon: Icons.medical_services,
-                      startColor: const Color(0xffBFDBFE),
-                      endColor: const Color(0xff93C5FD),
+                      startColor: const Color.fromARGB(255, 175, 199, 227),
+                      endColor: const Color.fromARGB(255, 181, 212, 247),
                     ),
 
                     const SizedBox(width: 12),
@@ -693,8 +692,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       title: "Remaining",
                       value: remainingLeave.toString(),
                       icon: Icons.star,
-                      startColor: const Color(0xffDDD6FE),
-                      endColor: const Color(0xffC4B5FD),
+                      startColor: const Color.fromARGB(255, 215, 208, 243),
+                      endColor: const Color.fromARGB(255, 194, 186, 225),
                     ),
                   ],
                 ),
@@ -718,7 +717,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       title: "Apply Leave",
                       subtitle: "Submit a new request",
                       icon: Icons.edit_calendar_rounded,
-                      colors: const [Color(0xffC7D2FE), Color(0xffA5B4FC)],
+                      colors: const [
+                        Color.fromARGB(255, 198, 230, 215),
+                        Color.fromARGB(255, 215, 239, 229),
+                      ],
                       onTap: () {
                         Navigator.push(
                           context,
@@ -736,7 +738,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       title: "My Leaves",
                       subtitle: "Track leave status",
                       icon: Icons.description_rounded,
-                      colors: const [Color(0xffA5F3FC), Color(0xff67E8F9)],
+                      colors: const [
+                        Color.fromARGB(255, 175, 199, 227),
+                        Color.fromARGB(255, 181, 212, 247),
+                      ],
                       onTap: () {
                         Navigator.push(
                           context,
@@ -758,7 +763,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       title: "Attendance",
                       subtitle: "Punch In / Out",
                       icon: Icons.access_time_filled_rounded,
-                      colors: const [Color(0xffFDE68A), Color(0xffFCD34D)],
+                      colors: const [
+                        Color.fromARGB(255, 215, 208, 243),
+                        Color.fromARGB(255, 215, 208, 243),
+                      ],
                       onTap: () {
                         Navigator.push(
                           context,
@@ -776,7 +784,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       title: "My Attendance",
                       subtitle: "View history",
                       icon: Icons.history_rounded,
-                      colors: const [Color(0xffA7F3D0), Color(0xff6EE7B7)],
+                      colors: const [
+                        Color.fromARGB(255, 180, 241, 213),
+                        Color.fromARGB(255, 167, 243, 212),
+                      ],
                       onTap: () {
                         Navigator.push(
                           context,

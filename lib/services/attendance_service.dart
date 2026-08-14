@@ -6,6 +6,100 @@ class AttendanceService {
   static const double officeLat = 18.548169882550805;
   static const double officeLng = 73.7684216761013;
   static const int allowedRadius = 150;
+  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  static final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  static String _today() {
+    final now = DateTime.now();
+
+    return "${now.year}-"
+        "${now.month.toString().padLeft(2, '0')}-"
+        "${now.day.toString().padLeft(2, '0')}";
+  }
+
+  static Future<DocumentReference<Map<String, dynamic>>>
+  _getAttendanceDocument() async {
+    final user = _auth.currentUser;
+
+    if (user == null) {
+      throw Exception("User not logged in");
+    }
+
+    final uid = user.uid;
+    final date = _today();
+
+    final query = await _firestore
+        .collection("attendance")
+        .where("uid", isEqualTo: uid)
+        .where("date", isEqualTo: date)
+        .limit(1)
+        .get();
+
+    if (query.docs.isNotEmpty) {
+      return query.docs.first.reference;
+    }
+
+    return _firestore.collection("attendance").doc(uid);
+  }
+
+  static Future<void> _addPunch(String type) async {
+    final user = _auth.currentUser;
+
+    if (user == null) {
+      throw Exception("User not logged in");
+    }
+
+    final attendanceRef = await _getAttendanceDocument();
+
+    final now = DateTime.now();
+
+    await attendanceRef.set({
+      "uid": user.uid,
+      "employeeName": user.displayName ?? "",
+      "date": _today(),
+      "updatedAt": FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    await attendanceRef.collection("punches").add({
+      "type": type,
+      "time": Timestamp.fromDate(now),
+      "createdAt": FieldValue.serverTimestamp(),
+    });
+  }
+
+  // ----------------------------------------------------------
+  // CLOCK IN
+  // ----------------------------------------------------------
+
+  static Future<void> punchIn() async {
+    await _addPunch("IN");
+  }
+
+  // ----------------------------------------------------------
+  // CLOCK OUT
+  // ----------------------------------------------------------
+
+  static Future<void> punchOut() async {
+    await _addPunch("OUT");
+  }
+
+  // ----------------------------------------------------------
+  // BREAK IN
+  // ----------------------------------------------------------
+
+  static Future<void> breakIn() async {
+    await _addPunch("BREAK_IN");
+  }
+
+  // ----------------------------------------------------------
+  // BREAK OUT
+  // ----------------------------------------------------------
+
+  static Future<void> breakOut() async {
+    await _addPunch("BREAK_OUT");
+  }
+
   static Future<bool> canMarkAttendance() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
 
@@ -62,100 +156,102 @@ class AttendanceService {
   // }
 
   static Future<Map<String, dynamic>?> getTodayAttendance() async {
-    String uid = FirebaseAuth.instance.currentUser!.uid;
+    final user = FirebaseAuth.instance.currentUser;
 
-    String today = DateTime.now().toString().split(' ')[0];
-
-    String docId = "${uid}_$today";
-
-    DocumentSnapshot doc = await FirebaseFirestore.instance
-        .collection('attendance')
-        .doc(docId)
-        .get();
-
-    if (!doc.exists) {
+    if (user == null) {
       return null;
     }
 
-    return doc.data() as Map<String, dynamic>;
-  }
+    final today = _today();
 
-  static Future<void> punchIn() async {
-    String uid = FirebaseAuth.instance.currentUser!.uid;
-
-    String today = DateTime.now().toString().split(' ')[0];
-
-    String docId = "${uid}_$today";
-
-    DocumentSnapshot userDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
+    final snapshot = await FirebaseFirestore.instance
+        .collection("attendance")
+        .where("uid", isEqualTo: user.uid)
+        .where("date", isEqualTo: today)
+        .limit(1)
         .get();
 
-    DocumentReference attendanceRef = FirebaseFirestore.instance
-        .collection('attendance')
-        .doc(docId);
-
-    DocumentSnapshot attendanceDoc = await attendanceRef.get();
-
-    bool isClockedIn = false;
-
-    if (attendanceDoc.exists) {
-      isClockedIn = attendanceDoc['isClockedIn'] ?? false;
+    if (snapshot.docs.isEmpty) {
+      return null;
     }
 
-    if (isClockedIn) {
-      throw Exception("Already Punched In");
-    }
+    return snapshot.docs.first.data();
+  } // static Future<void> punchIn() async {
+  //   String uid = FirebaseAuth.instance.currentUser!.uid;
 
-    await attendanceRef.set({
-      "uid": uid,
-      "employeeName": userDoc['name'],
-      "date": today,
-      "isClockedIn": true,
-      "totalMinutes": 0,
-      "workingHours": "0h 0m",
-    }, SetOptions(merge: true));
-    SetOptions(merge: true);
+  //   String today = DateTime.now().toString().split(' ')[0];
 
-    await attendanceRef.collection('punches').add({
-      "type": "IN",
-      "time": Timestamp.now(),
-    });
-  }
+  //   String docId = "${uid}_$today";
 
-  static Future<void> punchOut() async {
-    String uid = FirebaseAuth.instance.currentUser!.uid;
+  //   DocumentSnapshot userDoc = await FirebaseFirestore.instance
+  //       .collection('users')
+  //       .doc(uid)
+  //       .get();
 
-    String today = DateTime.now().toString().split(' ')[0];
+  //   DocumentReference attendanceRef = FirebaseFirestore.instance
+  //       .collection('attendance')
+  //       .doc(docId);
 
-    String docId = "${uid}_$today";
+  //   DocumentSnapshot attendanceDoc = await attendanceRef.get();
 
-    DocumentReference attendanceRef = FirebaseFirestore.instance
-        .collection('attendance')
-        .doc(docId);
+  //   bool isClockedIn = false;
 
-    DocumentSnapshot attendanceDoc = await attendanceRef.get();
+  //   if (attendanceDoc.exists) {
+  //     isClockedIn = attendanceDoc['isClockedIn'] ?? false;
+  //   }
 
-    if (!attendanceDoc.exists) {
-      throw Exception("Please Punch In First");
-    }
+  //   if (isClockedIn) {
+  //     throw Exception("Already Punched In");
+  //   }
 
-    bool isClockedIn = attendanceDoc['isClockedIn'] ?? false;
+  //   await attendanceRef.set({
+  //     "uid": uid,
+  //     "employeeName": userDoc['name'],
+  //     "date": today,
+  //     "isClockedIn": true,
+  //     "totalMinutes": 0,
+  //     "workingHours": "0h 0m",
+  //   }, SetOptions(merge: true));
+  //   SetOptions(merge: true);
 
-    if (!isClockedIn) {
-      throw Exception("Already Punched Out");
-    }
+  //   await attendanceRef.collection('punches').add({
+  //     "type": "IN",
+  //     "time": Timestamp.now(),
+  //   });
+  // }
 
-    await attendanceRef.collection('punches').add({
-      "type": "OUT",
-      "time": Timestamp.now(),
-    });
+  // static Future<void> punchOut() async {
+  //   String uid = FirebaseAuth.instance.currentUser!.uid;
 
-    await attendanceRef.update({"isClockedIn": false});
+  //   String today = DateTime.now().toString().split(' ')[0];
 
-    await calculateHours(docId);
-  }
+  //   String docId = "${uid}_$today";
+
+  //   DocumentReference attendanceRef = FirebaseFirestore.instance
+  //       .collection('attendance')
+  //       .doc(docId);
+
+  //   DocumentSnapshot attendanceDoc = await attendanceRef.get();
+
+  //   if (!attendanceDoc.exists) {
+  //     throw Exception("Please Punch In First");
+  //   }
+
+  //   bool isClockedIn = attendanceDoc['isClockedIn'] ?? false;
+
+  //   if (!isClockedIn) {
+  //     throw Exception("Already Punched Out");
+  //   }
+
+  //   await attendanceRef.collection('punches').add({
+  //     "type": "OUT",
+  //     "time": Timestamp.now(),
+  //   });
+
+  //   await attendanceRef.update({"isClockedIn": false});
+
+  //   await calculateHours(docId);
+  // }
 
   static Future<void> calculateHours(String docId) async {
     QuerySnapshot snap = await FirebaseFirestore.instance

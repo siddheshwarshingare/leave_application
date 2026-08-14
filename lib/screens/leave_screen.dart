@@ -354,9 +354,9 @@ for (var doc in adminSnap.docs) {
           "Apply Leave",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.blue,
 
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.blue,
+        //  foregroundColor: Colors.black,
       ),
 
       body: Padding(
