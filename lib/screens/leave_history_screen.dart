@@ -252,11 +252,13 @@ class _LeaveHistoryScreenState extends State<LeaveHistoryScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(
-                                  data["reason"],
-                                  style: TextStyle(
-                                    color: Colors.grey.shade600,
-                                    fontSize: 15,
+                                Expanded(
+                                  child: Text(
+                                    data["reason"],
+                                    style: TextStyle(
+                                      color: Colors.grey.shade600,
+                                      fontSize: 15,
+                                    ),
                                   ),
                                 ),
 

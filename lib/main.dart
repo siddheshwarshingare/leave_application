@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:leave_application/screens/admin_leave_screen.dart';
 import 'package:leave_application/screens/dashboard_screen.dart';
 import 'package:leave_application/screens/login_screen.dart';
+import 'package:leave_application/screens/splash_screen.dart';
 import 'package:leave_application/services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
@@ -51,6 +52,7 @@ void main() async {
 
   runApp(MyApp(screen: screen));
 }
+
 // void main() async {
 //   WidgetsFlutterBinding.ensureInitialized();
 
@@ -66,7 +68,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(debugShowCheckedModeBanner: false, home: screen);
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: SplashScreen(nextScreen: screen),
+    );
   }
 }
 // class MyApp extends StatelessWidget {

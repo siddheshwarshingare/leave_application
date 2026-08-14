@@ -225,7 +225,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }) {
     return Expanded(
       child: InkWell(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(20),
         onTap: onTap,
         child: Ink(
           decoration: BoxDecoration(
@@ -234,61 +234,74 @@ class _DashboardScreenState extends State<DashboardScreen> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: colors.first.withOpacity(.30),
-                blurRadius: 14,
-                offset: const Offset(0, 8),
+                color: colors.first.withOpacity(0.18),
+                blurRadius: 12,
+                offset: const Offset(0, 5),
               ),
             ],
           ),
           child: Container(
-            height: 161,
-            padding: const EdgeInsets.all(18),
+            height: 155,
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Icon
                 Container(
-                  height: 48,
-                  width: 48,
+                  height: 44,
+                  width: 44,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(.20),
-                    borderRadius: BorderRadius.circular(14),
+                    color: Colors.white.withOpacity(0.55),
+                    borderRadius: BorderRadius.circular(13),
                   ),
-                  child: Icon(icon, color: Colors.white, size: 26),
+                  child: Icon(icon, color: const Color(0xff374151), size: 23),
                 ),
 
                 const Spacer(),
 
+                // Title
                 Text(
                   title,
                   style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                    color: Color(0xff1F2937),
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
 
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
 
+                // Subtitle
                 Text(
                   subtitle,
-                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                  style: const TextStyle(
+                    color: Color(0xff4B5563),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
 
-                const SizedBox(height: 10),
+                const Spacer(),
 
-                Row(
-                  children: const [
-                    Spacer(),
-
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      color: Colors.white,
-                      size: 18,
+                // Arrow
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: Container(
+                    height: 30,
+                    width: 30,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.45),
+                      borderRadius: BorderRadius.circular(9),
                     ),
-                  ],
+                    child: const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Color(0xff374151),
+                      size: 17,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -307,53 +320,57 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }) {
     return Expanded(
       child: Container(
-        height: 135,
-        padding: const EdgeInsets.all(16),
+        height: 110,
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [startColor, endColor],
           ),
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: startColor.withOpacity(.25),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
+              color: startColor.withOpacity(0.20),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
             ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Icon
             Container(
-              padding: const EdgeInsets.all(8),
+              width: 29,
+              height: 29,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(.20),
+                color: Colors.white.withOpacity(0.45),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: Colors.white, size: 20),
+              child: Icon(icon, color: const Color(0xff374151), size: 18),
             ),
 
             const Spacer(),
 
+            // Value
             Text(
               value,
               style: const TextStyle(
-                fontSize: 30,
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+                fontSize: 22,
+                color: Color(0xff1F2937),
+                fontWeight: FontWeight.w700,
               ),
             ),
 
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
 
+            // Title
             Text(
               title,
               style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 14,
+                color: Color(0xff4B5563),
+                fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -656,8 +673,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       title: "CL Leave",
                       value: clLeave.toString(),
                       icon: Icons.event_available,
-                      startColor: const Color(0xff34D399),
-                      endColor: const Color(0xff10B981),
+                      startColor: const Color(0xffA7F3D0),
+                      endColor: const Color(0xff6EE7B7),
                     ),
 
                     const SizedBox(width: 12),
@@ -666,8 +683,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       title: "SL Leave",
                       value: slLeave.toString(),
                       icon: Icons.medical_services,
-                      startColor: const Color(0xff60A5FA),
-                      endColor: const Color(0xff2563EB),
+                      startColor: const Color(0xffBFDBFE),
+                      endColor: const Color(0xff93C5FD),
                     ),
 
                     const SizedBox(width: 12),
@@ -676,8 +693,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       title: "Remaining",
                       value: remainingLeave.toString(),
                       icon: Icons.star,
-                      startColor: const Color(0xff8B5CF6),
-                      endColor: const Color(0xff6D28D9),
+                      startColor: const Color(0xffDDD6FE),
+                      endColor: const Color(0xffC4B5FD),
                     ),
                   ],
                 ),
@@ -685,7 +702,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                 const Text(
                   "Quick Actions",
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xff1F2937),
+                  ),
                 ),
 
                 const SizedBox(height: 18),
@@ -697,7 +718,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       title: "Apply Leave",
                       subtitle: "Submit a new request",
                       icon: Icons.edit_calendar_rounded,
-                      colors: const [Color(0xff6366F1), Color(0xff4F46E5)],
+                      colors: const [Color(0xffC7D2FE), Color(0xffA5B4FC)],
                       onTap: () {
                         Navigator.push(
                           context,
@@ -715,7 +736,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       title: "My Leaves",
                       subtitle: "Track leave status",
                       icon: Icons.description_rounded,
-                      colors: const [Color(0xff06B6D4), Color(0xff0891B2)],
+                      colors: const [Color(0xffA5F3FC), Color(0xff67E8F9)],
                       onTap: () {
                         Navigator.push(
                           context,
@@ -737,7 +758,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       title: "Attendance",
                       subtitle: "Punch In / Out",
                       icon: Icons.access_time_filled_rounded,
-                      colors: const [Color(0xffF59E0B), Color(0xffD97706)],
+                      colors: const [Color(0xffFDE68A), Color(0xffFCD34D)],
                       onTap: () {
                         Navigator.push(
                           context,
@@ -755,7 +776,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       title: "My Attendance",
                       subtitle: "View history",
                       icon: Icons.history_rounded,
-                      colors: const [Color(0xff10B981), Color(0xff059669)],
+                      colors: const [Color(0xffA7F3D0), Color(0xff6EE7B7)],
                       onTap: () {
                         Navigator.push(
                           context,
@@ -806,8 +827,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
+                      backgroundColor: const Color(0xffFECACA),
+                      foregroundColor: const Color(0xffB91C1C),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
