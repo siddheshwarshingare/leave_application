@@ -607,6 +607,99 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     }
   }
 
+  Widget _attendanceAction({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+    bool disabled = false,
+  }) {
+    return Opacity(
+      opacity: disabled ? .45 : 1,
+
+      child: IgnorePointer(
+        ignoring: disabled,
+
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+
+          onTap: isProcessing ? null : onTap,
+
+          child: Container(
+            height: 105,
+
+            padding: const EdgeInsets.all(15),
+
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(.035),
+                  blurRadius: 12,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(.10),
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+
+                  child: Icon(icon, color: color, size: 24),
+                ),
+
+                const SizedBox(width: 12),
+
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+
+                    mainAxisAlignment: MainAxisAlignment.center,
+
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          color: Color(0xFF0F172A),
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+
+                      const SizedBox(height: 4),
+
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          color: Color(0xFF64748B),
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                Icon(Icons.arrow_forward_ios_rounded, size: 14, color: color),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> handleBreakIn() async {
     if (isProcessing) return;
 
@@ -881,669 +974,1030 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
-      body: Column(
+  Widget _buildAttendanceInfo({
+    required String value,
+    required String title,
+    required IconData icon,
+  }) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.white, size: 17),
+
+            const SizedBox(width: 5),
+
+            Flexible(
+              child: Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 4),
+
+        Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildModernActionButton({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color firstColor,
+    required Color secondColor,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(25),
+
+      child: Container(
+        height: 135,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(25),
+
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [firstColor, secondColor],
+          ),
+
+          boxShadow: [
+            BoxShadow(
+              color: secondColor.withOpacity(.20),
+              blurRadius: 15,
+              offset: const Offset(0, 7),
+            ),
+          ],
+        ),
+
+        child: Stack(
+          children: [
+            // Decorative circle
+            Positioned(
+              right: -25,
+              bottom: -35,
+              child: Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(.10),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.all(16),
+
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(.20),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+
+                    child: Icon(icon, color: Colors.white, size: 27),
+                  ),
+
+                  const Spacer(),
+
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+
+                  const SizedBox(height: 2),
+
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(.80),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Arrow
+            const Positioned(
+              right: 15,
+              bottom: 20,
+              child: Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: Colors.white,
+                size: 17,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyHistory() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.035),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+
+      child: Row(
         children: [
-          SizedBox(
-            height: 240,
-            child: Stack(
-              clipBehavior: Clip.none,
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0E9FF),
+              borderRadius: BorderRadius.circular(16),
+            ),
+
+            child: const Icon(
+              Icons.access_time_rounded,
+              color: Color(0xFF6D28D9),
+              size: 28,
+            ),
+          ),
+
+          const SizedBox(width: 15),
+
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // HEADER
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.only(
-                    top: 40,
-                    left: 20,
-                    right: 20,
-                    bottom: 80,
-                  ),
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        // Color.fromARGB(255, 238, 83, 60),
-                        // Color.fromARGB(255, 230, 61, 39),
-                        Color(0xFF2563EB),
-                        Color(0xFF60A5FA),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(35),
-                      bottomRight: Radius.circular(35),
-                    ),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // PROFILE
-                      Container(
-                        width: 62,
-                        height: 62,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 3),
-                        ),
-                        child: const CircleAvatar(
-                          backgroundColor: Colors.white,
-                          child: Icon(
-                            Icons.person,
-                            size: 32,
-                            color: Colors.deepOrange,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(width: 22),
-
-                      // GREETING
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Hi, Raje 👋",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 22,
-                              ),
-                            ),
-                            SizedBox(height: 5),
-                            Text(
-                              "Have a productive day",
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 17,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // NOTIFICATION
-                      // Container(
-                      //   width: 50,
-                      //   height: 50,
-                      //   decoration: BoxDecoration(
-                      //     color: Colors.white.withOpacity(.18),
-                      //     borderRadius: BorderRadius.circular(16),
-                      //   ),
-                      //   child: const Icon(
-                      //     Icons.notifications_none_rounded,
-                      //     color: Colors.white,
-                      //     size: 27,
-                      //   ),
-                      // ),
-                    ],
+                Text(
+                  "No attendance records",
+                  style: TextStyle(
+                    color: Color(0xFF17133A),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
 
-                // ATTENDANCE CARD
-                Positioned(
-                  top: 130,
-                  left: 16,
-                  right: 16,
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(28),
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          //Color.fromARGB(255, 175, 199, 227),
-                          // Color.fromARGB(255, 181, 212, 247),
-                          //   Color.fromARGB(255, 219, 107, 120),
-                          //  Color.fromARGB(255, 212, 120, 134),
-                          Color.fromARGB(255, 216, 92, 73),
-                          Color.fromARGB(255, 211, 75, 57),
-                          // Color(0xFF2563EB),
-                          //  Color(0xFF60A5FA),
-                        ],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xffFF7043).withOpacity(.30),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        // STATUS
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 7,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(40),
-                              ),
-                              child: Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 4,
-                                    backgroundColor: isClockedIn
-                                        ? Colors.green
-                                        : Colors.red,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    isClockedIn ? "Present" : "Absent",
-                                    style: TextStyle(
-                                      color: isClockedIn
-                                          ? Colors.green
-                                          : Colors.red,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                SizedBox(height: 5),
 
-                        const SizedBox(height: 14),
+                Text(
+                  "No punch activity recorded today",
+                  style: TextStyle(color: Color(0xFF8A8FA3), fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-                        // TIME + GOAL
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 52,
-                                    height: 52,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(17),
-                                    ),
-                                    child: const Icon(
-                                      Icons.access_time,
-                                      color: Color(0xff6A38F5),
-                                      size: 27,
-                                    ),
-                                  ),
+  Widget _modernInfo(String title, String value, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, color: Colors.white70, size: 16),
 
-                                  const SizedBox(width: 12),
+        const SizedBox(height: 5),
 
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        formatDuration(elapsed),
-                                        style: const TextStyle(
-                                          fontSize: 21,
-                                          fontWeight: FontWeight.w700,
-                                          color: Colors.white,
-                                        ),
-                                      ),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
 
-                                      const SizedBox(height: 4),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
 
-                                      Text(
-                                        "Today's Work Time",
-                                        style: TextStyle(
-                                          color: Colors.white.withOpacity(.70),
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
+        const SizedBox(height: 2),
 
-                            // GOAL
-                            SizedBox(
-                              width: 48,
-                              height: 48,
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  SizedBox(
-                                    width: 48,
-                                    height: 48,
-                                    child: CircularProgressIndicator(
-                                      value: elapsed.inHours / 8 > 1
-                                          ? 1
-                                          : elapsed.inHours / 8,
-                                      strokeWidth: 6,
-                                      backgroundColor: Colors.white24,
-                                      valueColor: const AlwaysStoppedAnimation(
-                                        Colors.white,
-                                      ),
-                                    ),
-                                  ),
+        Text(
+          title,
+          style: const TextStyle(color: Colors.white60, fontSize: 10),
+        ),
+      ],
+    );
+  }
 
-                                  const Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        "Goal",
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 10,
-                                        ),
-                                      ),
-                                      Text(
-                                        "8h",
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+  Widget _sectionTitle(String title, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 19, color: const Color(0xFF4F46E5)),
 
-                        const SizedBox(height: 16),
+        const SizedBox(width: 7),
 
-                        // DETAILS
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildColumn("Worked Hrs", workingHours),
-                            ),
+        Text(
+          title,
+          style: const TextStyle(
+            color: Color(0xFF0F172A),
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
+    );
+  }
 
-                            Container(
-                              width: 1,
-                              height: 40,
-                              color: Colors.white24,
-                            ),
+  Widget _modernHistoryItem(String type, String time) {
+    IconData icon;
+    Color color;
+    Color background;
+    String title;
+    String subtitle;
 
-                            Expanded(
-                              child: _buildColumn(
-                                "Status",
-                                isClockedIn ? "Working" : "Not Started",
-                              ),
-                            ),
+    switch (type) {
+      case "IN":
+        icon = Icons.login_rounded;
+        color = const Color(0xFF10B981);
+        background = const Color(0xFFECFDF5);
+        title = "Clock In";
+        subtitle = "Started working";
+        break;
 
-                            Container(
-                              width: 1,
-                              height: 40,
-                              color: Colors.white24,
-                            ),
+      case "OUT":
+        icon = Icons.logout_rounded;
+        color = const Color(0xFFEF4444);
+        background = const Color(0xFFFEF2F2);
+        title = "Clock Out";
+        subtitle = "Finished working";
+        break;
 
-                            Expanded(child: _buildColumn("Break", "00:00")),
-                          ],
-                        ),
-                      ],
-                    ),
+      case "BREAK_IN":
+        icon = Icons.coffee_rounded;
+        color = const Color(0xFFF59E0B);
+        background = const Color(0xFFFFFBEB);
+        title = "Break Started";
+        subtitle = "You are currently on break";
+        break;
+
+      case "BREAK_OUT":
+        icon = Icons.play_arrow_rounded;
+        color = const Color(0xFF3B82F6);
+        background = const Color(0xFFEFF6FF);
+        title = "Break Ended";
+        subtitle = "Work resumed";
+        break;
+
+      default:
+        icon = Icons.access_time_rounded;
+        color = const Color(0xFF64748B);
+        background = const Color(0xFFF1F5F9);
+        title = type;
+        subtitle = "Attendance activity";
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+
+      padding: const EdgeInsets.all(14),
+
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+
+            decoration: BoxDecoration(
+              color: background,
+              borderRadius: BorderRadius.circular(14),
+            ),
+
+            child: Icon(icon, color: color, size: 22),
+          ),
+
+          const SizedBox(width: 13),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Color(0xFF0F172A),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+
+                const SizedBox(height: 4),
+
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: Color(0xFF64748B),
+                    fontSize: 11,
                   ),
                 ),
               ],
             ),
           ),
 
-          const SizedBox(height: 100),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
 
-          // ACTION BUTTONS + HISTORY
-          Expanded(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
+            children: [
+              Text(
+                time,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+
+              const SizedBox(height: 4),
+
+              const Text(
+                "Today",
+                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModernEmptyHistory() {
+    return Container(
+      width: double.infinity,
+
+      padding: const EdgeInsets.all(22),
+
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+
+      child: Column(
+        children: [
+          Container(
+            width: 58,
+            height: 58,
+
+            decoration: BoxDecoration(
+              color: const Color(0xFFEEF2FF),
+              borderRadius: BorderRadius.circular(18),
+            ),
+
+            child: const Icon(
+              Icons.access_time_rounded,
+              color: Color(0xFF4F46E5),
+              size: 28,
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          const Text(
+            "No activity yet",
+            style: TextStyle(
+              color: Color(0xFF0F172A),
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+
+          const SizedBox(height: 5),
+
+          const Text(
+            "Your attendance activity will appear here.",
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatToday() {
+    final now = DateTime.now();
+
+    const months = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+
+    return "${months[now.month - 1]} ${now.day}, ${now.year}";
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 30),
+
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+
+            children: [
+              // ============================================================
+              // HEADER
+              // ============================================================
+              Row(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
+                  Container(
+                    width: 50,
+                    height: 50,
+
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE0E7FF),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+
+                    child: const Icon(
+                      Icons.person_rounded,
+                      color: Color(0xFF4F46E5),
+                      size: 28,
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // CLOCK IN / OUT
-                        Expanded(
-                          child: _buildActionCircle(
-                            title: isClockedIn ? "Clock Out" : "Clock In",
-                            subtitle: isClockedIn
-                                ? "Finish Work"
-                                : "Start Work",
-                            icon: isClockedIn
-                                ? Icons.logout_rounded
-                                : Icons.login_rounded,
-                            colors: isClockedIn
-                                ? const [
-                                    Color(0xFF2563EB),
-                                    Color(0xFF60A5FA),
-                                  ] // Clock Out
-                                : const [Color(0xFFEF4444), Color(0xFFFCA5A5)],
-                            onTap: () {
-                              if (isClockedIn) {
-                                handlePunchOut();
-                              } else {
-                                handlePunchIn();
-                              }
-                            },
+                        Text(
+                          "Good morning, Raje 👋",
+                          style: TextStyle(
+                            fontSize: 19,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF0F172A),
                           ),
                         ),
 
-                        Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 12),
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(.08),
-                                blurRadius: 10,
-                              ),
-                            ],
-                          ),
-                          child: const Center(
-                            child: Text(
-                              "OR",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
+                        SizedBox(height: 4),
+
+                        Text(
+                          "Manage your attendance",
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF64748B),
                           ),
                         ),
-                        Expanded(
-                          child: Opacity(
-                            opacity: isClockedIn ? 1 : .45,
-                            child: IgnorePointer(
-                              ignoring: !isClockedIn,
-                              child: _buildActionCircle(
-                                title: isOnBreak ? "Break Out" : "Break In",
-
-                                subtitle: isOnBreak
-                                    ? "Resume Work"
-                                    : "Take Break",
-
-                                icon: isOnBreak
-                                    ? Icons.play_arrow_rounded
-                                    : Icons.free_breakfast_rounded,
-
-                                colors: isOnBreak
-                                    ? const [
-                                        Color(0xFFF59E0B),
-                                        Color(0xFFFCD34D),
-                                      ]
-                                    : const [
-                                        Color(0xFF10B981),
-                                        Color(0xFF6EE7B7),
-                                      ],
-
-                                onTap: () {
-                                  if (isOnBreak) {
-                                    handleBreakOut();
-                                  } else {
-                                    handleBreakIn();
-                                  }
-                                },
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        // BREAK
-                        // Expanded(
-                        //   child: Opacity(
-                        //     opacity: isClockedIn ? 1 : .45,
-                        //     child: IgnorePointer(
-                        //       ignoring: !isClockedIn,
-                        //       child: _buildActionCircle(
-                        //         title: "Break In",
-                        //         subtitle: "Take Break",
-                        //         icon: Icons.free_breakfast_rounded,
-                        //         colors: const [
-                        //           Color.fromARGB(255, 224, 124, 9),
-                        //           Color(0xFFFDBA74),
-                        //         ],
-                        //         onTap: () {
-                        //           // Break functionality here
-                        //         },
-                        //       ),
-                        //     ),
-                        //   ),
-                        // ),
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: 25),
+                  Container(
+                    width: 44,
+                    height: 44,
 
-                  const Divider(),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
 
-                  // HISTORY HEADER
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 10,
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
                     ),
-                    child: Row(
+
+                    child: const Icon(
+                      Icons.notifications_none_rounded,
+                      color: Color(0xFF334155),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 22),
+
+              // ============================================================
+              // TODAY DATE
+              // ============================================================
+              Row(
+                children: [
+                  const Icon(
+                    Icons.calendar_today_rounded,
+                    size: 16,
+                    color: Color(0xFF6366F1),
+                  ),
+
+                  const SizedBox(width: 7),
+
+                  Text(
+                    _formatToday(),
+                    style: const TextStyle(
+                      color: Color(0xFF475569),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              // ============================================================
+              // MAIN ATTENDANCE CARD
+              // ============================================================
+              Container(
+                width: double.infinity,
+
+                padding: const EdgeInsets.all(20),
+
+                decoration: BoxDecoration(
+                  color: const Color(0xFF4F46E5),
+                  borderRadius: BorderRadius.circular(28),
+
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF4F46E5).withOpacity(.20),
+                      blurRadius: 24,
+                      offset: const Offset(0, 12),
+                    ),
+                  ],
+                ),
+
+                child: Column(
+                  children: [
+                    // STATUS
+                    Row(
                       children: [
-                        const Text(
-                          "Today's History",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 7,
+                          ),
+
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(.15),
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+
+                                decoration: BoxDecoration(
+                                  color: isClockedIn
+                                      ? const Color(0xFF34D399)
+                                      : const Color(0xFFF87171),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+
+                              const SizedBox(width: 7),
+
+                              Text(
+                                isClockedIn
+                                    ? (isOnBreak ? "On Break" : "Working")
+                                    : "Not Clocked In",
+
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
 
                         const Spacer(),
 
-                        InkWell(
-                          borderRadius: BorderRadius.circular(30),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const EmployeeAttendanceScreen(),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 9,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF4A90E2).withOpacity(.08),
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                            child: const Row(
-                              children: [
-                                Icon(
-                                  Icons.history,
-                                  size: 18,
-                                  color: Color(0xFF4A90E2),
-                                ),
-                                SizedBox(width: 6),
-                                Text(
-                                  "View All",
-                                  style: TextStyle(
-                                    color: Color(0xFF4A90E2),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
+                        const Icon(
+                          Icons.more_horiz_rounded,
+                          color: Colors.white70,
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // WORK TIME
+                    const Text(
+                      "TODAY'S WORK TIME",
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1,
+                      ),
+                    ),
+
+                    const SizedBox(height: 7),
+
+                    Text(
+                      formatDuration(elapsed),
+
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 42,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1,
+                      ),
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    // PROGRESS
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+
+                      child: LinearProgressIndicator(
+                        minHeight: 7,
+
+                        value: (elapsed.inMinutes / (8 * 60)).clamp(0.0, 1.0),
+
+                        backgroundColor: Colors.white.withOpacity(.15),
+
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                          Color(0xFF34D399),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                      children: [
+                        const Text(
+                          "Daily target",
+                          style: TextStyle(color: Colors.white70, fontSize: 11),
+                        ),
+
+                        const Text(
+                          "8h 00m",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],
                     ),
+
+                    const SizedBox(height: 22),
+
+                    // INFO
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(.10),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _modernInfo(
+                              "Worked",
+                              workingHours,
+                              Icons.access_time_rounded,
+                            ),
+                          ),
+
+                          Container(
+                            width: 1,
+                            height: 32,
+                            color: Colors.white24,
+                          ),
+
+                          Expanded(
+                            child: _modernInfo(
+                              "Status",
+                              isClockedIn
+                                  ? (isOnBreak ? "Break" : "Working")
+                                  : "Not Started",
+                              Icons.work_outline_rounded,
+                            ),
+                          ),
+
+                          Container(
+                            width: 1,
+                            height: 32,
+                            color: Colors.white24,
+                          ),
+
+                          Expanded(
+                            child: _modernInfo(
+                              "Goal",
+                              "8 Hours",
+                              Icons.flag_outlined,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // ============================================================
+              // ACTION BUTTONS
+              // ============================================================
+              Row(
+                children: [
+                  Expanded(
+                    child: _attendanceAction(
+                      title: isClockedIn ? "Clock Out" : "Clock In",
+
+                      subtitle: isClockedIn
+                          ? "Finish your work"
+                          : "Start your work",
+
+                      icon: isClockedIn
+                          ? Icons.logout_rounded
+                          : Icons.login_rounded,
+
+                      color: isClockedIn
+                          ? const Color(0xFFEF4444)
+                          : const Color(0xFF10B981),
+
+                      onTap: isClockedIn ? handlePunchOut : handlePunchIn,
+                    ),
                   ),
 
-                  const SizedBox(height: 10),
+                  const SizedBox(width: 12),
 
-                  const SizedBox(height: 10),
+                  Expanded(
+                    child: _attendanceAction(
+                      title: isOnBreak ? "End Break" : "Take Break",
 
-                  // TODAY'S FIREBASE HISTORY
-                  // TODAY'S HISTORY
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    child: isLoadingHistory
-                        ? const Padding(
-                            padding: EdgeInsets.all(20),
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                color: Color(0xFF4F46E5),
-                              ),
-                            ),
-                          )
-                        : history.isEmpty
-                        ? Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFE0E7FF),
-                                    borderRadius: BorderRadius.circular(13),
-                                  ),
-                                  child: const Icon(
-                                    Icons.access_time_rounded,
-                                    color: Color(0xFF4F46E5),
-                                  ),
-                                ),
+                      subtitle: isOnBreak ? "Resume working" : "Take some rest",
 
-                                const SizedBox(width: 14),
+                      icon: isOnBreak
+                          ? Icons.play_arrow_rounded
+                          : Icons.coffee_rounded,
 
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      "No attendance records",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
+                      color: const Color(0xFFF59E0B),
 
-                                    const SizedBox(height: 4),
+                      disabled: !isClockedIn,
 
-                                    Text(
-                                      "No punch activity recorded today",
-                                      style: TextStyle(
-                                        color: Colors.grey.shade600,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          )
-                        : Column(
-                            children: history.map((item) {
-                              final String type =
-                                  item["type"]?.toString() ?? "";
-
-                              final DateTime time = item["time"] as DateTime;
-
-                              final bool isIn = type == "IN";
-
-                              final String formattedTime =
-                                  TimeOfDay.fromDateTime(time).format(context);
-
-                              return Container(
-                                width: double.infinity,
-                                margin: const EdgeInsets.only(bottom: 10),
-                                padding: const EdgeInsets.all(15),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(18),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(.04),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 3),
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 44,
-                                      height: 44,
-                                      decoration: BoxDecoration(
-                                        color: isIn
-                                            ? const Color(0xFFE0F2FE)
-                                            : const Color(0xFFFFE4E6),
-                                        borderRadius: BorderRadius.circular(13),
-                                      ),
-                                      child: Icon(
-                                        isIn
-                                            ? Icons.login_rounded
-                                            : Icons.logout_rounded,
-                                        color: isIn
-                                            ? const Color(0xFF0284C7)
-                                            : const Color(0xFFE11D48),
-                                      ),
-                                    ),
-
-                                    const SizedBox(width: 14),
-
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            isIn ? "Clock In" : "Clock Out",
-                                            style: const TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-
-                                          const SizedBox(height: 4),
-
-                                          Text(
-                                            isIn
-                                                ? "Started working"
-                                                : "Finished working",
-                                            style: TextStyle(
-                                              color: Colors.grey.shade600,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-
-                                    Text(
-                                      formattedTime,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w700,
-                                        color: Color(0xFF374151),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }).toList(),
-                          ),
+                      onTap: isOnBreak ? handleBreakOut : handleBreakIn,
+                    ),
                   ),
                 ],
               ),
-            ),
+
+              const SizedBox(height: 24),
+
+              // ============================================================
+              // LOCATION CARD
+              // ============================================================
+              _sectionTitle("Work Location", Icons.location_on_outlined),
+
+              const SizedBox(height: 10),
+
+              Container(
+                padding: const EdgeInsets.all(16),
+
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFECFDF5),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+
+                      child: const Icon(
+                        Icons.location_on_rounded,
+                        color: Color(0xFF10B981),
+                      ),
+                    ),
+
+                    const SizedBox(width: 13),
+
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+
+                        children: [
+                          Text(
+                            "Office Location",
+                            style: TextStyle(
+                              color: Color(0xFF0F172A),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+
+                          SizedBox(height: 4),
+
+                          Text(
+                            "Your current location is verified",
+                            style: TextStyle(
+                              color: Color(0xFF64748B),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 7,
+                      ),
+
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFECFDF5),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+
+                      child: const Row(
+                        children: [
+                          Icon(
+                            Icons.check_circle_rounded,
+                            size: 14,
+                            color: Color(0xFF10B981),
+                          ),
+
+                          SizedBox(width: 4),
+
+                          Text(
+                            "Verified",
+                            style: TextStyle(
+                              color: Color(0xFF059669),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 28),
+
+              // ============================================================
+              // HISTORY HEADER
+              // ============================================================
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      "Today's Activity",
+                      style: TextStyle(
+                        color: Color(0xFF0F172A),
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+
+                  InkWell(
+                    borderRadius: BorderRadius.circular(20),
+
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const EmployeeAttendanceScreen(),
+                        ),
+                      );
+                    },
+
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEEF2FF),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+
+                      child: const Row(
+                        children: [
+                          Text(
+                            "View All",
+                            style: TextStyle(
+                              color: Color(0xFF4F46E5),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+
+                          SizedBox(width: 5),
+
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            color: Color(0xFF4F46E5),
+                            size: 15,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              // ============================================================
+              // HISTORY
+              // ============================================================
+              if (isLoadingHistory)
+                const Padding(
+                  padding: EdgeInsets.all(30),
+
+                  child: Center(
+                    child: CircularProgressIndicator(color: Color(0xFF4F46E5)),
+                  ),
+                )
+              else if (history.isEmpty)
+                _buildModernEmptyHistory()
+              else
+                Column(
+                  children: history.map((item) {
+                    final String type = item["type"]?.toString() ?? "";
+
+                    final DateTime time = item["time"] as DateTime;
+
+                    final formattedTime = TimeOfDay.fromDateTime(
+                      time,
+                    ).format(context);
+
+                    return _modernHistoryItem(type, formattedTime);
+                  }).toList(),
+                ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

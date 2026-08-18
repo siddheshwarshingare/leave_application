@@ -20,10 +20,10 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
   String? selectedUid;
   List users = [];
   int totalLeave = 13;
-  int usedLeave = 0;
-  int clLeave = 3;
-  int slLeave = 10;
-  int remainingLeave = 0;
+  double usedLeave = 0;
+  double clLeave = 3;
+  double slLeave = 10;
+  double remainingLeave = 0;
   @override
   void initState() {
     super.initState();
@@ -94,10 +94,10 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
       final data = leaveDoc.data() as Map<String, dynamic>;
 
       // CURRENT REMAINING BALANCE
-      int cl = int.tryParse(data['Cl'].toString()) ?? 0;
-      int sl = int.tryParse(data['Sl'].toString()) ?? 0;
+      double cl = double.tryParse(data['Cl'].toString()) ?? 0.0;
+      double sl = double.tryParse(data['Sl'].toString()) ?? 0.0;
 
-      int remaining = cl + sl;
+      double remaining = cl + sl;
 
       // USED LEAVE FROM APPROVED REQUESTS
       QuerySnapshot snap = await FirebaseFirestore.instance
@@ -106,10 +106,16 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
           .where('status', isEqualTo: 'Approved')
           .get();
 
-      int used = 0;
+      double used = 0.0;
 
       for (var doc in snap.docs) {
-        used += (doc['days'] as num?)?.toInt() ?? 0;
+        final days = doc['days'];
+
+        if (days is num) {
+          used += days.toDouble();
+        } else {
+          used += double.tryParse(days.toString()) ?? 0.0;
+        }
       }
 
       setState(() {
@@ -121,7 +127,6 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
 
         usedLeave = used;
 
-        // CURRENT BALANCE
         remainingLeave = remaining;
       });
     } catch (e) {
@@ -160,11 +165,19 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
     }
   }
 
+  String formatLeave(double value) {
+    if (value == value.roundToDouble()) {
+      return value.toInt().toString();
+    }
+
+    return value.toString();
+  }
+
   Future<void> approveLeave(
     String requestId,
     String uid,
     String leaveType,
-    int days,
+    double days,
     String currentStatus,
   ) async {
     try {
@@ -172,54 +185,89 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text("Already Approved")));
-
         return;
       }
+
+      // ============================================================
+      // GET CURRENT LEAVE BALANCE
+      // ============================================================
 
       DocumentSnapshot balanceDoc = await FirebaseFirestore.instance
           .collection('toatl_leave')
           .doc(uid)
           .get();
 
-      int cl = int.parse(balanceDoc['Cl'].toString());
+      if (!balanceDoc.exists) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Leave balance not found")),
+        );
+        return;
+      }
 
-      int sl = int.parse(balanceDoc['Sl'].toString());
+      // IMPORTANT:
+      // Firestore values are strings:
+      // Cl = "1"
+      // Sl = "6.5"
+      //
+      // Therefore use DOUBLE, not INT.
 
-      /// deduct ONLY when moving TO approved
+      double cl = double.tryParse(balanceDoc['Cl'].toString()) ?? 0.0;
+
+      double sl = double.tryParse(balanceDoc['Sl'].toString()) ?? 0.0;
+
+      print("Current CL = $cl");
+      print("Current SL = $sl");
+      print("Requested Days = $days");
+
+      // ============================================================
+      // DEDUCT LEAVE
+      // ============================================================
+
       if (leaveType == "Casual Leave") {
         if (days > cl) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text("Only $cl CL available")));
-
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Only ${formatLeave(cl)} CL available")),
+          );
           return;
         }
+
+        double newCl = cl - days;
 
         await FirebaseFirestore.instance
             .collection('toatl_leave')
             .doc(uid)
-            .update({"Cl": (cl - days).toString()});
+            .update({"Cl": formatLeave(newCl)});
       }
 
       if (leaveType == "Sick Leave") {
         if (days > sl) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text("Only $sl SL available")));
-
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Only ${formatLeave(sl)} SL available")),
+          );
           return;
         }
+
+        double newSl = sl - days;
 
         await FirebaseFirestore.instance
             .collection('toatl_leave')
             .doc(uid)
-            .update({"Sl": (sl - days).toString()});
+            .update({"Sl": formatLeave(newSl)});
       }
+
+      // ============================================================
+      // UPDATE REQUEST STATUS
+      // ============================================================
 
       await FirebaseFirestore.instance
           .collection('leave_requests')
           .doc(requestId)
           .update({"status": "Approved"});
+
+      // ============================================================
+      // GET USER
+      // ============================================================
+
       DocumentSnapshot userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
@@ -227,17 +275,20 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
 
       String token = userDoc['fcmToken'];
 
+      // ============================================================
+      // PUSH NOTIFICATION
+      // ============================================================
+
       await NotificationService.sendPush(
         token: token,
         title: "Leave Approved",
         body: "Your leave request approved.",
       );
-      DocumentSnapshot leaveDoc = await FirebaseFirestore.instance
-          .collection('leave_requests')
-          .doc(requestId)
-          .get();
 
-      final leaveData = leaveDoc.data() as Map<String, dynamic>;
+      // ============================================================
+      // FIRESTORE NOTIFICATION
+      // ============================================================
+
       await FirebaseFirestore.instance.collection('notifications').add({
         "uid": uid,
         "role": "employee",
@@ -246,12 +297,28 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
         "isRead": false,
         "createdAt": Timestamp.now(),
       });
+
+      // ============================================================
+      // GET LEAVE DATA
+      // ============================================================
+
+      DocumentSnapshot leaveDoc = await FirebaseFirestore.instance
+          .collection('leave_requests')
+          .doc(requestId)
+          .get();
+
+      final leaveData = leaveDoc.data() as Map<String, dynamic>;
+
+      // ============================================================
+      // EMAIL
+      // ============================================================
+
       await emailjs.send(
         'service_90wr32y',
         'template_b04xilb',
         {
           'employee_name': leaveData['employeeName'],
-          'employee_email': "siddheshwarshingare1999@gmail.com",
+          'employee_email': leaveData['employeeEmail'],
           'leave_type': leaveData['leaveType'],
 
           'from_date': (leaveData['fromDate'] as Timestamp)
@@ -269,34 +336,24 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
           'status': "Approved",
         },
 
+        //  publicKey: '8erlfJzc6WZtfnz0o',
+        //  privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
         emailjs.Options(
           publicKey: '8erlfJzc6WZtfnz0o',
           privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
         ),
       );
-      // await EmailService.sendEmail(
-      //   email: "siddheshwarshingare1999@gmail.com",
-      //   subject: "Leave Approved",
-      //   message: "Your leave approved",
-      // );
-      // testEmail();
-      // await EmailService.sendEmail(
-      //   toEmail: userDoc['email'],
-      //   title: "Leave Approved",
-      //   content:
-      //       "Hello ${userDoc['name']}, Your leave request has been approved.",
-      // );
-      // await EmailService.sendEmail(
-      //   email: userDoc['email'],c
-      //   subject: "Leave Approved",
-      //   message:
-      //       "Hello ${userDoc['name']}, "
-      //       "Your leave request has been approved.",
-      // );
+
+      // ============================================================
+      // SUCCESS
+      // ============================================================
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("Leave Approved")));
     } catch (e) {
+      print("APPROVE ERROR: $e");
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(e.toString())));
@@ -307,10 +364,14 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
     String requestId,
     String uid,
     String leaveType,
-    int days,
+    double days,
     String currentStatus,
   ) async {
     try {
+      // ============================================================
+      // ALREADY REJECTED
+      // ============================================================
+
       if (currentStatus == "Rejected") {
         ScaffoldMessenger.of(
           context,
@@ -319,77 +380,135 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
         return;
       }
 
-      /// If previously approved → restore balance
+      // ============================================================
+      // IF PREVIOUSLY APPROVED
+      // RESTORE THE LEAVE BALANCE
+      // ============================================================
+
       if (currentStatus == "Approved") {
         DocumentSnapshot balanceDoc = await FirebaseFirestore.instance
             .collection('toatl_leave')
             .doc(uid)
             .get();
 
-        int cl = int.parse(balanceDoc['Cl'].toString());
+        if (!balanceDoc.exists) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Leave balance not found")),
+          );
 
-        int sl = int.parse(balanceDoc['Sl'].toString());
+          return;
+        }
+
+        // IMPORTANT:
+        // Use DOUBLE because values can be 0.5, 6.5 etc.
+
+        double cl = double.tryParse(balanceDoc['Cl'].toString()) ?? 0.0;
+
+        double sl = double.tryParse(balanceDoc['Sl'].toString()) ?? 0.0;
+
+        // ==========================================================
+        // RESTORE CASUAL LEAVE
+        // ==========================================================
 
         if (leaveType == "Casual Leave") {
+          double newCl = cl + days;
+
           await FirebaseFirestore.instance
               .collection('toatl_leave')
               .doc(uid)
-              .update({"Cl": (cl + days).toString()});
+              .update({"Cl": newCl.toString()});
         }
+
+        // ==========================================================
+        // RESTORE SICK LEAVE
+        // ==========================================================
 
         if (leaveType == "Sick Leave") {
+          double newSl = sl + days;
+
           await FirebaseFirestore.instance
               .collection('toatl_leave')
               .doc(uid)
-              .update({"Sl": (sl + days).toString()});
+              .update({"Sl": newSl.toString()});
         }
       }
-      if (currentStatus == "Rejected") {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Already Rejected. Cannot Approve.")),
-        );
 
-        return;
-      }
+      // ============================================================
+      // UPDATE LEAVE REQUEST
+      // ============================================================
+
       await FirebaseFirestore.instance
           .collection('leave_requests')
           .doc(requestId)
           .update({"status": "Rejected"});
+
+      // ============================================================
+      // GET EMPLOYEE
+      // ============================================================
+
       DocumentSnapshot userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
           .get();
 
-      String token = userDoc['fcmToken'];
+      // ============================================================
+      // SEND PUSH NOTIFICATION
+      // ============================================================
 
-      await NotificationService.sendPush(
-        token: token,
-        title: "Leave Rejected",
-        body: "Your leave request rejected.",
-      );
+      if (userDoc.exists &&
+          userDoc.data() != null &&
+          (userDoc.data() as Map<String, dynamic>).containsKey('fcmToken')) {
+        String token = (userDoc['fcmToken'] ?? '').toString();
+
+        if (token.isNotEmpty) {
+          await NotificationService.sendPush(
+            token: token,
+            title: "Leave Rejected",
+            body: "Your leave request was rejected.",
+          );
+        }
+      }
+
+      // ============================================================
+      // ADD IN-APP NOTIFICATION
+      // ============================================================
+
       await FirebaseFirestore.instance.collection('notifications').add({
         "uid": uid,
         "role": "employee",
         "title": "Leave Rejected",
-        "body": "Your leave request rejected",
+        "body": "Your leave request was rejected.",
         "isRead": false,
         "createdAt": Timestamp.now(),
       });
+
+      // ============================================================
+      // GET UPDATED LEAVE REQUEST
+      // ============================================================
+
       DocumentSnapshot leaveDoc = await FirebaseFirestore.instance
           .collection('leave_requests')
           .doc(requestId)
           .get();
 
+      if (!leaveDoc.exists) {
+        throw Exception("Leave request not found");
+      }
+
       final leaveData = leaveDoc.data() as Map<String, dynamic>;
+
+      // ============================================================
+      // SEND EMAIL
+      // ============================================================
 
       await emailjs.send(
         'service_90wr32y',
         'template_b04xilb',
-
         {
           'employee_name': leaveData['employeeName'],
-          //'employee_email': "siddheshwarshingare1999@gmail.com",
-          'employee_email': leaveData['employeeEmail'], // actual employee email
+
+          'employee_email': leaveData['employeeEmail'],
+
           'leave_type': leaveData['leaveType'],
 
           'from_date': (leaveData['fromDate'] as Timestamp)
@@ -405,6 +524,8 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
           'days': leaveData['days'].toString(),
 
           'status': 'Rejected',
+
+          // IMPORTANT
         },
 
         emailjs.Options(
@@ -412,63 +533,34 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
           privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
         ),
       );
-      // await emailjs.send(
-      //   'service_90wr32y',
-      //   'template_b04xilb',
 
-      //   {
-      //     'employee_name': leaveData['employeeName'],
-      //     'employee_email': "siddheshwarshingare1999@gmail.com",
-      //     'leave_type': leaveData['leaveType'],
-      //     'status': "Rejected",
-      //   },
+      // ============================================================
+      // REFRESH LEAVE SUMMARY
+      // ============================================================
 
-      //   emailjs.Options(
-      //     publicKey: '8erlfJzc6WZtfnz0o',
-      //     privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
-      //   ),
-      // );
+      if (selectedUid != null) {
+        await getLeaveData(selectedUid!);
+      }
 
-      // await EmailService.sendEmail(
+      // ============================================================
+      // SUCCESS MESSAGE
+      // ============================================================
 
-      //   toEmail: userDoc['email'],
-      //   title: "Leave Rejected",
-      //   content:
-      //       "Hello ${userDoc['name']}, Your leave request has been rejected.",
-      // );
-      // await EmailService.sendEmail(
-      //   email: userDoc['email'],
-      //   subject: "Leave Rejected",
-      //   message:
-      //       "Hello ${userDoc['name']}, "
-      //       "Your leave request has been rejected.",
-      // );
-      // await emailjs.send(
-      //   'service_90wr32y',
-      //   'template_b04xilb', // APPROVE/REJECT TEMPLATE
-      //   {
-      //     'to_email': userDoc['email'],
-      //     'name': userDoc['name'],
-      //     'title': 'Leave Approved',
-      //     'message': 'Your leave request has been approved.',
-      //   },
-
-      //   emailjs.Options(
-      //     publicKey: '8erlfJzc6WZtfnz0o',
-      //     privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
-      //   ),
-      // );
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Leave Rejected")));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Leave Rejected")));
+      }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      debugPrint("REJECT LEAVE ERROR: $e");
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Failed to reject leave: $e")));
+      }
     }
-  }
-  // Future<void> rejectLeave(String requestId, String status) async {
+  } // Future<void> rejectLeave(String requestId, String status) async {
   //   if (status == "Rejected") {
   //     return;
   //   }
@@ -554,24 +646,156 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
     );
   }
 
+  Widget _buildSummaryItem({
+    required String title,
+    required String value,
+    required Color color,
+  }) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            color: color,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+
+        const SizedBox(height: 3),
+
+        Text(
+          title,
+          style: const TextStyle(
+            color: Color(0xFF8A8FA3),
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLeaveDetail({
+    required IconData icon,
+    required String title,
+    required String value,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, size: 17, color: const Color(0xFF6D28D9)),
+
+        const SizedBox(width: 7),
+
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Color(0xFF8A8FA3),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+
+              const SizedBox(height: 2),
+
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Color(0xFF374151),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  String formatLeaveDate(dynamic fromValue, dynamic toValue) {
+    if (fromValue is! Timestamp || toValue is! Timestamp) {
+      return "Date not available";
+    }
+
+    final from = fromValue.toDate();
+    final to = toValue.toDate();
+
+    String formatDate(DateTime date) {
+      const months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+
+      return "${date.day} ${months[date.month - 1]} ${date.year}";
+    }
+
+    return "${formatDate(from)} → ${formatDate(to)}";
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF7F8FC),
+
+      // ============================================================
+      // APP BAR
+      // ============================================================
       appBar: AppBar(
-        title: Row(
-          children: [
-            const Text(
-              "Admin Leave Requests",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-            ),
-            SizedBox(width: 12),
-            IconButton(onPressed: logout, icon: const Icon(Icons.logout)),
-          ],
+        backgroundColor: Colors.white,
+        elevation: 0,
+        surfaceTintColor: Colors.white,
+
+        title: const Text(
+          "Admin Leave Requests",
+          style: TextStyle(
+            color: Color(0xFF17133A),
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+          ),
         ),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
 
         actions: [
+          // ----------------------------------------------------------
+          // LOGOUT
+          // ----------------------------------------------------------
+          IconButton(
+            onPressed: logout,
+            tooltip: "Logout",
+            icon: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0E9FF),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.logout_rounded,
+                color: Color(0xFF6D28D9),
+                size: 21,
+              ),
+            ),
+          ),
+
+          // ----------------------------------------------------------
+          // NOTIFICATIONS
+          // ----------------------------------------------------------
           StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('notifications')
@@ -582,198 +806,453 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
             builder: (context, snapshot) {
               int count = snapshot.data?.docs.length ?? 0;
 
-              return Stack(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.notifications),
-
-                    onPressed: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const AdminNotificationScreen(),
+              return Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    IconButton(
+                      tooltip: "Notifications",
+                      icon: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0E9FF),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                      );
-
-                      setState(() {});
-                    },
-                  ),
-
-                  if (count > 0)
-                    Positioned(
-                      right: 8,
-                      top: 8,
-
-                      child: Container(
-                        padding: const EdgeInsets.all(5),
-
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
+                        child: const Icon(
+                          Icons.notifications_none_rounded,
+                          color: Color(0xFF6D28D9),
+                          size: 23,
                         ),
+                      ),
 
-                        child: Text(
-                          count.toString(),
+                      onPressed: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const AdminNotificationScreen(),
+                          ),
+                        );
 
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
+                        setState(() {});
+                      },
+                    ),
+
+                    if (count > 0)
+                      Positioned(
+                        right: 2,
+                        top: 0,
+                        child: Container(
+                          constraints: const BoxConstraints(
+                            minWidth: 18,
+                            minHeight: 18,
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFDC2626),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: Text(
+                            count > 99 ? "99+" : count.toString(),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               );
             },
           ),
         ],
       ),
+
+      // ============================================================
+      // BODY
+      // ============================================================
       body: Column(
         children: [
+          // ==========================================================
+          // EMPLOYEE DROPDOWN
+          // ==========================================================
           Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: Padding(
-              padding: const EdgeInsets.all(10),
-              child: DropdownButtonFormField<String>(
-                decoration: InputDecoration(
-                  labelText: "Select Employee",
-                  border: OutlineInputBorder(
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 8),
+            child: DropdownButtonFormField<String>(
+              decoration: InputDecoration(
+                labelText: "Select Employee",
+
+                labelStyle: const TextStyle(
+                  color: Color(0xFF6B7280),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+
+                prefixIcon: Container(
+                  margin: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0E9FF),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 14,
+                  child: const Icon(
+                    Icons.person_outline_rounded,
+                    color: Color(0xFF6D28D9),
+                    size: 21,
                   ),
                 ),
 
-                value: selectedUid,
-                isExpanded: true,
+                filled: true,
+                fillColor: Colors.white,
 
-                items: users.map((user) {
-                  return DropdownMenuItem<String>(
-                    value: user.id,
-                    child: Text(
-                      user['name'],
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  );
-                }).toList(),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
 
-                onChanged: (value) {
-                  setState(() {
-                    selectedUid = value;
-                  });
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                ),
 
-                  if (value != null) {
-                    getLeaveData(value);
-                  }
-                },
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF6D28D9),
+                    width: 1.5,
+                  ),
+                ),
+
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 16,
+                ),
               ),
+
+              value: selectedUid,
+
+              isExpanded: true,
+
+              icon: const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: Color(0xFF6D28D9),
+              ),
+
+              items: users.map((user) {
+                return DropdownMenuItem<String>(
+                  value: user.id,
+                  child: Text(
+                    user['name'],
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF17133A),
+                    ),
+                  ),
+                );
+              }).toList(),
+
+              onChanged: (value) {
+                setState(() {
+                  selectedUid = value;
+                });
+
+                if (value != null) {
+                  getLeaveData(value);
+                }
+              },
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Card(
-                      elevation: 4,
-                      child: Padding(
-                        padding: EdgeInsets.all(16),
+
+          // ==========================================================
+          // LEAVE SUMMARY
+          // ==========================================================
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(18),
+
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(22),
+
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(.035),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+
+              child: Column(
+                children: [
+                  // ----------------------------------------------------
+                  // SUMMARY HEADER
+                  // ----------------------------------------------------
+                  Row(
+                    children: [
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF6D28D9),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(
+                          Icons.event_available_rounded,
+                          color: Colors.white,
+                          size: 27,
+                        ),
+                      ),
+
+                      const SizedBox(width: 14),
+
+                      const Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               "Leave Summary",
                               style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue,
+                                color: Color(0xFF17133A),
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
                               ),
                             ),
 
+                            SizedBox(height: 3),
+
                             Text(
-                              "Total Leave: 13",
+                              "Employee leave balance",
                               style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                // color: Colors.blue,
-                              ),
-                            ),
-                            Text(
-                              "Used Leave: $usedLeave",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                // color: Colors.blue,
-                              ),
-                            ),
-                            Text(
-                              "Remaining: $remainingLeave ($clLeave CL + $slLeave SL)",
-                              style: TextStyle(
-                                color: Colors.green,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                color: Color(0xFF8A8FA3),
+                                fontSize: 12,
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ),
-                    Column(
-                      children: [
-                        ElevatedButton(
-                          onPressed: () {
-                            if (selectedUid == null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    "Please select an employee first",
-                                  ),
-                                ),
-                              );
-                              return;
-                            }
+                    ],
+                  ),
 
-                            getLeaveData(selectedUid!);
-                          },
-                          child: const Text(
-                            "Refresh",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
+                  const SizedBox(height: 18),
+
+                  // ----------------------------------------------------
+                  // SUMMARY VALUES
+                  // ----------------------------------------------------
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildSummaryItem(
+                          title: "Total",
+                          value: "13",
+                          color: const Color(0xFF6D28D9),
+                        ),
+                      ),
+
+                      Container(
+                        width: 1,
+                        height: 42,
+                        color: const Color(0xFFE5E7EB),
+                      ),
+
+                      Expanded(
+                        child: _buildSummaryItem(
+                          title: "Used",
+                          value: "$usedLeave",
+                          color: const Color(0xFFF59E0B),
+                        ),
+                      ),
+
+                      Container(
+                        width: 1,
+                        height: 42,
+                        color: const Color(0xFFE5E7EB),
+                      ),
+
+                      Expanded(
+                        child: _buildSummaryItem(
+                          title: "Remaining",
+                          value: "$remainingLeave",
+                          color: const Color(0xFF16A34A),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  // ----------------------------------------------------
+                  // CL / SL
+                  // ----------------------------------------------------
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 11,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF7F5FF),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.info_outline_rounded,
+                          size: 17,
+                          color: Color(0xFF6D28D9),
+                        ),
+
+                        const SizedBox(width: 8),
+
+                        Text(
+                          "$clLeave CL",
+                          style: const TextStyle(
+                            color: Color(0xFF6D28D9),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => AdminAttendanceScreen(
-                                  selectedUid: selectedUid,
-                                ),
-                              ),
-                            );
-                          },
-                          child: const Text("Attendance"),
+
+                        const SizedBox(width: 8),
+
+                        const Text(
+                          "•",
+                          style: TextStyle(color: Color(0xFF9CA3AF)),
+                        ),
+
+                        const SizedBox(width: 8),
+
+                        Text(
+                          "$slLeave SL",
+                          style: const TextStyle(
+                            color: Color(0xFF6D28D9),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+
+                        const Spacer(),
+
+                        const Text(
+                          "Available",
+                          style: TextStyle(
+                            color: Color(0xFF16A34A),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-
-              // Text("Total Leave: $totalLeave ($clLeave CL + $slLeave SL)"),
-              // Text("Used Leave: $usedLeave"),
-              // Text("Remaining Leave: $remainingLeave"),
-            ],
+            ),
           ),
+
+          // ==========================================================
+          // REFRESH + ATTENDANCE
+          // ==========================================================
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+            child: Row(
+              children: [
+                // ------------------------------------------------------
+                // REFRESH
+                // ------------------------------------------------------
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      if (selectedUid == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Please select an employee first"),
+                          ),
+                        );
+                        return;
+                      }
+
+                      getLeaveData(selectedUid!);
+                    },
+
+                    icon: const Icon(Icons.refresh_rounded, size: 19),
+
+                    label: const Text(
+                      "Refresh",
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6D28D9),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      minimumSize: const Size(0, 48),
+
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                // ------------------------------------------------------
+                // ATTENDANCE
+                // ------------------------------------------------------
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              AdminAttendanceScreen(selectedUid: selectedUid),
+                        ),
+                      );
+                    },
+
+                    icon: const Icon(Icons.access_time_rounded, size: 19),
+
+                    label: const Text(
+                      "Attendance",
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF5B21E8),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      minimumSize: const Size(0, 48),
+
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          // ==========================================================
+          // LEAVE REQUESTS
+          // ==========================================================
           Expanded(
             child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+
               child: Column(
                 children: [
                   StreamBuilder(
@@ -787,24 +1266,75 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
                               .where('uid', isEqualTo: selectedUid)
                               .orderBy('createdAt', descending: true)
                               .snapshots(),
+
                     builder: (context, snapshot) {
                       if (!snapshot.hasData) {
-                        return const Center(child: CircularProgressIndicator());
+                        return const Padding(
+                          padding: EdgeInsets.all(40),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: Color(0xFF6D28D9),
+                            ),
+                          ),
+                        );
                       }
 
                       final docs = snapshot.data!.docs;
 
                       if (docs.isEmpty) {
-                        return const Center(child: Text("No Requests Found"));
+                        return Padding(
+                          padding: const EdgeInsets.all(40),
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 70,
+                                height: 70,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF0E9FF),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Icon(
+                                  Icons.inbox_rounded,
+                                  color: Color(0xFF6D28D9),
+                                  size: 34,
+                                ),
+                              ),
+
+                              const SizedBox(height: 14),
+
+                              const Text(
+                                "No Requests Found",
+                                style: TextStyle(
+                                  color: Color(0xFF17133A),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+
+                              const SizedBox(height: 5),
+
+                              const Text(
+                                "There are no leave requests to display.",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Color(0xFF8A8FA3),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
                       }
 
                       return ListView.builder(
                         shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
+                        physics: const NeverScrollableScrollPhysics(),
+
                         itemCount: docs.length,
 
                         itemBuilder: (context, index) {
                           var data = docs[index];
+
                           DateTime fromDate = (data['fromDate'] as Timestamp)
                               .toDate();
 
@@ -815,216 +1345,617 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
                               DateTime.now().day,
                             ),
                           );
-                          return Card(
-                            margin: const EdgeInsets.all(10),
 
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
+                          final String status =
+                              data['status']?.toString() ?? "";
 
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                          final bool isApproved = status == "Approved";
 
-                                children: [
-                                  Text(
-                                    "Employee Name: ${data['employeeName']}",
-                                    // data['employeeName'],
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
+                          final bool isRejected = status == "Rejected";
+
+                          // ------------------------------------------------
+                          // STATUS COLORS
+                          // ------------------------------------------------
+                          Color statusColor;
+
+                          Color statusBackground;
+
+                          IconData statusIcon;
+
+                          if (isApproved) {
+                            statusColor = const Color(0xFF15803D);
+
+                            statusBackground = const Color(0xFFDCFCE7);
+
+                            statusIcon = Icons.check_circle_rounded;
+                          } else if (isRejected) {
+                            statusColor = const Color(0xFFDC2626);
+
+                            statusBackground = const Color(0xFFFEE2E2);
+
+                            statusIcon = Icons.cancel_rounded;
+                          } else {
+                            statusColor = const Color(0xFFD97706);
+
+                            statusBackground = const Color(0xFFFEF3C7);
+
+                            statusIcon = Icons.pending_rounded;
+                          }
+
+                          return Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.fromLTRB(18, 6, 18, 10),
+
+                            padding: const EdgeInsets.all(17),
+
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(.035),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                            ),
+
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+
+                              children: [
+                                // ==========================================
+                                // EMPLOYEE + STATUS
+                                // ==========================================
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                                  children: [
+                                    Container(
+                                      width: 46,
+                                      height: 46,
+
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF0E9FF),
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+
+                                      child: const Icon(
+                                        Icons.person_rounded,
+                                        color: Color(0xFF6D28D9),
+                                        size: 24,
+                                      ),
                                     ),
-                                  ),
 
-                                  const SizedBox(height: 8),
+                                    const SizedBox(width: 12),
 
-                                  Text(
-                                    "Email: ${data['employeeEmail']}",
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
 
-                                  Text(
-                                    "Leave Type: ${data['leaveType']}",
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                                        children: [
+                                          Text(
+                                            data['employeeName'].toString(),
 
-                                  Text(
-                                    "Days: ${data['days']}",
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                                            maxLines: 1,
 
-                                  Text(
-                                    "Reason: ${data['reason']}",
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                                            overflow: TextOverflow.ellipsis,
 
-                                  Text(
-                                    "Status: ${data['status']}",
-                                    style: TextStyle(
-                                      color: data['status'] == "Approved"
-                                          ? Colors.green
-                                          : data['status'] == "Rejected"
-                                          ? Colors.red
-                                          : Colors.orange,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 10),
-
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: ElevatedButton(
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.green,
+                                            style: const TextStyle(
+                                              color: Color(0xFF17133A),
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w800,
+                                            ),
                                           ),
 
-                                          onPressed: () {
-                                            showDialog(
-                                              context: context,
-                                              builder: (context) => AlertDialog(
-                                                title: const Text(
-                                                  "Confirm Approval",
-                                                ),
-                                                content: const Text(
-                                                  "Are you sure you want to approve this leave?",
-                                                ),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () =>
-                                                        Navigator.pop(context),
-                                                    child: const Text("Cancel"),
-                                                  ),
-                                                  // ElevatedButton(
-                                                  //   style: ElevatedButton.styleFrom(
-                                                  //     backgroundColor: Colors.green,
-                                                  //   ),
-                                                  //   onPressed: () {
-                                                  //     Navigator.pop(context);
+                                          const SizedBox(height: 3),
 
-                                                  //     approveLeave(
-                                                  //       data.id,
-                                                  //       data['uid'],
-                                                  //       data['leaveType'],
-                                                  //       int.parse(
-                                                  //         data['days'].toString(),
-                                                  //       ),
-                                                  //       data['status'],
-                                                  //     );
-                                                  //   },
-                                                  //   child: const Text("Approve"),
-                                                  // ),
-                                                  ElevatedButton(
-                                                    onPressed: isOldLeave
-                                                        ? null
-                                                        : () {
-                                                            approveLeave(
-                                                              data.id,
-                                                              data['uid'],
-                                                              data['leaveType'],
-                                                              int.parse(
-                                                                data['days']
-                                                                    .toString(),
-                                                              ),
-                                                              data['status'],
-                                                            );
-                                                          },
-                                                    child: const Text(
-                                                      "Approve",
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          },
+                                          Text(
+                                            data['employeeEmail'].toString(),
 
-                                          child: const Text(
-                                            "Approve",
+                                            maxLines: 1,
+
+                                            overflow: TextOverflow.ellipsis,
+
+                                            style: const TextStyle(
+                                              color: Color(0xFF8A8FA3),
+                                              fontSize: 11,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                    const SizedBox(width: 8),
+
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 9,
+                                        vertical: 6,
+                                      ),
+
+                                      decoration: BoxDecoration(
+                                        color: statusBackground,
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+
+                                        children: [
+                                          Icon(
+                                            statusIcon,
+                                            color: statusColor,
+                                            size: 14,
+                                          ),
+
+                                          const SizedBox(width: 4),
+
+                                          Text(
+                                            status,
                                             style: TextStyle(
-                                              color: Colors.white,
+                                              color: statusColor,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                const SizedBox(height: 16),
+
+                                // ==========================================
+                                // LEAVE DETAILS
+                                // ==========================================
+                                Container(
+                                  padding: const EdgeInsets.all(13),
+
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8F7FC),
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: _buildLeaveDetail(
+                                              icon: Icons.category_outlined,
+                                              title: "Leave Type",
+                                              value: data['leaveType']
+                                                  .toString(),
+                                            ),
+                                          ),
+
+                                          Expanded(
+                                            child: _buildLeaveDetail(
+                                              icon:
+                                                  Icons.calendar_today_rounded,
+                                              title: "Days",
+                                              value: data['days'].toString(),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Icon(
+                                            Icons.calendar_month_rounded,
+                                            size: 17,
+                                            color: Color(0xFF6D28D9),
+                                          ),
+
+                                          const SizedBox(width: 8),
+
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                const Text(
+                                                  "Leave Date",
+                                                  style: TextStyle(
+                                                    color: Color(0xFF8A8FA3),
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+
+                                                const SizedBox(height: 3),
+
+                                                Text(
+                                                  formatLeaveDate(
+                                                    data['fromDate'],
+                                                    data['toDate'],
+                                                  ),
+                                                  style: const TextStyle(
+                                                    color: Color(0xFF374151),
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+
+                                                const SizedBox(height: 2),
+
+                                                Text(
+                                                  "${data['days'] ?? 0} Days • ${data['leaveDuration'] ?? ''}",
+                                                  style: const TextStyle(
+                                                    color: Color(0xFF6D28D9),
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+
+                                      const SizedBox(height: 12),
+
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+
+                                        children: [
+                                          const Icon(
+                                            Icons.description_outlined,
+                                            size: 17,
+                                            color: Color(0xFF6D28D9),
+                                          ),
+
+                                          const SizedBox(width: 8),
+
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                const Text(
+                                                  "Reason",
+                                                  style: TextStyle(
+                                                    color: Color(0xFF8A8FA3),
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+
+                                                const SizedBox(height: 2),
+
+                                                Text(
+                                                  data['reason'].toString(),
+
+                                                  style: const TextStyle(
+                                                    color: Color(0xFF374151),
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                const SizedBox(height: 15),
+
+                                // ==========================================
+                                // APPROVE / REJECT
+                                // ==========================================
+                                Row(
+                                  children: [
+                                    // ============================================================
+                                    // APPROVE BUTTON
+                                    // ============================================================
+                                    Expanded(
+                                      child: ElevatedButton.icon(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(
+                                            0xFF16A34A,
+                                          ),
+                                          foregroundColor: Colors.white,
+                                          elevation: 0,
+                                          disabledBackgroundColor: const Color(
+                                            0xFFD1D5DB,
+                                          ),
+                                          disabledForegroundColor:
+                                              Colors.white70,
+                                          minimumSize: const Size(0, 46),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              13,
                                             ),
                                           ),
                                         ),
-                                      ),
 
-                                      const SizedBox(width: 10),
+                                        onPressed: isOldLeave
+                                            ? null
+                                            : () {
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (dialogContext) {
+                                                    return AlertDialog(
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              18,
+                                                            ),
+                                                      ),
 
-                                      Expanded(
-                                        child: ElevatedButton(
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.red,
-                                          ),
+                                                      title: const Row(
+                                                        children: [
+                                                          Icon(
+                                                            Icons
+                                                                .check_circle_outline_rounded,
+                                                            color: Color(
+                                                              0xFF16A34A,
+                                                            ),
+                                                          ),
+                                                          SizedBox(width: 10),
+                                                          Text(
+                                                            "Confirm Approval",
+                                                          ),
+                                                        ],
+                                                      ),
 
-                                          onPressed: () {
-                                            showDialog(
-                                              context: context,
-                                              builder: (context) => AlertDialog(
-                                                title: const Text(
-                                                  "Confirm Rejection",
-                                                ),
-                                                content: const Text(
-                                                  "Are you sure you want to reject this leave?",
-                                                ),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () =>
-                                                        Navigator.pop(context),
-                                                    child: const Text("Cancel"),
-                                                  ),
-                                                  ElevatedButton(
-                                                    style:
-                                                        ElevatedButton.styleFrom(
-                                                          backgroundColor:
-                                                              Colors.red,
-                                                        ),
-                                                    onPressed: isOldLeave
-                                                        ? null
-                                                        : () {
+                                                      content: const Text(
+                                                        "Are you sure you want to approve this leave?",
+                                                      ),
+
+                                                      actions: [
+                                                        TextButton(
+                                                          onPressed: () {
                                                             Navigator.pop(
-                                                              context,
+                                                              dialogContext,
+                                                            );
+                                                          },
+                                                          child: const Text(
+                                                            "Cancel",
+                                                            style: TextStyle(
+                                                              color: Color(
+                                                                0xFF6B7280,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+
+                                                        ElevatedButton(
+                                                          style:
+                                                              ElevatedButton.styleFrom(
+                                                                backgroundColor:
+                                                                    const Color(
+                                                                      0xFF16A34A,
+                                                                    ),
+                                                                foregroundColor:
+                                                                    Colors
+                                                                        .white,
+                                                              ),
+
+                                                          onPressed: () async {
+                                                            // CLOSE DIALOG FIRST
+                                                            Navigator.pop(
+                                                              dialogContext,
                                                             );
 
-                                                            rejectLeave(
+                                                            // THEN APPROVE
+                                                            await approveLeave(
                                                               data.id,
                                                               data['uid'],
                                                               data['leaveType'],
-                                                              int.parse(
+                                                              double.parse(
                                                                 data['days']
                                                                     .toString(),
                                                               ),
                                                               data['status'],
                                                             );
                                                           },
-                                                    child: const Text(
-                                                      "Reject",
-                                                      style: TextStyle(
-                                                        color: Colors.white,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          },
 
-                                          child: const Text("Reject"),
+                                                          child: const Text(
+                                                            "Approve",
+                                                            style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w700,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    );
+                                                  },
+                                                );
+                                              },
+
+                                        icon: const Icon(
+                                          Icons.check_circle_outline_rounded,
+                                          size: 18,
+                                        ),
+
+                                        label: const Text(
+                                          "Approve",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+
+                                    const SizedBox(width: 10),
+
+                                    // ============================================================
+                                    // REJECT BUTTON
+                                    // ============================================================
+                                    Expanded(
+                                      child: ElevatedButton.icon(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(
+                                            0xFFDC2626,
+                                          ),
+                                          foregroundColor: Colors.white,
+                                          elevation: 0,
+                                          disabledBackgroundColor: const Color(
+                                            0xFFD1D5DB,
+                                          ),
+                                          disabledForegroundColor:
+                                              Colors.white70,
+                                          minimumSize: const Size(0, 46),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              13,
+                                            ),
+                                          ),
+                                        ),
+
+                                        onPressed: isOldLeave
+                                            ? null
+                                            : () {
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (dialogContext) {
+                                                    return AlertDialog(
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              18,
+                                                            ),
+                                                      ),
+
+                                                      title: const Row(
+                                                        children: [
+                                                          Icon(
+                                                            Icons
+                                                                .cancel_outlined,
+                                                            color: Color(
+                                                              0xFFDC2626,
+                                                            ),
+                                                          ),
+                                                          SizedBox(width: 10),
+                                                          Text("Reject Leave"),
+                                                        ],
+                                                      ),
+
+                                                      content: const Text(
+                                                        "Are you sure you want to reject this leave?",
+                                                      ),
+
+                                                      actions: [
+                                                        TextButton(
+                                                          onPressed: () {
+                                                            Navigator.pop(
+                                                              dialogContext,
+                                                            );
+                                                          },
+                                                          child: const Text(
+                                                            "Cancel",
+                                                            style: TextStyle(
+                                                              color: Color(
+                                                                0xFF6B7280,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+
+                                                        ElevatedButton(
+                                                          style:
+                                                              ElevatedButton.styleFrom(
+                                                                backgroundColor:
+                                                                    const Color(
+                                                                      0xFFDC2626,
+                                                                    ),
+                                                                foregroundColor:
+                                                                    Colors
+                                                                        .white,
+                                                              ),
+
+                                                          onPressed: () async {
+                                                            // Close confirmation popup
+                                                            Navigator.pop(
+                                                              dialogContext,
+                                                            );
+
+                                                            // Reject leave
+                                                            await rejectLeave(
+                                                              data.id,
+                                                              data['uid'],
+                                                              data['leaveType'],
+                                                              double.parse(
+                                                                data['days']
+                                                                    .toString(),
+                                                              ),
+                                                              data['status'],
+                                                            );
+                                                          },
+
+                                                          child: const Text(
+                                                            "Reject",
+                                                            style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w700,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    );
+                                                  },
+                                                );
+                                              },
+
+                                        icon: const Icon(
+                                          Icons.cancel_outlined,
+                                          size: 18,
+                                        ),
+
+                                        label: const Text(
+                                          "Reject",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                // ==========================================
+                                // OLD LEAVE MESSAGE
+                                // ==========================================
+                                if (isOldLeave) ...[
+                                  const SizedBox(height: 9),
+
+                                  Row(
+                                    children: const [
+                                      Icon(
+                                        Icons.info_outline_rounded,
+                                        size: 14,
+                                        color: Color(0xFFD97706),
+                                      ),
+
+                                      SizedBox(width: 5),
+
+                                      Expanded(
+                                        child: Text(
+                                          "This leave request is from a previous date.",
+                                          style: TextStyle(
+                                            color: Color(0xFFD97706),
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                         ),
                                       ),
                                     ],
                                   ),
                                 ],
-                              ),
+                              ],
                             ),
                           );
                         },

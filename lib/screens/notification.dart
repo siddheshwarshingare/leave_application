@@ -49,8 +49,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
           "Notifications",
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
         ),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        //  backgroundColor: Colors.,
+        foregroundColor: Colors.black,
       ),
 
       body: StreamBuilder<QuerySnapshot>(
@@ -134,7 +135,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           fontSize: 12,
                         ),
                       ),
-                                                                                 
+
                       const SizedBox(height: 5),
 
                       Text(

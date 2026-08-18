@@ -71,7 +71,33 @@ class ProfileScreen extends StatelessWidget {
         ),
       );
     }
-
+    // _ModernSection(
+    //   title: "Personal Information",
+    //   children: [
+    //     _ModernProfileRow(
+    //       icon: Icons.email_outlined,
+    //       label: "Email",
+    //       value: email,
+    //     ),
+    //     const _ModernDivider(),
+    //     _ModernProfileRow(
+    //       icon: Icons.phone_outlined,
+    //       label: "Phone",
+    //       value: phone,
+    //     ),
+    //   ],
+    // ),
+    if (currentUser == null) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF8FAFC),
+        body: Center(
+          child: Text(
+            'User not logged in',
+            style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+          ),
+        ),
+      );
+    }
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
 
@@ -79,28 +105,26 @@ class ProfileScreen extends StatelessWidget {
       // APP BAR
       // ========================================================
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFFF7F8FC),
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
 
         leading: IconButton(
+          onPressed: () => Navigator.pop(context),
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
             size: 18,
-            color: Color(0xFF1E293B),
+            color: Color(0xFF1F2937),
           ),
-          onPressed: () {
-            Navigator.pop(context);
-          },
         ),
 
         title: const Text(
-          'Profile',
+          "My Profile",
           style: TextStyle(
-            fontSize: 15,
+            fontSize: 20,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
+            color: Color(0xFF1F2937),
           ),
         ),
       ),
@@ -216,101 +240,71 @@ class ProfileScreen extends StatelessWidget {
                   // ==================================================
                   Container(
                     width: double.infinity,
-
-                    padding: const EdgeInsets.all(16),
-
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-
-                      borderRadius: BorderRadius.circular(16),
-
-                      border: Border.all(color: const Color(0xFFE8EDF3)),
-
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF7034E6), Color(0xFF8B4DE8)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.035),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
+                          color: const Color(0xFF8B4DE8).withOpacity(.18),
+                          blurRadius: 14,
+                          offset: const Offset(0, 6),
                         ),
                       ],
                     ),
-
-                    child: Row(
+                    child: Column(
                       children: [
-                        // ------------------------------------------
-                        // AVATAR
-                        // ------------------------------------------
                         _ProfileAvatar(imageUrl: profileImage, name: name),
 
-                        const SizedBox(width: 13),
+                        const SizedBox(height: 12),
 
-                        // ------------------------------------------
-                        // NAME + ROLE
-                        // ------------------------------------------
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 21,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
 
-                            children: [
-                              Text(
-                                name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                        const SizedBox(height: 4),
 
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF172033),
-                                ),
-                              ),
+                        Text(
+                          role,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
 
-                              const SizedBox(height: 4),
+                        const SizedBox(height: 12),
 
-                              Text(
-                                role,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w400,
-                                  color: Color(0xFF64748B),
-                                ),
-                              ),
-
-                              const SizedBox(height: 8),
-
-                              // Employee ID Badge
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFEFF6FF),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-
-                                child: Text(
-                                  employeeId == '-'
-                                      ? 'ID unavailable'
-                                      : 'ID • $employeeId',
-
-                                  style: const TextStyle(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF2563EB),
-                                  ),
-                                ),
-                              ),
-                            ],
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(.18),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            employeeId == '-' ? 'Employee' : 'ID • $employeeId',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 14),
 
                   // ==================================================
@@ -376,40 +370,24 @@ class ProfileScreen extends StatelessWidget {
                   // ==================================================
                   SizedBox(
                     width: double.infinity,
-                    height: 42,
-
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _editProfile(context);
-                      },
-
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2563EB),
-                        foregroundColor: Colors.white,
-
-                        elevation: 0,
-
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                    height: 50,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _editProfile(context),
+                      icon: const Icon(Icons.edit_outlined, size: 18),
+                      label: const Text(
+                        "Edit Profile",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-
-                        children: const [
-                          Icon(Icons.edit_outlined, size: 17),
-
-                          SizedBox(width: 7),
-
-                          Text(
-                            'Edit Profile',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF8B4DE8),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                       ),
                     ),
                   ),
@@ -604,11 +582,10 @@ class _ModernSection extends StatelessWidget {
 
               child: Text(
                 title,
-
                 style: const TextStyle(
-                  fontSize: 11.5,
+                  fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF334155),
+                  color: Color(0xFF1F2937),
                 ),
               ),
             ),

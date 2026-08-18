@@ -124,9 +124,15 @@ class AttendanceService {
     }
 
     Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
+      //desiredAccuracy: LocationAccuracy.high,
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
     );
-
+    print("====================================");
+    print("CURRENT LAT      = ${position.latitude}");
+    print("CURRENT LNG      = ${position.longitude}");
+    print("ACCURACY         = ${position.accuracy} meters");
+    print("OFFICE LAT       = $officeLat");
+    print("OFFICE LNG       = $officeLng");
     double distance = Geolocator.distanceBetween(
       position.latitude,
       position.longitude,
@@ -135,7 +141,10 @@ class AttendanceService {
     );
 
     print("Distance = $distance");
-
+    print("DISTANCE         = $distance meters");
+    print("ALLOWED RADIUS   = $allowedRadius meters");
+    print("INSIDE OFFICE    = ${distance <= allowedRadius}");
+    print("====================================");
     return distance <= allowedRadius;
   }
   // static Future<bool> canMarkAttendance() async {
