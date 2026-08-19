@@ -333,7 +333,9 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
 
           'days': leaveData['days'].toString(),
 
-          'status': "Approved",
+          //  'status': "Approved",
+          'approved': true,
+          'rejected': false,
         },
 
         //  publicKey: '8erlfJzc6WZtfnz0o',
@@ -522,8 +524,9 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
               .split(' ')[0],
 
           'days': leaveData['days'].toString(),
-
-          'status': 'Rejected',
+          'approved': false,
+          'rejected': true,
+          // 'status': 'Rejected',
 
           // IMPORTANT
         },

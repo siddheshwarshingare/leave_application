@@ -3,9 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
 
 class AttendanceService {
-  static const double officeLat = 18.548169882550805;
-  static const double officeLng = 73.7684216761013;
-  static const int allowedRadius = 150;
+  static const double officeLat = 18.5483066;
+  static const double officeLng = 73.7710023;
+  static const int allowedRadius = 100;
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   static final FirebaseAuth _auth = FirebaseAuth.instance;
