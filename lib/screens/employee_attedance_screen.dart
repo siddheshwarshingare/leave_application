@@ -496,6 +496,13 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
                         fontSize: 10,
                       ),
                     ),
+                    Text(
+                      "${selectedDate.day} ${_monthName(selectedDate.month)}",
+                      style: const TextStyle(
+                        color: Color(0xFF9CA3AF),
+                        fontSize: 10,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -614,7 +621,12 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
           .where("date", isEqualTo: date)
           .limit(1)
           .get();
-
+      // final punchesSnapshot = await FirebaseFirestore.instance
+      //     .collection("attendance")
+      //     .doc(attendanceDoc.id)
+      //     .collection("punches")
+      //     .orderBy("time")
+      //     .get();
       if (snapshot.docs.isEmpty) {
         if (!mounted) return;
 
@@ -644,14 +656,20 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
         final data = doc.data();
 
         final type = data["type"]?.toString() ?? "";
-
         final timestamp = data["time"];
 
         if (timestamp is! Timestamp) {
           continue;
         }
 
-        loadedPunches.add(_Punch(type: type, time: timestamp.toDate()));
+        final punchTime = timestamp.toDate();
+
+        // Only show punches belonging to selected date
+        if (!DateUtils.isSameDay(punchTime, selectedDate)) {
+          continue;
+        }
+
+        loadedPunches.add(_Punch(type: type, time: punchTime));
       }
 
       final calculatedWorkingTime = _calculateWorkingTime(loadedPunches);

@@ -29,18 +29,8 @@ class AttendanceService {
     final uid = user.uid;
     final date = _today();
 
-    final query = await _firestore
-        .collection("attendance")
-        .where("uid", isEqualTo: uid)
-        .where("date", isEqualTo: date)
-        .limit(1)
-        .get();
-
-    if (query.docs.isNotEmpty) {
-      return query.docs.first.reference;
-    }
-
-    return _firestore.collection("attendance").doc(uid);
+    // ONE DOCUMENT PER USER PER DAY
+    return _firestore.collection("attendance").doc("${uid}_$date");
   }
 
   static Future<void> _addPunch(String type) async {

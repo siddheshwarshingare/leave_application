@@ -1103,15 +1103,105 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
 
         title: const Text(
-          'Dashboard',
+          'Enquad',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w700,
             color: Color(0xFF1F2937),
           ),
         ),
-
         centerTitle: true,
+        actions: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const NotificationScreen(),
+                      ),
+                    );
+
+                    if (mounted) {
+                      setState(() {});
+                    }
+                  },
+                  child: Container(
+                    height: 54,
+                    width: 54,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.notifications_none_rounded,
+                      color: Color(0xFF374151),
+                      size: 23,
+                    ),
+                  ),
+                ),
+              ),
+
+              // NOTIFICATION COUNT
+              StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('notifications')
+                    .where(
+                      'uid',
+                      isEqualTo: FirebaseAuth.instance.currentUser!.uid,
+                    )
+                    .where('isRead', isEqualTo: false)
+                    .snapshots(),
+
+                builder: (context, snapshot) {
+                  final count = snapshot.data?.docs.length ?? 0;
+
+                  if (count == 0) {
+                    return const SizedBox();
+                  }
+
+                  return Positioned(
+                    right: -3,
+                    top: -4,
+                    child: Container(
+                      constraints: const BoxConstraints(
+                        minWidth: 18,
+                        minHeight: 18,
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFEF4444),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          count > 99 ? "99+" : "$count",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ],
       ),
       backgroundColor: const Color(0xFFF7F8FC),
       drawer: _buildDrawer(context),
@@ -1130,166 +1220,165 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 // =====================================================
                 // HEADER
                 // =====================================================
-                Row(
-                  children: [
-                    // MENU / PROFILE
-                    Builder(
-                      builder: (context) {
-                        return InkWell(
-                          borderRadius: BorderRadius.circular(14),
-                          onTap: () {
-                            Scaffold.of(context).openDrawer();
-                          },
-                          child: Container(
-                            height: 44,
-                            width: 44,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(14),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(.05),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: Text(
-                                name.isNotEmpty ? name[0].toUpperCase() : "U",
-                                style: const TextStyle(
-                                  color: Color(0xFF7C3AED),
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                // Row(
+                //   children: [
+                //     // MENU / PROFILE
+                //     Builder(
+                //       builder: (context) {
+                //         return InkWell(
+                //           borderRadius: BorderRadius.circular(14),
+                //           onTap: () {
+                //             Scaffold.of(context).openDrawer();
+                //           },
+                //           child: Container(
+                //             height: 44,
+                //             width: 44,
+                //             decoration: BoxDecoration(
+                //               color: Colors.white,
+                //               borderRadius: BorderRadius.circular(14),
+                //               boxShadow: [
+                //                 BoxShadow(
+                //                   color: Colors.black.withOpacity(.05),
+                //                   blurRadius: 10,
+                //                   offset: const Offset(0, 3),
+                //                 ),
+                //               ],
+                //             ),
+                //             child: Center(
+                //               child: Text(
+                //                 name.isNotEmpty ? name[0].toUpperCase() : "U",
+                //                 style: const TextStyle(
+                //                   color: Color(0xFF7C3AED),
+                //                   fontSize: 18,
+                //                   fontWeight: FontWeight.bold,
+                //                 ),
+                //               ),
+                //             ),
+                //           ),
+                //         );
+                //       },
+                //     ),
 
-                    const SizedBox(width: 12),
+                //     const SizedBox(width: 12),
 
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Dashboard",
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF172033),
-                            ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            "Employee portal",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF8A93A5),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                //     const Expanded(
+                //       child: Column(
+                //         crossAxisAlignment: CrossAxisAlignment.start,
+                //         children: [
+                //           // Text(
+                //           //   "Dashboard",
+                //           //   style: TextStyle(
+                //           //     fontSize: 22,
+                //           //     fontWeight: FontWeight.w800,
+                //           //     color: Color(0xFF172033),
+                //           //   ),
+                //           // ),
+                //           SizedBox(height: 2),
+                //           // Text(
+                //           //   "Employee portal",
+                //           //   style: TextStyle(
+                //           //     fontSize: 12,
+                //           //     color: Color(0xFF8A93A5),
+                //           //     fontWeight: FontWeight.w500,
+                //           //   ),
+                //           // ),
+                //         ],
+                //       ),
+                //     ),
 
-                    // NOTIFICATION
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        InkWell(
-                          borderRadius: BorderRadius.circular(14),
-                          onTap: () async {
-                            await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const NotificationScreen(),
-                              ),
-                            );
+                //     // NOTIFICATION
+                //     Stack(
+                //       clipBehavior: Clip.none,
+                //       children: [
+                //         InkWell(
+                //           borderRadius: BorderRadius.circular(14),
+                //           onTap: () async {
+                //             await Navigator.push(
+                //               context,
+                //               MaterialPageRoute(
+                //                 builder: (_) => const NotificationScreen(),
+                //               ),
+                //             );
 
-                            if (mounted) {
-                              setState(() {});
-                            }
-                          },
-                          child: Container(
-                            height: 44,
-                            width: 44,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(14),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(.05),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.notifications_none_rounded,
-                              color: Color(0xFF374151),
-                              size: 23,
-                            ),
-                          ),
-                        ),
+                //             if (mounted) {
+                //               setState(() {});
+                //             }
+                //           },
+                //           child: Container(
+                //             height: 44,
+                //             width: 44,
+                //             decoration: BoxDecoration(
+                //               color: Colors.white,
+                //               borderRadius: BorderRadius.circular(14),
+                //               boxShadow: [
+                //                 BoxShadow(
+                //                   color: Colors.black.withOpacity(.05),
+                //                   blurRadius: 10,
+                //                   offset: const Offset(0, 3),
+                //                 ),
+                //               ],
+                //             ),
+                //             child: const Icon(
+                //               Icons.notifications_none_rounded,
+                //               color: Color(0xFF374151),
+                //               size: 23,
+                //             ),
+                //           ),
+                //         ),
 
-                        // NOTIFICATION COUNT
-                        StreamBuilder<QuerySnapshot>(
-                          stream: FirebaseFirestore.instance
-                              .collection('notifications')
-                              .where(
-                                'uid',
-                                isEqualTo:
-                                    FirebaseAuth.instance.currentUser!.uid,
-                              )
-                              .where('isRead', isEqualTo: false)
-                              .snapshots(),
+                //         // NOTIFICATION COUNT
+                //         StreamBuilder<QuerySnapshot>(
+                //           stream: FirebaseFirestore.instance
+                //               .collection('notifications')
+                //               .where(
+                //                 'uid',
+                //                 isEqualTo:
+                //                     FirebaseAuth.instance.currentUser!.uid,
+                //               )
+                //               .where('isRead', isEqualTo: false)
+                //               .snapshots(),
 
-                          builder: (context, snapshot) {
-                            final count = snapshot.data?.docs.length ?? 0;
+                //           builder: (context, snapshot) {
+                //             final count = snapshot.data?.docs.length ?? 0;
 
-                            if (count == 0) {
-                              return const SizedBox();
-                            }
+                //             if (count == 0) {
+                //               return const SizedBox();
+                //             }
 
-                            return Positioned(
-                              right: -3,
-                              top: -4,
-                              child: Container(
-                                constraints: const BoxConstraints(
-                                  minWidth: 18,
-                                  minHeight: 18,
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                ),
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFFEF4444),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    count > 99 ? "99+" : "$count",
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
+                //             return Positioned(
+                //               right: -3,
+                //               top: -4,
+                //               child: Container(
+                //                 constraints: const BoxConstraints(
+                //                   minWidth: 18,
+                //                   minHeight: 18,
+                //                 ),
+                //                 padding: const EdgeInsets.symmetric(
+                //                   horizontal: 4,
+                //                 ),
+                //                 decoration: const BoxDecoration(
+                //                   color: Color(0xFFEF4444),
+                //                   shape: BoxShape.circle,
+                //                 ),
+                //                 child: Center(
+                //                   child: Text(
+                //                     count > 99 ? "99+" : "$count",
+                //                     style: const TextStyle(
+                //                       color: Colors.white,
+                //                       fontSize: 9,
+                //                       fontWeight: FontWeight.bold,
+                //                     ),
+                //                   ),
+                //                 ),
+                //               ),
+                //             );
+                //           },
+                //         ),
+                //       ],
+                //     ),
+                //   ],
+                // ),
+                // const SizedBox(height: 20),
 
                 // =====================================================
                 // WELCOME CARD

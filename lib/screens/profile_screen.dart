@@ -284,24 +284,24 @@ class ProfileScreen extends StatelessWidget {
 
                         const SizedBox(height: 12),
 
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(.18),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            employeeId == '-' ? 'Employee' : 'ID • $employeeId',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
+                        // Container(
+                        //   padding: const EdgeInsets.symmetric(
+                        //     horizontal: 12,
+                        //     vertical: 6,
+                        //   ),
+                        //   decoration: BoxDecoration(
+                        //     color: Colors.white.withOpacity(.18),
+                        //     borderRadius: BorderRadius.circular(20),
+                        //   ),
+                        //   child: Text(
+                        //     employeeId == '-' ? 'Employee' : 'ID • $employeeId',
+                        //     style: const TextStyle(
+                        //       color: Colors.white,
+                        //       fontSize: 11,
+                        //       fontWeight: FontWeight.w600,
+                        //     ),
+                        //   ),
+                        // ),
                       ],
                     ),
                   ),
@@ -355,11 +355,11 @@ class ProfileScreen extends StatelessWidget {
 
                       const _ModernDivider(),
 
-                      _ModernProfileRow(
-                        icon: Icons.person_outline_rounded,
-                        label: 'Manager',
-                        value: manager,
-                      ),
+                      // _ModernProfileRow(
+                      //   icon: Icons.person_outline_rounded,
+                      //   label: 'Manager',
+                      //   value: manager,
+                      // ),
                     ],
                   ),
 

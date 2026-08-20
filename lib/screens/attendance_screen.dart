@@ -32,12 +32,42 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   List<Map<String, dynamic>> history = [];
   bool isLoadingHistory = true;
   final List<Map<String, dynamic>> tempHistory = [];
-
+  String name = "";
   @override
   void initState() {
     super.initState();
-    loadAttendance();
+    //  loadAttendance();
     loadTodayHistory();
+    getUserData();
+  }
+
+  getUserData() async {
+    String uid = FirebaseAuth.instance.currentUser!.uid;
+
+    DocumentSnapshot user = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
+
+    setState(() {
+      name = user['name'];
+      // role = user['role'];
+      // email = user['email'];
+    });
+  }
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+
+    if (hour < 12) {
+      return "Good morning";
+    } else if (hour < 17) {
+      return "Good afternoon";
+    } else if (hour < 21) {
+      return "Good evening";
+    } else {
+      return "Good night";
+    }
   }
 
   void _calculateCurrentStatus(List<_Punch> punches) {
@@ -223,7 +253,31 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       // ----------------------------------------------------------
       // NO ATTENDANCE RECORD FOR TODAY
       // ----------------------------------------------------------
-      if (snapshot.docs.isEmpty) {
+      // if (snapshot.docs.isEmpty) {
+      //   if (!mounted) return;
+
+      //   setState(() {
+      //     history = [];
+      //     _todayPunches = [];
+      //     elapsed = Duration.zero;
+      //     workingHours = "0h 0m";
+      //     isClockedIn = false;
+      //     isOnBreak = false;
+      //     isLoadingHistory = false;
+      //   });
+
+      //   timer?.cancel();
+      //   return;
+      // }
+      final attendanceDocId = "${user.uid}_$date";
+
+      final attendanceRef = FirebaseFirestore.instance
+          .collection("attendance")
+          .doc(attendanceDocId);
+
+      final attendanceDoc = await attendanceRef.get();
+
+      if (!attendanceDoc.exists) {
         if (!mounted) return;
 
         setState(() {
@@ -239,19 +293,21 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         timer?.cancel();
         return;
       }
-
-      final attendanceDoc = snapshot.docs.first;
+      // final attendanceDoc = snapshot.docs.first;
 
       // ----------------------------------------------------------
       // GET TODAY'S PUNCHES
       // ----------------------------------------------------------
-      final punchesSnapshot = await FirebaseFirestore.instance
-          .collection("attendance")
-          .doc(attendanceDoc.id)
+      // final punchesSnapshot = await FirebaseFirestore.instance
+      //     .collection("attendance")
+      //     .doc(attendanceDoc.id)
+      //     .collection("punches")
+      //     .orderBy("time")
+      //     .get();
+      final punchesSnapshot = await attendanceRef
           .collection("punches")
           .orderBy("time")
           .get();
-
       final List<_Punch> punches = [];
       final List<Map<String, dynamic>> tempHistory = [];
 
@@ -345,7 +401,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     if (data != null) {
       setState(() {
         isClockedIn = data['isClockedIn'] ?? false;
-
         workingHours = data['workingHours'] ?? "0h 0m";
       });
     }
@@ -487,7 +542,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
       await loadTodayHistory();
 
-      startTimer();
+      //  startTimer();
 
       if (!mounted) return;
 
@@ -585,7 +640,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
       await loadTodayHistory();
 
-      startTimer();
+      //  startTimer();
 
       if (!mounted) return;
 
@@ -614,6 +669,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     required Color color,
     required VoidCallback onTap,
     bool disabled = false,
+    bool showLoading = false,
   }) {
     return Opacity(
       opacity: disabled ? .45 : 1,
@@ -657,7 +713,16 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     borderRadius: BorderRadius.circular(15),
                   ),
 
-                  child: Icon(icon, color: color, size: 24),
+                  child: showLoading
+                      ? SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            valueColor: AlwaysStoppedAnimation<Color>(color),
+                          ),
+                        )
+                      : Icon(icon, color: color, size: 24),
                 ),
 
                 const SizedBox(width: 12),
@@ -1476,19 +1541,36 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
                   const SizedBox(width: 12),
 
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Text(
+                        //   "Good morning, Raje 👋",
+                        //   style: TextStyle(
+                        //     fontSize: 19,
+                        //     fontWeight: FontWeight.w800,
+                        //     color: Color(0xFF0F172A),
+                        //   ),
+                        // ),
                         Text(
-                          "Good morning, Raje 👋",
-                          style: TextStyle(
+                          "${_getGreeting()} ${name.isEmpty ? "Employee" : name} ,👋",
+                          style: const TextStyle(
                             fontSize: 19,
                             fontWeight: FontWeight.w800,
                             color: Color(0xFF0F172A),
                           ),
                         ),
-
+                        // Text(
+                        //   name.isEmpty ? "Employee" : name,
+                        //   maxLines: 1,
+                        //   overflow: TextOverflow.ellipsis,
+                        //   style: const TextStyle(
+                        //     color: Colors.white,
+                        //     fontSize: 23,
+                        //     fontWeight: FontWeight.w800,
+                        //   ),
+                        // ),
                         SizedBox(height: 4),
 
                         Text(
@@ -1761,7 +1843,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     child: _attendanceAction(
                       title: isClockedIn ? "Clock Out" : "Clock In",
 
-                      subtitle: isClockedIn
+                      subtitle: isProcessing
+                          ? "Please wait..."
+                          : isClockedIn
                           ? "Finish your work"
                           : "Start your work",
 
@@ -1772,7 +1856,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                       color: isClockedIn
                           ? const Color(0xFFEF4444)
                           : const Color(0xFF10B981),
-
+                      showLoading: isProcessing,
                       onTap: isClockedIn ? handlePunchOut : handlePunchIn,
                     ),
                   ),
