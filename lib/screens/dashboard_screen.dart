@@ -1641,12 +1641,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       icon: Icons.access_time_filled_rounded,
                       color: const Color(0xFF8B5CF6),
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const AttendanceScreen(),
+                        // ScaffoldMessenger.of(context).showSnackBar(
+                        //   const SnackBar(
+                        //     content: Text("Attendance feature is coming soon."),
+                        //     duration: Duration(seconds: 2),
+                        //   ),
+                        // );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Row(
+                              children: [
+                                Icon(
+                                  Icons.info_outline_rounded,
+                                  color: Colors.white,
+                                ),
+                                SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    "Attendance feature is coming soon.",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            behavior: SnackBarBehavior.floating,
+                            margin: const EdgeInsets.all(16),
+                            duration: const Duration(seconds: 2),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
                           ),
                         );
+                        // Navigator.push(
+                        //   context,
+                        //   MaterialPageRoute(
+                        //     builder: (_) => const AttendanceScreen(),
+                        //   ),
+                        // );
                       },
                     ),
 
@@ -1658,12 +1691,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       icon: Icons.history_rounded,
                       color: const Color(0xFFF59E0B),
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const EmployeeAttendanceScreen(),
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Row(
+                              children: [
+                                Icon(
+                                  Icons.info_outline_rounded,
+                                  color: Colors.white,
+                                ),
+                                SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    "Attendance history is coming soon.",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            behavior: SnackBarBehavior.floating,
+                            margin: const EdgeInsets.all(16),
+                            duration: const Duration(seconds: 2),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
                           ),
                         );
+                        // ScaffoldMessenger.of(context).showSnackBar(
+                        //   const SnackBar(
+                        //     content: Text("Attendance history is coming soon."),
+                        //     duration: Duration(seconds: 2),
+                        //   ),
+                        // );
+                        // Navigator.push(
+                        //   context,
+                        //   MaterialPageRoute(
+                        //     builder: (_) => const EmployeeAttendanceScreen(),
+                        //   ),
+                        // );
                       },
                     ),
                   ],

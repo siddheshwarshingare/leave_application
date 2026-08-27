@@ -167,7 +167,7 @@ class _SignupScreenState extends State<SignupScreen> {
           children: [
             // Orange Header
             Container(
-              height: 1000,
+              //  height: 1000,
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -234,34 +234,34 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
 
             // Floating Icon Card
-            Positioned(
-              top: 70,
-              right: 20,
-              child: Container(
-                height: 50,
-                width: 50,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(22),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 18,
-                      offset: Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.person_add_alt_1,
-                  color: Color(0xffFF8A00),
-                  size: 42,
-                ),
-              ),
-            ),
+            // Positioned(
+            //   top: 70,
+            //   right: 20,
+            //   child: Container(
+            //     height: 50,
+            //     width: 50,
+            //     decoration: BoxDecoration(
+            //       color: Colors.white,
+            //       borderRadius: BorderRadius.circular(22),
+            //       boxShadow: [
+            //         BoxShadow(
+            //           color: Colors.black12,
+            //           blurRadius: 18,
+            //           offset: Offset(0, 8),
+            //         ),
+            //       ],
+            //     ),
+            //     child: const Icon(
+            //       Icons.person_add_alt_1,
+            //       color: Color(0xffFF8A00),
+            //       size: 42,
+            //     ),
+            //   ),
+            // ),
 
             /// White Form Card
             Positioned(
-              top: 130,
+              top: 90,
               left: 0,
               right: 0,
               bottom: 0,
@@ -404,8 +404,27 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
 
                           items: const [
-                            DropdownMenuItem(value: "HR", child: Text("HR")),
+                            DropdownMenuItem(
+                              value: "HR / Admin",
+                              child: Text("HR / Admin"),
+                            ),
                             DropdownMenuItem(value: "IT", child: Text("IT")),
+                            DropdownMenuItem(
+                              value: "Digital Marketing",
+                              child: Text("Digital Marketing"),
+                            ),
+                            DropdownMenuItem(
+                              value: "Graphic Designer",
+                              child: Text("Graphic Designer"),
+                            ),
+                            DropdownMenuItem(
+                              value: "Berwick Hospital",
+                              child: Text("Berwick Hospital"),
+                            ),
+                            DropdownMenuItem(
+                              value: "IELTS",
+                              child: Text("IELTS"),
+                            ),
                             DropdownMenuItem(
                               value: "Accounts",
                               child: Text("Accounts"),
@@ -474,6 +493,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
                         Wrap(
                           spacing: 10,
+
                           runSpacing: 10,
                           children: weekDays.map((day) {
                             return FilterChip(
@@ -503,7 +523,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             );
                           }).toList(),
                         ),
-                        const SizedBox(height: 35),
+                        const SizedBox(height: 17),
 
                         SizedBox(
                           width: double.infinity,
@@ -546,8 +566,8 @@ class _SignupScreenState extends State<SignupScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 25),
 
+                        // const SizedBox(height: 17),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [

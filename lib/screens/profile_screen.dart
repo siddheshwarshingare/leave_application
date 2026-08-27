@@ -408,10 +408,10 @@ class ProfileScreen extends StatelessWidget {
 
                       style: OutlinedButton.styleFrom(
                         backgroundColor: Colors.white,
-
+                        //  backgroundColor: const Color(0xFF6D28D9),
                         foregroundColor: const Color(0xFFDC2626),
 
-                        side: const BorderSide(color: Color(0xFFFECACA)),
+                        side: const BorderSide(color: Color(0xFF6D28D9)),
 
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
