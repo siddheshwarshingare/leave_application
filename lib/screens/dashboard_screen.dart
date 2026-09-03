@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:leave_application/screens/attendance_screen.dart';
 import 'package:leave_application/screens/employee_attedance_screen.dart';
 import 'package:leave_application/screens/leave_history_screen.dart';
@@ -8,6 +9,7 @@ import 'package:leave_application/screens/leave_screen.dart';
 import 'package:leave_application/screens/notification.dart';
 import 'package:leave_application/screens/profile_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'holiday_list_screen.dart';
 import 'login_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -30,167 +32,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    getHolidays();
     getUserData();
     getLeaveData();
     markAllRead();
   }
 
-  Widget _holidayList() {
-    final List<Map<String, String>> holidays = [
-      {'date': '01-Jan-2026', 'day': 'Thu', 'holiday': 'New Year'},
-      {'date': '26-Jan-2026', 'day': 'Mon', 'holiday': 'Republic Day'},
-      {'date': '19-Mar-2026', 'day': 'Thu', 'holiday': 'Gudi Padwa'},
-      {
-        'date': '01-May-2026',
-        'day': 'Fri',
-        'holiday': 'Labour Day / Maharashtra Day',
-      },
-      {'date': '15-Aug-2026', 'day': 'Sat', 'holiday': 'Independence Day'},
-      {'date': '28-Aug-2026', 'day': 'Fri', 'holiday': 'Rakshabandhan'},
-      {'date': '14-Sep-2026', 'day': 'Mon', 'holiday': 'Ganesh Chaturthi'},
-      {'date': '20-Oct-2026', 'day': 'Tue', 'holiday': 'Dussehra'},
-      {'date': '08-Nov-2026', 'day': 'Sun', 'holiday': 'Diwali – Laxmi Poojan'},
-      {'date': '10-Nov-2026', 'day': 'Tue', 'holiday': 'Diwali – Padwa'},
-      {'date': '25-Dec-2026', 'day': 'Fri', 'holiday': 'Christmas'},
-    ];
+  Future<void> getHolidays() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('holidays')
+          .get();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Holidays",
-          style: TextStyle(
-            fontSize: 19,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF172033),
-          ),
-        ),
-
-        const SizedBox(height: 4),
-
-        const Text(
-          "Upcoming holidays",
-          style: TextStyle(fontSize: 12, color: Color(0xFF8A93A5)),
-        ),
-
-        const SizedBox(height: 14),
-
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFE9ECF2)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(.035),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: holidays.length,
-            separatorBuilder: (context, index) {
-              return const Divider(height: 1, color: Color(0xFFE9ECF2));
-            },
-            itemBuilder: (context, index) {
-              final holiday = holidays[index];
-
-              return Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
-                child: Row(
-                  children: [
-                    // DATE BOX
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF0E9FF),
-                        borderRadius: BorderRadius.circular(13),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            holiday['date']!.substring(0, 2),
-                            style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF7034E6),
-                            ),
-                          ),
-                          Text(
-                            holiday['date']!.substring(3, 6),
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF8B5CF6),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(width: 13),
-
-                    // HOLIDAY NAME
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            holiday['holiday']!,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF172033),
-                            ),
-                          ),
-
-                          const SizedBox(height: 4),
-
-                          Text(
-                            "${holiday['day']} • ${holiday['date']}",
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFF8A93A5),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // HOLIDAY ICON
-                    Container(
-                      height: 34,
-                      width: 34,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF7ED),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.celebration_rounded,
-                        size: 18,
-                        color: Color(0xFFF59E0B),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
+      for (final doc in snapshot.docs) {
+        print('ID: ${doc.id}');
+        print('DATA: ${doc.data()}');
+      }
+    } catch (e) {
+      print('HOLIDAY FETCH FAILED: $e');
+    }
   }
 
   Future<void> showPunchDetails(
@@ -583,160 +443,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _modernLeaveCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Expanded(
-      child: Container(
-        height: 125,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFE9ECF2)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(.035),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              height: 36,
-              width: 36,
-              decoration: BoxDecoration(
-                color: color.withOpacity(.10),
-                borderRadius: BorderRadius.circular(11),
-              ),
-              child: Icon(icon, color: color, size: 19),
-            ),
-
-            const Spacer(),
-
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 23,
-                fontWeight: FontWeight.w800,
-                color: color,
-              ),
-            ),
-
-            const SizedBox(height: 2),
-
-            Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 11,
-                color: Color(0xFF6B7280),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _modernActionCard({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(11),
-        child: Ink(
-          height: 145,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFE9ECF2)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(.035),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                height: 42,
-                width: 42,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(.10),
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: Icon(icon, color: color, size: 23),
-              ),
-
-              const Spacer(),
-
-              Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF172033),
-                ),
-              ),
-
-              const SizedBox(height: 4),
-
-              Text(
-                subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: Color(0xFF8A93A5),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-
-              const Spacer(),
-
-              Align(
-                alignment: Alignment.bottomRight,
-                child: Container(
-                  height: 28,
-                  width: 28,
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(.08),
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: Icon(
-                    Icons.arrow_forward_rounded,
-                    size: 16,
-                    color: color,
-                  ),
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -1162,24 +868,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Future<void> _logout(BuildContext context) async {
-    try {
-      await FirebaseAuth.instance.signOut();
-
-      if (!context.mounted) return;
-
-      Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-    } catch (e) {
-      if (!context.mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Logout failed: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
   // ================================================================
   // REFERENCE UI COLORS
   // ================================================================
@@ -1199,35 +887,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // ================================================================
 
   Widget _enquadLogo() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          height: 30,
-          width: 30,
-          decoration: BoxDecoration(
-            color: _orange,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Icon(
-            Icons.hexagon_rounded,
-            color: Colors.white,
-            size: 21,
-          ),
-        ),
-
-        const SizedBox(width: 8),
-
-        const Text(
-          "Enquad",
-          style: TextStyle(
-            color: _textDark,
-            fontSize: 19,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -.3,
-          ),
-        ),
-      ],
+    return Text(
+      "ENQUAD",
+      style: TextStyle(
+        color: _textDark,
+        fontSize: 19,
+        fontWeight: FontWeight.w800,
+        letterSpacing: -.3,
+      ),
     );
   }
 
@@ -1235,7 +902,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // PROFILE AVATAR
   // ================================================================
 
-  Widget _profileAvatar({double size = 44}) {
+  Widget _profileAvatar({double size = 40}) {
     final initial = name.isNotEmpty ? name.trim()[0].toUpperCase() : "U";
 
     return GestureDetector(
@@ -1275,7 +942,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _welcomeCard() {
     return Container(
       width: double.infinity,
-      height: 158,
+      height: MediaQuery.sizeOf(context).height / 7,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF102A56), Color(0xFF173867)],
@@ -1298,8 +965,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             right: 130,
             top: -25,
             child: Container(
-              height: 70,
-              width: 70,
+              height: 60,
+              width: 50,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(color: _orange.withOpacity(.55), width: 1),
@@ -1333,7 +1000,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         "Welcome back, 👋",
                         style: TextStyle(
                           color: Colors.white70,
-                          fontSize: 13,
+                          fontSize: 15,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -1346,7 +1013,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 24,
+                          fontSize: 20,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -1369,8 +1036,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                 // Large profile circle
                 Container(
-                  height: 91,
-                  width: 91,
+                  height: 85,
+                  width: 85,
                   padding: const EdgeInsets.all(5),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
@@ -1423,7 +1090,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                title.toUpperCase(),
+                title,
                 style: const TextStyle(
                   color: _textDark,
                   fontSize: 13,
@@ -1455,7 +1122,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   "View All",
                   style: TextStyle(
                     color: _orange,
-                    fontSize: 11,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -1481,11 +1148,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }) {
     return Expanded(
       child: Container(
-        height: 143,
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 11),
+        height: MediaQuery.sizeOf(context).height / 6,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(color: const Color(0xFFE9ECF2)),
           boxShadow: [
             BoxShadow(
@@ -1496,48 +1162,69 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 0.0, top: 10),
+              child: Container(
+                height: 38,
+                width: 38,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(.10),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: color, size: 21),
+              ),
+            ),
+            SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 0.0),
+              child: Text(
+                value,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 1),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 0.0),
+              child: Text(
+                title,
+                style: const TextStyle(
+                  color: _textDark,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 1),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 0.0),
+              child: Text(
+                subtitle,
+                style: const TextStyle(
+                  color: _textGrey,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Spacer(),
             Container(
-              height: 38,
-              width: 38,
+              height: 5,
               decoration: BoxDecoration(
-                color: color.withOpacity(.10),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: color, size: 21),
-            ),
-
-            const Spacer(),
-
-            Text(
-              value,
-              style: TextStyle(
                 color: color,
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-
-            const SizedBox(height: 1),
-
-            Text(
-              title,
-              style: const TextStyle(
-                color: _textDark,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-
-            const SizedBox(height: 1),
-
-            Text(
-              subtitle,
-              style: const TextStyle(
-                color: _textGrey,
-                fontSize: 9,
-                fontWeight: FontWeight.w500,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(15),
+                  bottomRight: Radius.circular(15),
+                ),
               ),
             ),
           ],
@@ -1663,111 +1350,156 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // ================================================================
 
   Widget _holidaysSection() {
-    final holidays = [
-      ["15", "AUG", "Independence Day", "Friday"],
-      ["05", "SEP", "Teacher's Day", "Friday"],
-      ["02", "OCT", "Gandhi Jayanti", "Thursday"],
-      ["31", "OCT", "Diwali", "Friday"],
-      ["25", "DEC", "Christmas Day", "Thursday"],
-    ];
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('holidays').snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE9ECF2)),
-      ),
-      child: Column(
-        children: List.generate(holidays.length, (index) {
-          final holiday = holidays[index];
+        if (snapshot.hasError) {
+          return Text('Error: ${snapshot.error}');
+        }
 
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 8,
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF3EC),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            holiday[0],
-                            style: const TextStyle(
-                              color: _orange,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Text('No upcoming holidays');
+        }
 
-                          Text(
-                            holiday[1],
-                            style: const TextStyle(
-                              color: _orange,
-                              fontSize: 8,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
+        final now = DateTime.now();
+
+        final upcomingHolidays = snapshot.data!.docs.where((doc) {
+          try {
+            // Document ID example: 01-Jan-2026
+            final date = DateFormat('dd-MMM-yyyy').parse(doc.id);
+
+            return !date.isBefore(DateTime(now.year, now.month, now.day));
+          } catch (e) {
+            return false;
+          }
+        }).toList();
+
+        // Sort nearest holiday first
+        upcomingHolidays.sort((a, b) {
+          final dateA = DateFormat('dd-MMM-yyyy').parse(a.id);
+          final dateB = DateFormat('dd-MMM-yyyy').parse(b.id);
+
+          return dateA.compareTo(dateB);
+        });
+
+        if (upcomingHolidays.isEmpty) {
+          return const Text('No upcoming holidays');
+        }
+
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFE9ECF2)),
+          ),
+          child: Column(
+            children: List.generate(upcomingHolidays.length, (index) {
+              final doc = upcomingHolidays[index];
+
+              final data = doc.data() as Map<String, dynamic>;
+
+              final date = DateFormat('dd-MMM-yyyy').parse(doc.id);
+
+              final day = DateFormat('dd').format(date);
+              final month = DateFormat('MMM').format(date).toUpperCase();
+
+              final holidayName =
+                  data['holiday']?.toString() ??
+                  data['holiday']?.toString() ??
+                  'Holiday';
+
+              final weekday = DateFormat('EEEE').format(date);
+
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
                     ),
-
-                    const SizedBox(width: 10),
-
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            holiday[2],
-                            style: const TextStyle(
-                              color: _textDark,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                            ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF3EC),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-
-                          const SizedBox(height: 2),
-
-                          Text(
-                            holiday[3],
-                            style: const TextStyle(
-                              color: _textGrey,
-                              fontSize: 9,
-                            ),
+                          child: Column(
+                            children: [
+                              Text(
+                                day,
+                                style: const TextStyle(
+                                  color: _orange,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              Text(
+                                month,
+                                style: const TextStyle(
+                                  color: _orange,
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
+                        ),
 
-                    const Icon(
-                      Icons.calendar_month_outlined,
-                      color: _orange,
-                      size: 18,
-                    ),
-                  ],
-                ),
-              ),
+                        const SizedBox(width: 10),
 
-              if (index != holidays.length - 1)
-                const Divider(
-                  height: 1,
-                  indent: 10,
-                  endIndent: 10,
-                  color: Color(0xFFF0F1F4),
-                ),
-            ],
-          );
-        }),
-      ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                holidayName,
+                                style: const TextStyle(
+                                  color: _textDark,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                weekday,
+                                style: const TextStyle(
+                                  color: _textGrey,
+                                  fontSize: 9,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const Icon(
+                          Icons.calendar_month_outlined,
+                          color: _orange,
+                          size: 18,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  if (index != upcomingHolidays.length - 1)
+                    const Divider(
+                      height: 1,
+                      indent: 10,
+                      endIndent: 10,
+                      color: Color(0xFFF0F1F4),
+                    ),
+                ],
+              );
+            }),
+          ),
+        );
+      },
     );
   }
 
@@ -1850,7 +1582,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required VoidCallback onTap,
   }) {
     final color = selected ? _orange : const Color(0xFF687284);
-
     return Expanded(
       child: InkWell(
         onTap: onTap,
@@ -1884,62 +1615,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-
-          title: const Text(
-            'Logout',
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF172033),
-            ),
-          ),
-
-          content: const Text(
-            'Are you sure you want to logout?',
-            style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-          ),
-
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext);
-              },
-              child: const Text(
-                'Cancel',
-                style: TextStyle(color: Color(0xFF64748B)),
-              ),
-            ),
-
-            TextButton(
-              onPressed: () async {
-                Navigator.pop(dialogContext);
-
-                await _logout(context);
-              },
-              child: const Text(
-                'Logout',
-                style: TextStyle(
-                  color: Color(0xFFDC2626),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
     );
   }
 
@@ -2285,8 +1960,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   title: "Upcoming Holidays",
                   subtitle: "",
                   onViewAll: () {
-                    // UI only for now.
-                    // Your existing logic is untouched.
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => HolidayListScreen(),
+                      ),
+                    );
                   },
                 ),
 
@@ -2375,330 +2054,3 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 }
-  // return Scaffold(
-  //   //  backgroundColor: const Color(0xFFF5F5F5),
-  //   appBar: AppBar(
-  //     title: const Text(
-  //       "Dashboard",
-  //       style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-  //     ),
-  //     actions: [
-  //       IconButton(onPressed: logout, icon: const Icon(Icons.logout)),
-  //     ],
-  //     backgroundColor: Colors.blue,
-
-  //     foregroundColor: Colors.white,
-  //   ),
-
-  //   body:
-  //   Padding(
-  //     padding: const EdgeInsets.all(20),
-
-  //     child: Column(
-  //       crossAxisAlignment: CrossAxisAlignment.start,
-
-  //       children: [
-  //         Row(
-  //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //           children: [
-  //             Text(
-  //               "Welcome  $name",
-  //               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-  //             ),
-  //             StreamBuilder<QuerySnapshot>(
-  //               stream: FirebaseFirestore.instance
-  //                   .collection('notifications')
-  //                   .where(
-  //                     'uid',
-  //                     isEqualTo: FirebaseAuth.instance.currentUser!.uid,
-  //                   )
-  //                   .where('isRead', isEqualTo: false)
-  //                   .snapshots(),
-
-  //               builder: (context, snapshot) {
-  //                 int count = snapshot.data?.docs.length ?? 0;
-
-  //                 return Stack(
-  //                   children: [
-  //                     IconButton(
-  //                       icon: const Icon(Icons.notifications),
-
-  //                       onPressed: () async {
-  //                         await Navigator.push(
-  //                           context,
-  //                           MaterialPageRoute(
-  //                             builder: (_) => const NotificationScreen(),
-  //                           ),
-  //                         );
-
-  //                         setState(() {});
-  //                       },
-  //                     ),
-
-  //                     if (count > 0)
-  //                       Positioned(
-  //                         right: 8,
-  //                         top: 8,
-
-  //                         child: Container(
-  //                           padding: const EdgeInsets.all(5),
-
-  //                           decoration: const BoxDecoration(
-  //                             color: Colors.red,
-  //                             shape: BoxShape.circle,
-  //                           ),
-
-  //                           constraints: const BoxConstraints(
-  //                             minWidth: 20,
-  //                             minHeight: 20,
-  //                           ),
-
-  //                           child: Text(
-  //                             "$count",
-
-  //                             textAlign: TextAlign.center,
-
-  //                             style: const TextStyle(
-  //                               color: Colors.white,
-  //                               fontSize: 12,
-  //                               fontWeight: FontWeight.bold,
-  //                             ),
-  //                           ),
-  //                         ),
-  //                       ),
-  //                   ],
-  //                 );
-  //               },
-  //             ),
-  //           ],
-  //         ),
-
-  //         const SizedBox(height: 4),
-
-  //         Card(
-  //           elevation: 8,
-  //           color: const Color.fromARGB(255, 99, 204, 186),
-  //           child: Padding(
-  //             padding: const EdgeInsets.all(20),
-
-  //             child: Column(
-  //               crossAxisAlignment: CrossAxisAlignment.start,
-
-  //               children: [
-  //                 Text(
-  //                   "Name : $name",
-  //                   style: const TextStyle(
-  //                     fontSize: 18,
-  //                     color: Colors.white,
-  //                     fontWeight: FontWeight.bold,
-  //                   ),
-  //                 ),
-
-  //                 const SizedBox(height: 10),
-
-  //                 Text(
-  //                   "Email : $email",
-  //                   style: const TextStyle(
-  //                     fontSize: 18,
-  //                     color: Colors.white,
-  //                     fontWeight: FontWeight.bold,
-  //                   ),
-  //                 ),
-
-  //                 const SizedBox(height: 10),
-
-  //                 Text(
-  //                   "Role : $role",
-  //                   style: const TextStyle(
-  //                     fontSize: 18,
-  //                     color: Colors.white,
-  //                     fontWeight: FontWeight.bold,
-  //                   ),
-  //                 ),
-  //               ],
-  //             ),
-  //           ),
-  //         ),
-
-  //         const SizedBox(height: 4),
-  //         Card(
-  //           elevation: 4,
-  //           child: Padding(
-  //             padding: const EdgeInsets.all(20),
-  //             child: Column(
-  //               crossAxisAlignment: CrossAxisAlignment.start,
-  //               children: [
-  //                 Text(
-  //                   "Total Leave: $totalLeave ==$clLeave CL + $slLeave SL",
-  //                   style: const TextStyle(fontSize: 16),
-  //                 ),
-  //                 const SizedBox(height: 10),
-  //                 Text(
-  //                   "Used Leave: $usedLeave",
-  //                   style: const TextStyle(fontSize: 16),
-  //                 ),
-  //                 const SizedBox(height: 10),
-  //                 Text(
-  //                   "Remaining Leave: $remainingLeave",
-  //                   style: const TextStyle(
-  //                     fontSize: 16,
-  //                     fontWeight: FontWeight.bold,
-  //                     color: Colors.green,
-  //                   ),
-  //                 ),
-  //                 ElevatedButton(
-  //                   onPressed: () {
-  //                     getLeaveData();
-  //                     getLeaveData(); // refresh
-  //                   },
-  //                   child: const Text(
-  //                     "Refresh Leave",
-  //                     style: TextStyle(
-  //                       fontSize: 14,
-  //                       fontWeight: FontWeight.w600,
-  //                     ),
-  //                   ),
-  //                 ),
-  //               ],
-  //             ),
-  //           ),
-  //         ),
-  //         const SizedBox(height: 30),
-
-  //         Row(
-  //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //           children: [
-  //             ElevatedButton(
-  //               onPressed: () {
-  //                 Navigator.push(
-  //                   context,
-
-  //                   MaterialPageRoute(
-  //                     builder: (_) => const ApplyLeaveScreen(),
-  //                   ),
-  //                 );
-  //               },
-
-  //               child: const Text(
-  //                 "Apply Leave",
-  //                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-  //               ),
-  //             ),
-  //             const SizedBox(width: 20),
-  //             ElevatedButton(
-  //               onPressed: () {
-  //                 Navigator.push(
-  //                   context,
-
-  //                   MaterialPageRoute(
-  //                     builder: (_) => const LeaveHistoryScreen(),
-  //                   ),
-  //                 );
-  //               },
-
-  //               child: const Text(
-  //                 "My Leave Status",
-  //                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-
-  //         InkWell(
-  //           borderRadius: BorderRadius.circular(16),
-  //           onTap: () {
-  //             Navigator.push(
-  //               context,
-  //               MaterialPageRoute(builder: (_) => const AttendanceScreen()),
-  //             );
-  //           },
-  //           child: Container(
-  //             margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-  //             padding: const EdgeInsets.all(16),
-  //             decoration: BoxDecoration(
-  //               borderRadius: BorderRadius.circular(16),
-  //               gradient: const LinearGradient(
-  //                 colors: [Color(0xff1976D2), Color(0xff42A5F5)],
-  //               ),
-  //               boxShadow: [
-  //                 BoxShadow(
-  //                   color: Colors.blue.withOpacity(0.3),
-  //                   blurRadius: 10,
-  //                   offset: const Offset(0, 5),
-  //                 ),
-  //               ],
-  //             ),
-  //             child: Row(
-  //               children: [
-  //                 Container(
-  //                   padding: const EdgeInsets.all(12),
-  //                   decoration: BoxDecoration(
-  //                     color: Colors.white.withOpacity(0.2),
-  //                     borderRadius: BorderRadius.circular(12),
-  //                   ),
-  //                   child: const Icon(
-  //                     Icons.access_time_filled,
-  //                     color: Colors.white,
-  //                     size: 28,
-  //                   ),
-  //                 ),
-
-  //                 const SizedBox(width: 15),
-
-  //                 const Expanded(
-  //                   child: Column(
-  //                     crossAxisAlignment: CrossAxisAlignment.start,
-  //                     children: [
-  //                       Text(
-  //                         "Attendance",
-  //                         style: TextStyle(
-  //                           color: Colors.white,
-  //                           fontSize: 18,
-  //                           fontWeight: FontWeight.bold,
-  //                         ),
-  //                       ),
-
-  //                       SizedBox(height: 4),
-
-  //                       Text(
-  //                         "Punch In / Punch Out",
-  //                         style: TextStyle(
-  //                           color: Colors.white70,
-  //                           fontSize: 13,
-  //                         ),
-  //                       ),
-  //                     ],
-  //                   ),
-  //                 ),
-
-  //                 const Icon(
-  //                   Icons.arrow_forward_ios,
-  //                   color: Colors.white,
-  //                   size: 18,
-  //                 ),
-  //               ],
-  //             ),
-  //           ),
-  //         ),
-  //         const SizedBox(height: 30),
-
-  //         Center(
-  //           child: ElevatedButton.icon(
-  //             icon: const Icon(Icons.history),
-  //             label: const Text("My Attendance"),
-  //             onPressed: () {
-  //               Navigator.push(
-  //                 context,
-  //                 MaterialPageRoute(
-  //                   builder: (_) => const EmployeeAttendanceScreen(),
-  //                 ),
-  //               );
-  //             },
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   ),
-
-  // );
-
