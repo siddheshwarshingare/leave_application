@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:leave_application/screens/apply_c_off_screen.dart';
 import 'package:leave_application/screens/attendance_screen.dart';
 import 'package:leave_application/screens/employee_attedance_screen.dart';
 import 'package:leave_application/screens/leave_history_screen.dart';
@@ -312,7 +313,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
           child: Container(
-            height: 155,
+            height: MediaQuery.sizeOf(context).height / 2,
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1139,10 +1140,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // LEAVE CARD
   // ================================================================
 
-  Widget _referenceLeaveCard({
+  Widget referenceLeaveCard({
     required String title,
     required String value,
-    required String subtitle,
+    // required String subtitle,
     required Color color,
     required IconData icon,
   }) {
@@ -1176,7 +1177,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: Icon(icon, color: color, size: 21),
               ),
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 15),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 0.0),
               child: Text(
@@ -1189,7 +1190,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
 
-            const SizedBox(height: 1),
+            const SizedBox(height: 10),
 
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 0.0),
@@ -1197,25 +1198,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 title,
                 style: const TextStyle(
                   color: _textDark,
-                  fontSize: 11,
+                  fontSize: 14,
                   fontWeight: FontWeight.w700,
                 ),
               ),
             ),
 
-            const SizedBox(height: 1),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 0.0),
-              child: Text(
-                subtitle,
-                style: const TextStyle(
-                  color: _textGrey,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
             Spacer(),
             Container(
               height: 5,
@@ -1534,7 +1522,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               _bottomNavItem(
                 icon: Icons.description_outlined,
-                label: "Leaves",
+                label: "My Leave",
                 onTap: () {
                   Navigator.push(
                     context,
@@ -1596,7 +1584,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               label,
               style: TextStyle(
                 color: color,
-                fontSize: 9,
+                fontSize: 12,
                 fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
               ),
             ),
@@ -1785,30 +1773,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                 Row(
                   children: [
-                    _referenceLeaveCard(
+                    referenceLeaveCard(
                       title: "CL Leave",
                       value: clLeave.toString(),
-                      subtitle: "Casual Leave",
+                      // subtitle: "Casual Leave",
                       color: _green,
                       icon: Icons.event_available_rounded,
                     ),
 
-                    const SizedBox(width: 9),
+                    const SizedBox(width: 5),
 
-                    _referenceLeaveCard(
+                    referenceLeaveCard(
                       title: "SL Leave",
                       value: slLeave.toString(),
-                      subtitle: "Sick Leave",
+                      // subtitle: "Sick Leave",
                       color: _blue,
                       icon: Icons.medical_services_rounded,
                     ),
+                    const SizedBox(width: 5),
 
-                    const SizedBox(width: 9),
+                    referenceLeaveCard(
+                      title: "C-Off",
+                      value: slLeave.toString(),
+                      // subtitle: "c-off",
+                      color: _orange.withValues(alpha: 0.7),
+                      icon: Icons.medical_services_rounded,
+                    ),
+                    const SizedBox(width: 5),
 
-                    _referenceLeaveCard(
+                    referenceLeaveCard(
                       title: "Remaining",
                       value: remainingLeave.toString(),
-                      subtitle: "Leaves Left",
+                      // subtitle: "Leaves Left",
                       color: _purple,
                       icon: Icons.star_rounded,
                     ),
@@ -1849,7 +1845,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(width: 10),
 
                     _referenceActionCard(
-                      title: "My Leaves",
+                      title: "WFH & C-Off",
                       subtitle: "Track leave status",
                       icon: Icons.description_rounded,
                       color: _blue,
@@ -1859,7 +1855,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const LeaveHistoryScreen(),
+                            builder: (_) => const ApplyCOffScreen(),
                           ),
                         );
                       },
