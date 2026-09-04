@@ -57,7 +57,7 @@ class ProfileScreen extends StatelessWidget {
   // ============================================================
   // BUILD
   // ============================================================
-
+  static const Color _orange = Color(0xFFFF6B1A);
   @override
   Widget build(BuildContext context) {
     if (currentUser == null) {
@@ -243,7 +243,7 @@ class ProfileScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF7034E6), Color(0xFF8B4DE8)],
+                        colors: [Color(0xFF102A56), Color(0xFF173867)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -256,55 +256,92 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: Column(
+                    child: Stack(
+                      alignment: Alignment.center,
                       children: [
-                        _ProfileAvatar(imageUrl: profileImage, name: name),
-
-                        const SizedBox(height: 12),
-
-                        Text(
-                          name,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 21,
-                            fontWeight: FontWeight.w700,
+                        Positioned(
+                          right: 120,
+                          top: -25,
+                          child: Container(
+                            height: 80,
+                            width: 100,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: _orange.withOpacity(.55),
+                                width: 1,
+                              ),
+                            ),
                           ),
                         ),
 
-                        const SizedBox(height: 4),
-
-                        Text(
-                          role,
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
+                        Positioned(
+                          right: 70,
+                          bottom: -35,
+                          child: Container(
+                            height: 80,
+                            width: 80,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: _orange.withOpacity(.45),
+                                width: 1,
+                              ),
+                            ),
                           ),
                         ),
+                        Column(
+                          children: [
+                            _ProfileAvatar(imageUrl: profileImage, name: name),
 
-                        const SizedBox(height: 12),
+                            const SizedBox(height: 12),
 
-                        // Container(
-                        //   padding: const EdgeInsets.symmetric(
-                        //     horizontal: 12,
-                        //     vertical: 6,
-                        //   ),
-                        //   decoration: BoxDecoration(
-                        //     color: Colors.white.withOpacity(.18),
-                        //     borderRadius: BorderRadius.circular(20),
-                        //   ),
-                        //   child: Text(
-                        //     employeeId == '-' ? 'Employee' : 'ID • $employeeId',
-                        //     style: const TextStyle(
-                        //       color: Colors.white,
-                        //       fontSize: 11,
-                        //       fontWeight: FontWeight.w600,
-                        //     ),
-                        //   ),
-                        // ),
+                            Text(
+                              name,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 21,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+
+                            const SizedBox(height: 4),
+
+                            Text(
+                              role,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+
+                            const SizedBox(height: 12),
+
+                            // Container(
+                            //   padding: const EdgeInsets.symmetric(
+                            //     horizontal: 12,
+                            //     vertical: 6,
+                            //   ),
+                            //   decoration: BoxDecoration(
+                            //     color: Colors.white.withOpacity(.18),
+                            //     borderRadius: BorderRadius.circular(20),
+                            //   ),
+                            //   child: Text(
+                            //     employeeId == '-' ? 'Employee' : 'ID • $employeeId',
+                            //     style: const TextStyle(
+                            //       color: Colors.white,
+                            //       fontSize: 11,
+                            //       fontWeight: FontWeight.w600,
+                            //     ),
+                            //   ),
+                            // ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
+
                   const SizedBox(height: 14),
 
                   // ==================================================
@@ -382,7 +419,7 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8B4DE8),
+                        backgroundColor: const Color(0xFF173867),
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
@@ -459,7 +496,7 @@ class ProfileScreen extends StatelessWidget {
                         'Your information is securely stored',
 
                         style: TextStyle(
-                          fontSize: 9.5,
+                          fontSize: 14,
                           color: Colors.grey.shade500,
                         ),
                       ),
@@ -664,7 +701,7 @@ class _ModernProfileRow extends StatelessWidget {
               textAlign: TextAlign.right,
 
               style: const TextStyle(
-                fontSize: 10.5,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF1E293B),
                 height: 1.3,
@@ -778,22 +815,23 @@ class _InitialsAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const Color _orange = Color(0xFFFF6B1A);
     return Container(
       alignment: Alignment.center,
 
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFEFF6FF), Color(0xFFDBEAFE)],
-        ),
+        color: _orange,
+        // gradient: LinearGradient(
+        //   colors: [Color(0xFFEFF6FF), Color(0xFFDBEAFE)],
+        // ),
       ),
 
       child: Text(
         initials,
-
         style: const TextStyle(
           fontSize: 21,
           fontWeight: FontWeight.w700,
-          color: Color(0xFF2563EB),
+          color: Colors.white,
         ),
       ),
     );
