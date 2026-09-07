@@ -15,6 +15,9 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
   final reasonController = TextEditingController();
 
   double totalDays = 0;
+  double clBalance = 0;
+  double slBalance = 0;
+  double coffClBalance = 0;
 
   /// Employee-specific weekly offs loaded from Firebase.
   /// Example:
@@ -36,9 +39,54 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
     "Casual Leave",
     "Sick Leave",
     "Paid Leave",
-    "LWP",
+    //"LWP",
+    "C-OFF",
   ];
+  Future<void> loadLeaveBalances() async {
+    try {
+      final User? user = FirebaseAuth.instance.currentUser;
 
+      if (user == null) {
+        return;
+      }
+
+      final DocumentSnapshot balanceDoc = await FirebaseFirestore.instance
+          .collection('toatl_leave')
+          .doc(user.uid)
+          .get();
+
+      if (!balanceDoc.exists) {
+        debugPrint("Leave balance document not found");
+        return;
+      }
+
+      final Map<String, dynamic> data =
+          balanceDoc.data() as Map<String, dynamic>;
+
+      final double cl = double.tryParse(data['Cl']?.toString() ?? '0') ?? 0;
+
+      final double sl = double.tryParse(data['Sl']?.toString() ?? '0') ?? 0;
+
+      final double coff =
+          double.tryParse(data['coffCl']?.toString() ?? '0') ?? 0;
+
+      debugPrint("CL BALANCE   = $cl");
+      debugPrint("SL BALANCE   = $sl");
+      debugPrint("C-OFF BALANCE = $coff");
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        clBalance = cl;
+        slBalance = sl;
+        coffClBalance = coff;
+      });
+    } catch (e) {
+      debugPrint("Failed to load leave balances: $e");
+    }
+  }
   // ============================================================
   // INIT
   // ============================================================
@@ -49,6 +97,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
     /// Load employee weekly offs as soon as screen opens.
     loadEmployeeWeeklyOff();
+    loadLeaveBalances();
   }
 
   // ============================================================
@@ -517,7 +566,15 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
       final double sl =
           double.tryParse(balanceData['Sl']?.toString() ?? '0') ?? 0;
-
+      final double coffCl =
+          double.tryParse(balanceData['coffCl']?.toString() ?? '0') ?? 0;
+      debugPrint("================================");
+      debugPrint("CL BALANCE    = $cl");
+      debugPrint("SL BALANCE    = $sl");
+      debugPrint("C-OFF BALANCE = $coffCl");
+      debugPrint("REQUESTED     = $requestedDays");
+      debugPrint("LEAVE TYPE    = $selectedLeaveType");
+      debugPrint("================================");
       // ==========================================================
       // CASUAL LEAVE BALANCE
       // ==========================================================
@@ -538,6 +595,21 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text("Only $sl SL remaining")));
+
+        return;
+      }
+      // ==========================================================
+      // C-OFF BALANCE
+      // ==========================================================
+
+      if (selectedLeaveType == "C-OFF" && requestedDays > coffCl) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Only ${_formatLeaveDays(coffCl)} C-OFF day(s) available",
+            ),
+          ),
+        );
 
         return;
       }

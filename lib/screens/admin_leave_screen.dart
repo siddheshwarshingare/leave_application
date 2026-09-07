@@ -3,11 +3,18 @@ import 'package:emailjs/emailjs.dart' as emailjs;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:leave_application/screens/admin_attedance_screen.dart';
+import 'package:leave_application/screens/admin_calendar_screen.dart';
 import 'package:leave_application/screens/admin_notification_screen.dart';
+import 'package:leave_application/screens/employee_attedance_screen.dart';
+import 'package:leave_application/screens/hr_coff_screen.dart';
+import 'package:leave_application/screens/leave_history_screen.dart';
 import 'package:leave_application/screens/login_screen.dart';
+import 'package:leave_application/screens/profile_screen.dart';
+import 'package:leave_application/screens/weekly_off_screen.dart';
 import 'package:leave_application/services/email_service.dart';
 import 'package:leave_application/services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 class AdminLeaveScreen extends StatefulWidget {
   const AdminLeaveScreen({super.key});
@@ -20,6 +27,7 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
   String? selectedUid;
   List users = [];
   int totalLeave = 13;
+  double coffLeave = 0;
   double usedLeave = 0;
   double clLeave = 3;
   double slLeave = 10;
@@ -30,6 +38,101 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
     getUsers();
     //  getLeaveData();
     markAllRead();
+  }
+
+  Widget leaveCalendar() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: selectedUid == null
+          ? FirebaseFirestore.instance
+                .collection('leave_requests')
+                .where('status', isEqualTo: 'Approved')
+                .snapshots()
+          : FirebaseFirestore.instance
+                .collection('leave_requests')
+                .where('uid', isEqualTo: selectedUid)
+                .where('status', isEqualTo: 'Approved')
+                .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF6D28D9)),
+          );
+        }
+
+        final leaveDocs = snapshot.data!.docs;
+
+        final Map<DateTime, List<String>> leaveDays = {};
+
+        for (final doc in leaveDocs) {
+          final data = doc.data() as Map<String, dynamic>;
+
+          final from = (data['fromDate'] as Timestamp).toDate();
+          final to = (data['toDate'] as Timestamp).toDate();
+
+          DateTime current = DateTime(from.year, from.month, from.day);
+
+          final end = DateTime(to.year, to.month, to.day);
+
+          while (!current.isAfter(end)) {
+            final date = DateTime(current.year, current.month, current.day);
+
+            leaveDays.putIfAbsent(date, () => []);
+
+            leaveDays[date]!.add(
+              data['employeeName']?.toString() ?? 'Employee',
+            );
+
+            current = current.add(const Duration(days: 1));
+          }
+        }
+
+        return TableCalendar(
+          firstDay: DateTime(2020),
+          lastDay: DateTime(2030),
+          focusedDay: DateTime.now(),
+
+          calendarStyle: CalendarStyle(
+            todayDecoration: BoxDecoration(
+              color: const Color(0xFF6D28D9),
+              shape: BoxShape.circle,
+            ),
+
+            selectedDecoration: BoxDecoration(
+              color: const Color(0xFF6D28D9),
+              shape: BoxShape.circle,
+            ),
+          ),
+
+          calendarBuilders: CalendarBuilders(
+            defaultBuilder: (context, day, focusedDay) {
+              final date = DateTime(day.year, day.month, day.day);
+
+              final employees = leaveDays[date];
+
+              if (employees != null && employees.isNotEmpty) {
+                return Container(
+                  margin: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '${day.day}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                );
+              }
+
+              return null;
+            },
+          ),
+        );
+      },
+    );
   }
 
   Future<void> getUsers() async {
@@ -96,8 +199,8 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
       // CURRENT REMAINING BALANCE
       double cl = double.tryParse(data['Cl'].toString()) ?? 0.0;
       double sl = double.tryParse(data['Sl'].toString()) ?? 0.0;
-
-      double remaining = cl + sl;
+      double coff = double.tryParse(data['coffCl'].toString()) ?? 0.0;
+      double remaining = cl + sl + coff;
 
       // USED LEAVE FROM APPROVED REQUESTS
       QuerySnapshot snap = await FirebaseFirestore.instance
@@ -124,7 +227,7 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
 
         clLeave = cl;
         slLeave = sl;
-
+        coffLeave = coff;
         usedLeave = used;
 
         remainingLeave = remaining;
@@ -212,10 +315,11 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
       // Therefore use DOUBLE, not INT.
 
       double cl = double.tryParse(balanceDoc['Cl'].toString()) ?? 0.0;
-
       double sl = double.tryParse(balanceDoc['Sl'].toString()) ?? 0.0;
+      double coff = double.tryParse(balanceDoc['coffCl'].toString()) ?? 0.0;
 
       print("Current CL = $cl");
+      print("Current coff= $coff");
       print("Current SL = $sl");
       print("Requested Days = $days");
 
@@ -253,6 +357,25 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
             .collection('toatl_leave')
             .doc(uid)
             .update({"Sl": formatLeave(newSl)});
+      }
+      // ============================================================
+      // DEDUCT COFF
+      // ============================================================
+
+      if (leaveType == "C-OFF" || leaveType == "COFF") {
+        if (days > coff) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Only ${formatLeave(coff)} COFF available")),
+          );
+          return;
+        }
+
+        double newCoff = coff - days;
+
+        await FirebaseFirestore.instance
+            .collection('toatl_leave')
+            .doc(uid)
+            .update({"coffCl": formatLeave(newCoff)});
       }
 
       // ============================================================
@@ -373,7 +496,7 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
       // ============================================================
       // ALREADY REJECTED
       // ============================================================
-
+      print('tttttttttttttttttttttttttttttttttttttttttt$leaveType');
       if (currentStatus == "Rejected") {
         ScaffoldMessenger.of(
           context,
@@ -407,6 +530,7 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
         double cl = double.tryParse(balanceDoc['Cl'].toString()) ?? 0.0;
 
         double sl = double.tryParse(balanceDoc['Sl'].toString()) ?? 0.0;
+        double coff = double.tryParse(balanceDoc['coffCl'].toString()) ?? 0.0;
 
         // ==========================================================
         // RESTORE CASUAL LEAVE
@@ -433,7 +557,19 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
               .doc(uid)
               .update({"Sl": newSl.toString()});
         }
+
+        if (leaveType == "C-OFF" || leaveType == "COFF") {
+          double newCoff = coff + days;
+
+          await FirebaseFirestore.instance
+              .collection('toatl_leave')
+              .doc(uid)
+              .update({"coffCl": formatLeave(newCoff)});
+        }
       }
+      // ==========================================================
+      // RESTORE COFF
+      // ==========================================================
 
       // ============================================================
       // UPDATE LEAVE REQUEST
@@ -752,9 +888,143 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
     return "${formatDate(from)} → ${formatDate(to)}";
   }
 
+  Widget _bottomNavItem({
+    required IconData icon,
+    required String label,
+    bool selected = false,
+    required VoidCallback onTap,
+  }) {
+    final color = selected ? Colors.orange : const Color(0xFF687284);
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 22, color: color),
+
+            const SizedBox(height: 4),
+
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
+              ),
+            ),
+
+            const SizedBox(height: 3),
+
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              height: 2,
+              width: selected ? 35 : 0,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(5),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _bottomNavigationBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.08),
+            blurRadius: 18,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 66,
+          child: Row(
+            children: [
+              _bottomNavItem(
+                icon: Icons.home_rounded,
+                label: "Home",
+                selected: true,
+                onTap: () {},
+              ),
+              _bottomNavItem(
+                icon: Icons.calendar_month_rounded,
+                label: "Calendar",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const AdminCalendarScreen(),
+                    ),
+                  );
+                },
+              ),
+
+              // _bottomNavItem(
+              //   icon: Icons.access_time_outlined,
+              //   label: "Attendance",
+              //   onTap: () {
+              //     Navigator.push(
+              //       context,
+              //       MaterialPageRoute(
+              //         builder: (_) =>
+              //             AdminAttendanceScreen(selectedUid: selectedUid),
+              //       ),
+              //     );
+              //   },
+              // ),
+              _bottomNavItem(
+                icon: Icons.event_repeat_rounded,
+                label: "Weekly Off",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ManageWeeklyOffScreen(),
+                    ),
+                  );
+                },
+              ),
+
+              // _bottomNavItem(
+              //   icon: Icons.person_outline_rounded,
+              //   label: "Profile",
+              //   onTap: () {
+              //     Navigator.push(
+              //       context,
+              //       MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              //     );
+              //   },
+              // ),
+              _bottomNavItem(
+                icon: Icons.person_outline_rounded,
+                label: "C-OFF",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const HRCOffScreen()),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: _bottomNavigationBar(),
       backgroundColor: const Color(0xFFF7F8FC),
 
       // ============================================================
@@ -1057,7 +1327,8 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
                       Expanded(
                         child: _buildSummaryItem(
                           title: "Total",
-                          value: "13",
+                          value: formatLeave(clLeave + slLeave + coffLeave),
+
                           color: const Color(0xFF6D28D9),
                         ),
                       ),
@@ -1144,8 +1415,16 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
                           ),
                         ),
 
+                        const SizedBox(width: 8),
+                        Text(
+                          "$coffLeave COFF",
+                          style: const TextStyle(
+                            color: Color(0xFF6D28D9),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                         const Spacer(),
-
                         const Text(
                           "Available",
                           style: TextStyle(
@@ -1161,6 +1440,25 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
               ),
             ),
           ),
+          // Padding(
+          //   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+          //   child: Container(
+          //     width: double.infinity,
+          //     padding: const EdgeInsets.all(12),
+          //     decoration: BoxDecoration(
+          //       color: Colors.white,
+          //       borderRadius: BorderRadius.circular(22),
+          //       boxShadow: [
+          //         BoxShadow(
+          //           color: Colors.black.withOpacity(.035),
+          //           blurRadius: 15,
+          //           offset: const Offset(0, 5),
+          //         ),
+          //       ],
+          //     ),
+          //     child: leaveCalendar(),
+          //   ),
+          // ),
 
           // ==========================================================
           // REFRESH + ATTENDANCE

@@ -41,7 +41,8 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
     "Casual Leave",
     "Sick Leave",
     "Paid Leave",
-    "LWP",
+    // "LWP",
+    "C-OFF",
   ];
 
   // ----------------------------------------------------------

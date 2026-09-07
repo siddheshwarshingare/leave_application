@@ -28,6 +28,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   double usedLeave = 0;
   double clLeave = 3;
   double slLeave = 10;
+  double coffCl = 0;
   double remainingLeave = 0;
 
   @override
@@ -132,9 +133,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final double cl = double.tryParse(data['Cl']?.toString() ?? '0') ?? 0.0;
 
       final double sl = double.tryParse(data['Sl']?.toString() ?? '0') ?? 0.0;
+      final double coff =
+          double.tryParse(data['coffCl']?.toString() ?? '0') ?? 0.0;
 
       // Current remaining balance
-      final double total = cl + sl;
+      final double total = cl + sl + coff;
 
       // ============================================================
       // 2. GET APPROVED LEAVES
@@ -167,7 +170,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       setState(() {
         clLeave = cl;
         slLeave = sl;
-
+        coffCl = coff;
         totalLeave = total;
 
         usedLeave = used;
@@ -180,6 +183,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       print("CL = $cl");
       print("SL = $sl");
+      print("coffCl = $coffCl");
       print("Current Balance = $total");
       print("Approved Used = $used");
       print("Remaining = $total");
@@ -1791,14 +1795,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       icon: Icons.medical_services_rounded,
                     ),
                     const SizedBox(width: 5),
-
-                    referenceLeaveCard(
-                      title: "C-Off",
-                      value: slLeave.toString(),
-                      // subtitle: "c-off",
-                      color: _orange.withValues(alpha: 0.7),
-                      icon: Icons.medical_services_rounded,
-                    ),
+                    if (double.tryParse(coffCl.toString()) != null &&
+                        double.parse(coffCl.toString()) > 0)
+                      referenceLeaveCard(
+                        title: "C-Off",
+                        value: coffCl.toString(),
+                        color: _orange.withValues(alpha: 0.7),
+                        icon: Icons.medical_services_rounded,
+                      ),
                     const SizedBox(width: 5),
 
                     referenceLeaveCard(
