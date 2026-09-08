@@ -1156,96 +1156,301 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
       // ============================================================
       body: Column(
         children: [
+          SizedBox(height: 11),
           // ==========================================================
           // EMPLOYEE DROPDOWN
           // ==========================================================
+          // ==========================================================
+          // EMPLOYEE DROPDOWN - SEARCH + ALPHABETICAL
+          // ==========================================================
           Padding(
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 8),
-            child: DropdownButtonFormField<String>(
-              decoration: InputDecoration(
-                labelText: "Select Employee",
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(11),
+              onTap: () async {
+                // ------------------------------------------------------
+                // SORT USERS ALPHABETICALLY
+                // ------------------------------------------------------
 
-                labelStyle: const TextStyle(
-                  color: Color(0xFF6B7280),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
+                final sortedUsers = List<dynamic>.from(users);
 
-                prefixIcon: Container(
-                  margin: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF0E9FF),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.person_outline_rounded,
-                    color: Color(0xFF6D28D9),
-                    size: 21,
-                  ),
-                ),
+                sortedUsers.sort((a, b) {
+                  final nameA =
+                      a['name']?.toString().trim().toLowerCase() ?? '';
+                  final nameB =
+                      b['name']?.toString().trim().toLowerCase() ?? '';
 
-                filled: true,
-                fillColor: Colors.white,
-
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-                ),
-
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(
-                    color: Color(0xFF6D28D9),
-                    width: 1.5,
-                  ),
-                ),
-
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 16,
-                ),
-              ),
-
-              value: selectedUid,
-
-              isExpanded: true,
-
-              icon: const Icon(
-                Icons.keyboard_arrow_down_rounded,
-                color: Color(0xFF6D28D9),
-              ),
-
-              items: users.map((user) {
-                return DropdownMenuItem<String>(
-                  value: user.id,
-                  child: Text(
-                    user['name'],
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF17133A),
-                    ),
-                  ),
-                );
-              }).toList(),
-
-              onChanged: (value) {
-                setState(() {
-                  selectedUid = value;
+                  return nameA.compareTo(nameB);
                 });
 
-                if (value != null) {
-                  getLeaveData(value);
+                // ------------------------------------------------------
+                // SEARCH DIALOG
+                // ------------------------------------------------------
+
+                final String? selectedEmployee = await showDialog<String>(
+                  context: context,
+                  builder: (dialogContext) {
+                    String searchText = '';
+
+                    return StatefulBuilder(
+                      builder: (context, setDialogState) {
+                        // ------------------------------------------------
+                        // FILTER EMPLOYEES
+                        // ------------------------------------------------
+
+                        final filteredUsers = sortedUsers.where((user) {
+                          final name =
+                              user['name']?.toString().toLowerCase() ?? '';
+
+                          return name.contains(searchText.toLowerCase());
+                        }).toList();
+
+                        return AlertDialog(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          title: const Text(
+                            "Select Employee",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF17133A),
+                            ),
+                          ),
+
+                          content: SizedBox(
+                            width: double.maxFinite,
+                            height: MediaQuery.of(context).size.height / 1.5,
+
+                            child: Column(
+                              children: [
+                                // ==========================================
+                                // SEARCH FIELD
+                                // ==========================================
+                                TextField(
+                                  autofocus: true,
+                                  onChanged: (value) {
+                                    setDialogState(() {
+                                      searchText = value;
+                                    });
+                                  },
+                                  decoration: InputDecoration(
+                                    hintText: "Search employee...",
+                                    prefixIcon: const Icon(
+                                      Icons.search_rounded,
+                                      color: Color(0xFF6D28D9),
+                                    ),
+                                    suffixIcon: searchText.isNotEmpty
+                                        ? IconButton(
+                                            icon: const Icon(Icons.clear),
+                                            onPressed: () {
+                                              setDialogState(() {
+                                                searchText = '';
+                                              });
+                                            },
+                                          )
+                                        : null,
+                                    filled: true,
+                                    fillColor: const Color(0xFFF8F7FC),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 12),
+
+                                // ==========================================
+                                // EMPLOYEE LIST
+                                // ==========================================
+                                Expanded(
+                                  child: filteredUsers.isEmpty
+                                      ? const Center(
+                                          child: Text(
+                                            "No employee found",
+                                            style: TextStyle(
+                                              color: Colors.grey,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        )
+                                      : ListView.separated(
+                                          itemCount: filteredUsers.length,
+                                          separatorBuilder: (_, __) =>
+                                              const Divider(height: 1),
+                                          itemBuilder: (context, index) {
+                                            final user = filteredUsers[index];
+
+                                            final String uid = user.id;
+
+                                            final String name =
+                                                user['name']
+                                                    ?.toString()
+                                                    .trim() ??
+                                                "Unknown Employee";
+
+                                            final bool isSelected =
+                                                selectedUid == uid;
+
+                                            return ListTile(
+                                              contentPadding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 2,
+                                                  ),
+
+                                              leading: CircleAvatar(
+                                                backgroundColor: const Color(
+                                                  0xFFF0E9FF,
+                                                ),
+                                                child: Text(
+                                                  name.isNotEmpty
+                                                      ? name[0].toUpperCase()
+                                                      : "?",
+                                                  style: const TextStyle(
+                                                    color: Color(0xFF6D28D9),
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+                                              ),
+
+                                              title: Text(
+                                                name,
+                                                style: const TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Color(0xFF17133A),
+                                                ),
+                                              ),
+
+                                              trailing: isSelected
+                                                  ? const Icon(
+                                                      Icons.check_circle,
+                                                      color: Color(0xFF6D28D9),
+                                                    )
+                                                  : null,
+
+                                              onTap: () {
+                                                Navigator.pop(
+                                                  dialogContext,
+                                                  uid,
+                                                );
+                                              },
+                                            );
+                                          },
+                                        ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(dialogContext);
+                              },
+                              child: const Text("Cancel"),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                );
+
+                // ------------------------------------------------------
+                // EMPLOYEE SELECTED
+                // ------------------------------------------------------
+
+                if (selectedEmployee != null && mounted) {
+                  setState(() {
+                    selectedUid = selectedEmployee;
+                  });
+
+                  getLeaveData(selectedEmployee);
                 }
               },
+
+              child: InputDecorator(
+                decoration: InputDecoration(
+                  labelText: "",
+
+                  labelStyle: const TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+
+                  prefixIcon: Container(
+                    height: 40,
+                    margin: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0E9FF),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.person_outline_rounded,
+                      color: Color(0xFF6D28D9),
+                      size: 21,
+                    ),
+                  ),
+
+                  filled: true,
+                  fillColor: Colors.white,
+
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                  ),
+
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 16,
+                  ),
+                ),
+
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        selectedUid == null
+                            ? "Select Employee"
+                            : users
+                                      .where((user) => user.id == selectedUid)
+                                      .map(
+                                        (user) =>
+                                            user['name']?.toString() ??
+                                            "Unknown Employee",
+                                      )
+                                      .firstOrNull ??
+                                  "Select Employee",
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: selectedUid == null
+                              ? FontWeight.w400
+                              : FontWeight.w600,
+                          color: selectedUid == null
+                              ? const Color(0xFF6B7280)
+                              : const Color(0xFF17133A),
+                        ),
+                      ),
+                    ),
+
+                    const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: Color(0xFF6D28D9),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-
           // ==========================================================
           // LEAVE SUMMARY
           // ==========================================================
@@ -1416,6 +1621,11 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
                             fontWeight: FontWeight.w700,
                           ),
                         ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          "•",
+                          style: TextStyle(color: Color(0xFF9CA3AF)),
+                        ),
 
                         const SizedBox(width: 8),
                         Text(
@@ -1426,6 +1636,7 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
                             fontWeight: FontWeight.w700,
                           ),
                         ),
+
                         const Spacer(),
                         const Text(
                           "Available",
