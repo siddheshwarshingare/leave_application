@@ -871,7 +871,7 @@ class _ApplyCOffScreenState extends State<ApplyCOffScreen> {
                 "template_mga5feh",
                 {
                   "to_email": receiverEmail,
-
+                  'request_type': 'C-Off',
                   "employee_name": employeeName,
 
                   "employee_email": employeeEmail,
@@ -890,9 +890,11 @@ class _ApplyCOffScreenState extends State<ApplyCOffScreen> {
                 },
                 emailjs.Options(
                   publicKey: "8erlfJzc6WZtfnz0o",
-                  privateKey: const String.fromEnvironment(
-                    "wRTOsFZnkQi6yxQX7D-rF",
-                  ),
+                  privateKey: "wRTOsFZnkQi6yxQX7D-rF",
+
+                  // privateKey: const String.fromEnvironment(
+                  //   "wRTOsFZnkQi6yxQX7D-rF",
+                  // ),
                 ),
               );
             } catch (emailError) {

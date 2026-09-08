@@ -224,33 +224,99 @@ class _HRCOffScreenState extends State<HRCOffScreen> {
       // APPROVAL EMAIL TO EMPLOYEE
       // ======================================================
 
+      // ======================================================
+      // APPROVAL EMAIL TO EMPLOYEE
+      // ======================================================
+
       try {
         final employeeEmail = data['employeeEmail']?.toString().trim() ?? "";
 
+        debugPrint("========================================");
+        debugPrint("C-OFF APPROVAL EMAIL");
+        debugPrint("Employee Name: $employeeName");
+        debugPrint("Employee Email: $employeeEmail");
+        debugPrint("========================================");
+
         if (employeeEmail.isNotEmpty) {
-          await emailjs.send(
+          final response = await emailjs.send(
             "service_90wr32y",
-            "template_mga5feh", // CHANGE to your employee approval template
+            "template_b04xilb",
             {
+              // =================================================
+              // RECIPIENT
+              // =================================================
               "to_email": employeeEmail,
+              // "to_email": 'siddheshwar.shingare@en3.ca',
+              //'employee_email': "siddheshwar.shingare@en3.ca",
+              // =================================================
+              // STATUS FLAGS
+              // =================================================
+              "approved": true,
+              "rejected": false,
+
+              // =================================================
+              // REQUEST
+              // =================================================
+              "request_type": "C-Off",
+
+              // =================================================
+              // EMPLOYEE
+              // =================================================
               "employee_name": employeeName,
               "employee_email": employeeEmail,
+              // "employee_email": "siddheshwar.shingare@en3.ca",
+
+              // =================================================
+              // LEAVE
+              // =================================================
               "leave_type": "C-Off",
-              "worked_date": formatDate(workedDate),
+              "leave_duration": "Full Day",
+              "half_day_session": "-",
+
+              // =================================================
+              // DATES
+              // =================================================
+              "from_date": formatDate(workedDate),
+              "to_date": formatDate(workedDate),
+
+              // =================================================
+              // DAYS
+              // =================================================
               "days": coffDays.toString(),
-              "reason": data['reason']?.toString() ?? "",
+
+              // =================================================
+              // C-OFF SPECIFIC
+              // =================================================
+              "worked_dates": formatDate(workedDate),
+
+              // =================================================
+              // OTHER
+              // =================================================
+              "emergency": "No",
+              "reason": data['reason']?.toString() ?? "-",
+
+              // =================================================
+              // STATUS
+              // =================================================
               "status": "Approved",
+              "admin_remarks": "-",
             },
             emailjs.Options(
-              publicKey: "8erlfJzc6WZtfnz0o",
-              privateKey: const String.fromEnvironment("wRTOsFZnkQi6yxQX7D-rF"),
+              publicKey: '8erlfJzc6WZtfnz0o',
+              privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
             ),
           );
+
+          debugPrint(
+            "C-Off approval email sent: "
+            "${response.status} - ${response.text}",
+          );
+        } else {
+          debugPrint("C-Off approval email NOT sent: employee email is empty.");
         }
       } catch (emailError) {
         debugPrint("C-Off approval email failed: $emailError");
       }
-
       if (!mounted) return;
 
       showMessage(
@@ -421,30 +487,72 @@ class _HRCOffScreenState extends State<HRCOffScreen> {
         if (employeeEmail.isNotEmpty) {
           await emailjs.send(
             "service_90wr32y",
-            "template_coff_rejected", // your rejection email template
+            "template_b04xilb",
             {
-              "to_email": employeeEmail,
+              // "to_email": employeeEmail,
+              "to_email": "siddheshwar.shingare@en3.ca",
+              // =========================
+              // REQUEST
+              // =========================
+              "request_type": "C-Off",
+
+              // =========================
+              // EMPLOYEE
+              // =========================
               "employee_name": employeeName,
               "employee_email": employeeEmail,
-              "leave_type": "C-Off",
-              "worked_date": formatDate(workedDate),
+
+              // =========================
+              // COMMON FIELDS
+              // =========================
+              "leave_type": "-",
+              "leave_duration": "Full Day",
+              "half_day_session": "-",
+
+              // =========================
+              // DATES
+              // =========================
+              "from_date": formatDate(workedDate),
+              "to_date": formatDate(workedDate),
+
+              // =========================
+              // DAYS
+              // =========================
               "days": data['coffDays']?.toString() ?? "1",
-              "reason": data['reason']?.toString() ?? "",
-              "rejection_reason": rejectionReason.isEmpty
+
+              // =========================
+              // C-OFF SPECIFIC
+              // =========================
+              "worked_dates": formatDate(workedDate),
+
+              // =========================
+              // OTHER
+              // =========================
+              "emergency": "No",
+
+              "reason": data['reason']?.toString() ?? "-",
+
+              // =========================
+              // STATUS
+              // =========================
+              "status": "Rejected",
+
+              // =========================
+              // HR REMARKS
+              // =========================
+              "admin_remarks": rejectionReason.isEmpty
                   ? "Rejected by HR"
                   : rejectionReason,
-              "status": "Rejected",
             },
             emailjs.Options(
               publicKey: "8erlfJzc6WZtfnz0o",
-              privateKey: const String.fromEnvironment("wRTOsFZnkQi6yxQX7D-rF"),
+              privateKey: "wRTOsFZnkQi6yxQX7D-rF",
             ),
           );
         }
       } catch (emailError) {
         debugPrint("C-Off rejection email failed: $emailError");
       }
-
       if (!mounted) return;
 
       showMessage("C-Off request rejected.", color: Colors.red);

@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:leave_application/screens/apply_c_off_screen.dart';
+import 'package:leave_application/screens/apply_wfh_screen.dart';
 import 'package:leave_application/screens/attendance_screen.dart';
 import 'package:leave_application/screens/employee_attedance_screen.dart';
 import 'package:leave_application/screens/leave_history_screen.dart';
@@ -1849,8 +1850,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(width: 10),
 
                     _referenceActionCard(
-                      title: "WFH & C-Off",
-                      subtitle: "Track leave status",
+                      title: "C-Off",
+                      subtitle: "Submit a new request Track leave status",
                       icon: Icons.description_rounded,
                       color: _blue,
 
@@ -1866,49 +1867,84 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ],
                 ),
+                // Row(
+                //   children: [
+                //     _referenceActionCard(
+                //       title: "WFH & C-Off",
+                //       subtitle: "Track leave status",
+                //       icon: Icons.description_rounded,
+                //       color: _blue,
 
+                //       // KEEPING YOUR EXISTING LOGIC
+                //       onTap: () {
+                //         Navigator.push(
+                //           context,
+                //           MaterialPageRoute(
+                //             builder: (_) => const ApplyWFHScreen(),
+                //           ),
+                //         );
+                //       },
+                //     ),
+                //   ],
+                // ),
                 const SizedBox(height: 10),
 
                 Row(
                   children: [
                     _referenceActionCard(
-                      title: "Attendance",
-                      subtitle: "Punch In / Out",
-                      icon: Icons.access_time_filled_rounded,
-                      color: _purple,
+                      title: "WFH",
+                      subtitle: "Apply WFH leave status",
+                      icon: Icons.description_rounded,
+                      color: _blue,
 
                       // KEEPING YOUR EXISTING LOGIC
                       onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Row(
-                              children: [
-                                Icon(
-                                  Icons.info_outline_rounded,
-                                  color: Colors.white,
-                                ),
-                                SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    "Attendance feature is coming soon.",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            behavior: SnackBarBehavior.floating,
-                            margin: const EdgeInsets.all(16),
-                            duration: const Duration(seconds: 2),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ApplyWFHScreen(),
                           ),
                         );
                       },
                     ),
 
+                    // _referenceActionCard(
+                    //   title: "Attendance",
+                    //   subtitle: "Punch In / Out",
+                    //   icon: Icons.access_time_filled_rounded,
+                    //   color: _purple,
+
+                    //   // KEEPING YOUR EXISTING LOGIC
+                    //   onTap: () {
+                    //     ScaffoldMessenger.of(context).showSnackBar(
+                    //       SnackBar(
+                    //         content: const Row(
+                    //           children: [
+                    //             Icon(
+                    //               Icons.info_outline_rounded,
+                    //               color: Colors.white,
+                    //             ),
+                    //             SizedBox(width: 10),
+                    //             Expanded(
+                    //               child: Text(
+                    //                 "Attendance feature is coming soon.",
+                    //                 style: TextStyle(
+                    //                   fontWeight: FontWeight.w600,
+                    //                 ),
+                    //               ),
+                    //             ),
+                    //           ],
+                    //         ),
+                    //         behavior: SnackBarBehavior.floating,
+                    //         margin: const EdgeInsets.all(16),
+                    //         duration: const Duration(seconds: 2),
+                    //         shape: RoundedRectangleBorder(
+                    //           borderRadius: BorderRadius.circular(14),
+                    //         ),
+                    //       ),
+                    //     );
+                    //   },
+                    // ),
                     const SizedBox(width: 10),
 
                     _referenceActionCard(

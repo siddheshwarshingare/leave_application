@@ -441,6 +441,8 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
         'template_b04xilb',
         {
           'employee_name': leaveData['employeeName'],
+
+          //   'employee_email': "siddheshwar.shingare@en3.ca",
           'employee_email': leaveData['employeeEmail'],
           'leave_type': leaveData['leaveType'],
 
@@ -646,7 +648,7 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
           'employee_name': leaveData['employeeName'],
 
           'employee_email': leaveData['employeeEmail'],
-
+          // 'employee_email': "siddheshwar.shingare@en3.ca",
           'leave_type': leaveData['leaveType'],
 
           'from_date': (leaveData['fromDate'] as Timestamp)

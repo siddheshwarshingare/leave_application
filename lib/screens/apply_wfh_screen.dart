@@ -3,90 +3,36 @@ import 'package:emailjs/emailjs.dart' as emailjs;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-class ApplyLeaveScreen extends StatefulWidget {
-  const ApplyLeaveScreen({super.key});
+class ApplyWFHScreen extends StatefulWidget {
+  const ApplyWFHScreen({super.key});
 
   @override
-  State<ApplyLeaveScreen> createState() => _ApplyLeaveScreenState();
+  State<ApplyWFHScreen> createState() => _ApplyWFHScreenState();
 }
 
-class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
+class _ApplyWFHScreenState extends State<ApplyWFHScreen> {
   final formKey = GlobalKey<FormState>();
   final reasonController = TextEditingController();
 
-  double totalDays = 0;
-  double clBalance = 0;
-  double slBalance = 0;
-  double coffClBalance = 0;
-
-  /// Employee-specific weekly offs loaded from Firebase.
-  /// Example:
-  /// ["Saturday", "Sunday"]
-  List<String> employeeWeeklyOff = [];
-
-  String? selectedLeaveType;
-  String? halfDaySession;
+  // ============================================================
+  // STATE
+  // ============================================================
 
   DateTime? fromDate;
   DateTime? toDate;
 
+  double totalDays = 0;
+
+  /// Employee-specific weekly offs.
+  /// Example:
+  /// ["Saturday", "Sunday"]
+  List<String> employeeWeeklyOff = [];
+
   bool loading = false;
-  bool emergency = false;
 
-  String leaveDuration = "Full Day";
+  /// WFH is fixed. No dropdown is required.
+  final String requestType = "WFH";
 
-  final List<String> leaveTypes = [
-    "Casual Leave",
-    "Sick Leave",
-    "Paid Leave",
-    //"LWP",
-    "C-OFF",
-  ];
-  Future<void> loadLeaveBalances() async {
-    try {
-      final User? user = FirebaseAuth.instance.currentUser;
-
-      if (user == null) {
-        return;
-      }
-
-      final DocumentSnapshot balanceDoc = await FirebaseFirestore.instance
-          .collection('toatl_leave')
-          .doc(user.uid)
-          .get();
-
-      if (!balanceDoc.exists) {
-        debugPrint("Leave balance document not found");
-        return;
-      }
-
-      final Map<String, dynamic> data =
-          balanceDoc.data() as Map<String, dynamic>;
-
-      final double cl = double.tryParse(data['Cl']?.toString() ?? '0') ?? 0;
-
-      final double sl = double.tryParse(data['Sl']?.toString() ?? '0') ?? 0;
-
-      final double coff =
-          double.tryParse(data['coffCl']?.toString() ?? '0') ?? 0;
-
-      debugPrint("CL BALANCE   = $cl");
-      debugPrint("SL BALANCE   = $sl");
-      debugPrint("C-OFF BALANCE = $coff");
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        clBalance = cl;
-        slBalance = sl;
-        coffClBalance = coff;
-      });
-    } catch (e) {
-      debugPrint("Failed to load leave balances: $e");
-    }
-  }
   // ============================================================
   // INIT
   // ============================================================
@@ -94,10 +40,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
   @override
   void initState() {
     super.initState();
-
-    /// Load employee weekly offs as soon as screen opens.
     loadEmployeeWeeklyOff();
-    loadLeaveBalances();
   }
 
   // ============================================================
@@ -159,7 +102,6 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
         employeeWeeklyOff = weeklyOff;
       });
 
-      /// Recalculate if dates were already selected.
       calculateTotalDays();
     } catch (e) {
       debugPrint("Failed to load weekly off: $e");
@@ -183,9 +125,6 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
     final String dayName = dayNames[date.weekday - 1];
 
-    /// IMPORTANT:
-    /// Use the weeklyOff parameter.
-    /// Do NOT use employeeWeeklyOff here.
     return weeklyOff.contains(dayName);
   }
 
@@ -201,7 +140,6 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
     final DateTime end = DateTime(to.year, to.month, to.day);
 
     while (!current.isAfter(end)) {
-      /// Only count working days.
       if (!isWeeklyOff(current, weeklyOff)) {
         workingDays++;
       }
@@ -213,34 +151,12 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
   }
 
   // ============================================================
-  // CALCULATE FINAL LEAVE DAYS
+  // CALCULATE TOTAL WFH DAYS
   // ============================================================
 
-  double calculateLeaveDays(
-    DateTime from,
-    DateTime to,
-    List<String> weeklyOff,
-  ) {
+  double calculateWFHDays(DateTime from, DateTime to, List<String> weeklyOff) {
     final int workingDays = calculateWorkingDays(from, to, weeklyOff);
 
-    if (workingDays <= 0) {
-      return 0;
-    }
-
-    /// Half day means deduct 0.5 from the
-    /// total number of working days.
-    ///
-    /// Examples:
-    ///
-    /// 1 working day -> 0.5
-    /// 2 working days -> 1.5
-    /// 3 working days -> 2.5
-    ///
-    if (leaveDuration == "Half Day Only") {
-      return workingDays - 0.5;
-    }
-
-    /// Full day.
     return workingDays.toDouble();
   }
 
@@ -259,7 +175,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
       return;
     }
 
-    final double calculatedDays = calculateLeaveDays(
+    final double calculatedDays = calculateWFHDays(
       fromDate!,
       toDate!,
       employeeWeeklyOff,
@@ -273,10 +189,10 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
   }
 
   // ============================================================
-  // DUPLICATE LEAVE CHECK
+  // DUPLICATE / OVERLAPPING WFH CHECK
   // ============================================================
 
-  Future<bool> hasDuplicateLeave(String uid, DateTime from, DateTime to) async {
+  Future<bool> hasDuplicateWFH(String uid, DateTime from, DateTime to) async {
     final QuerySnapshot snap = await FirebaseFirestore.instance
         .collection('leave_requests')
         .where('uid', isEqualTo: uid)
@@ -289,9 +205,17 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
     for (final doc in snap.docs) {
       final Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
+      // Only check WFH requests.
+      final String leaveType =
+          data['leaveType']?.toString().trim().toUpperCase() ?? '';
+
+      if (leaveType != 'WFH') {
+        continue;
+      }
+
       final String status = data['status']?.toString().toLowerCase() ?? '';
 
-      /// Rejected/cancelled leaves don't block dates.
+      // Rejected/cancelled requests don't block dates.
       if (status == 'rejected' || status == 'cancelled') {
         continue;
       }
@@ -300,25 +224,31 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
         continue;
       }
 
-      final DateTime existingFrom = (data['fromDate'] as Timestamp).toDate();
+      final dynamic fromValue = data['fromDate'];
+      final dynamic toValue = data['toDate'];
 
-      final DateTime existingTo = (data['toDate'] as Timestamp).toDate();
+      if (fromValue is! Timestamp || toValue is! Timestamp) {
+        continue;
+      }
 
-      final DateTime existingFromDate = DateTime(
-        existingFrom.year,
-        existingFrom.month,
-        existingFrom.day,
+      final DateTime existingFromRaw = fromValue.toDate();
+      final DateTime existingToRaw = toValue.toDate();
+
+      final DateTime existingFrom = DateTime(
+        existingFromRaw.year,
+        existingFromRaw.month,
+        existingFromRaw.day,
       );
 
-      final DateTime existingToDate = DateTime(
-        existingTo.year,
-        existingTo.month,
-        existingTo.day,
+      final DateTime existingTo = DateTime(
+        existingToRaw.year,
+        existingToRaw.month,
+        existingToRaw.day,
       );
 
       final bool overlap =
-          !(selectedTo.isBefore(existingFromDate) ||
-              selectedFrom.isAfter(existingToDate));
+          !(selectedTo.isBefore(existingFrom) ||
+              selectedFrom.isAfter(existingTo));
 
       if (overlap) {
         return true;
@@ -333,6 +263,10 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
   // ============================================================
 
   Future<void> pickFromDate() async {
+    if (loading) {
+      return;
+    }
+
     final DateTime today = DateTime.now();
 
     final DateTime? picked = await showDatePicker(
@@ -349,7 +283,6 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
     setState(() {
       fromDate = DateTime(picked.year, picked.month, picked.day);
 
-      /// Reset To Date if it is before From Date.
       if (toDate != null && toDate!.isBefore(fromDate!)) {
         toDate = null;
       }
@@ -363,6 +296,10 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
   // ============================================================
 
   Future<void> pickToDate() async {
+    if (loading) {
+      return;
+    }
+
     final DateTime today = DateTime.now();
 
     final DateTime? picked = await showDatePicker(
@@ -384,10 +321,10 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
   }
 
   // ============================================================
-  // SUBMIT LEAVE
+  // SUBMIT WFH
   // ============================================================
 
-  Future<void> submitLeave() async {
+  Future<void> submitWFH() async {
     if (loading) {
       return;
     }
@@ -415,20 +352,6 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
     if (toDate!.isBefore(fromDate!)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("To Date cannot be before From Date")),
-      );
-
-      return;
-    }
-
-    // ==========================================================
-    // HALF DAY VALIDATION
-    // ==========================================================
-
-    if (leaveDuration == "Half Day Only" && halfDaySession == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please select First Half or Second Half"),
-        ),
       );
 
       return;
@@ -467,8 +390,13 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
       final Map<String, dynamic> userData =
           userDoc.data() as Map<String, dynamic>;
 
+      final String employeeName = userData['name']?.toString() ?? "";
+
+      final String employeeEmail =
+          userData['email']?.toString() ?? currentUser.email ?? "";
+
       // ==========================================================
-      // GET EMPLOYEE WEEKLY OFF FROM FIREBASE
+      // GET WEEKLY OFF FROM FIREBASE
       // ==========================================================
 
       final dynamic weeklyOffData = userData['weeklyOff'];
@@ -482,7 +410,6 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
       debugPrint("EMPLOYEE WEEKLY OFF = $weeklyOff");
 
-      // Update local value as well.
       if (mounted) {
         setState(() {
           employeeWeeklyOff = weeklyOff;
@@ -490,16 +417,18 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
       }
 
       // ==========================================================
-      // DUPLICATE LEAVE CHECK
+      // DUPLICATE WFH CHECK
       // ==========================================================
 
-      final bool duplicate = await hasDuplicateLeave(uid, fromDate!, toDate!);
+      final bool duplicate = await hasDuplicateWFH(uid, fromDate!, toDate!);
 
       if (duplicate) {
+        if (!mounted) {
+          return;
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Leave already applied for these dates"),
-          ),
+          const SnackBar(content: Text("WFH already applied for these dates")),
         );
 
         return;
@@ -515,13 +444,17 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
         weeklyOff,
       );
 
-      debugPrint("WORKING DAYS = $workingDays");
+      debugPrint("WFH WORKING DAYS = $workingDays");
 
       // ==========================================================
-      // IF ONLY WEEKLY OFF DAYS WERE SELECTED
+      // ONLY WEEKLY OFF SELECTED
       // ==========================================================
 
       if (workingDays <= 0) {
+        if (!mounted) {
+          return;
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Selected dates contain only weekly off days"),
@@ -532,114 +465,28 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
       }
 
       // ==========================================================
-      // FINAL LEAVE DAYS
+      // FINAL WFH DAYS
       // ==========================================================
 
-      final double requestedDays = leaveDuration == "Half Day Only"
-          ? workingDays - 0.5
-          : workingDays.toDouble();
+      final double requestedDays = workingDays.toDouble();
 
-      debugPrint("FINAL LEAVE DAYS = $requestedDays");
+      debugPrint("FINAL WFH DAYS = $requestedDays");
 
       // ==========================================================
-      // LEAVE BALANCE
+      // SAVE WFH REQUEST
       // ==========================================================
 
-      final DocumentSnapshot balanceDoc = await FirebaseFirestore.instance
-          .collection('toatl_leave')
-          .doc(uid)
-          .get();
-
-      if (!balanceDoc.exists) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Leave balance not found")),
-        );
-
-        return;
-      }
-
-      final Map<String, dynamic> balanceData =
-          balanceDoc.data() as Map<String, dynamic>;
-
-      final double cl =
-          double.tryParse(balanceData['Cl']?.toString() ?? '0') ?? 0;
-
-      final double sl =
-          double.tryParse(balanceData['Sl']?.toString() ?? '0') ?? 0;
-      final double coffCl =
-          double.tryParse(balanceData['coffCl']?.toString() ?? '0') ?? 0;
-      debugPrint("================================");
-      debugPrint("CL BALANCE    = $cl");
-      debugPrint("SL BALANCE    = $sl");
-      debugPrint("C-OFF BALANCE = $coffCl");
-      debugPrint("REQUESTED     = $requestedDays");
-      debugPrint("LEAVE TYPE    = $selectedLeaveType");
-      debugPrint("================================");
-      // ==========================================================
-      // CASUAL LEAVE BALANCE
-      // ==========================================================
-
-      if (selectedLeaveType == "Casual Leave" && requestedDays > cl) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Only $cl CL remaining")));
-
-        return;
-      }
-
-      // ==========================================================
-      // SICK LEAVE BALANCE
-      // ==========================================================
-
-      if (selectedLeaveType == "Sick Leave" && requestedDays > sl) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Only $sl SL remaining")));
-
-        return;
-      }
-      // ==========================================================
-      // C-OFF BALANCE
-      // ==========================================================
-
-      if (selectedLeaveType == "C-OFF" && requestedDays > coffCl) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "Only ${_formatLeaveDays(coffCl)} C-OFF day(s) available",
-            ),
-          ),
-        );
-
-        return;
-      }
-
-      // ==========================================================
-      // SAVE LEAVE REQUEST
-      // ==========================================================
-
-      final Map<String, dynamic> leaveData = {
+      final Map<String, dynamic> wfhData = {
         "uid": uid,
 
-        "employeeName": userData['name']?.toString() ?? "",
+        "employeeName": employeeName,
 
-        "employeeEmail": userData['email']?.toString() ?? "",
+        "employeeEmail": employeeEmail,
 
-        "leaveType": selectedLeaveType,
+        "leaveType": "WFH",
 
-        "leaveDuration": leaveDuration,
+        "leaveDuration": "Full Day",
 
-        /// IMPORTANT
-        ///
-        /// Full Day:
-        /// 1.0
-        /// 2.0
-        /// 3.0
-        ///
-        /// Half Day:
-        /// 0.5
-        /// 1.5
-        /// 2.5
         "days": requestedDays,
 
         "fromDate": Timestamp.fromDate(fromDate!),
@@ -648,20 +495,18 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
         "reason": reasonController.text.trim(),
 
-        "emergency": emergency,
+        "emergency": false,
 
-        "halfDaySession": leaveDuration == "Half Day Only"
-            ? halfDaySession
-            : null,
+        "halfDaySession": null,
 
         "status": "Pending",
 
-        "createdAt": Timestamp.now(),
+        "createdAt": FieldValue.serverTimestamp(),
       };
 
       await FirebaseFirestore.instance
           .collection('leave_requests')
-          .add(leaveData);
+          .add(wfhData);
 
       // ==========================================================
       // FETCH APPROVER EMAILS
@@ -691,13 +536,15 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
             notifyEmails.add(primaryEmail);
           }
 
-          if (secondaryEmail != null && secondaryEmail.isNotEmpty) {
+          if (secondaryEmail != null &&
+              secondaryEmail.isNotEmpty &&
+              secondaryEmail != primaryEmail) {
             notifyEmails.add(secondaryEmail);
           }
         }
       }
 
-      debugPrint("Leave notification emails: $notifyEmails");
+      debugPrint("WFH notification emails: $notifyEmails");
 
       // ==========================================================
       // SEND EMAIL
@@ -710,39 +557,41 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
             'template_mga5feh',
             {
               'to_email': receiverEmail,
-              'request_type': "Leave ",
 
-              'employee_name': userData['name']?.toString() ?? "",
+              'request_type': 'WFH',
 
-              'employee_email': userData['email']?.toString() ?? "",
+              'employee_name': employeeName,
+              'employee_email': employeeEmail,
 
-              'leave_type': selectedLeaveType ?? "",
+              'leave_type': 'WFH',
 
-              'leave_duration': leaveDuration,
+              'leave_duration': 'Full Day',
 
-              'half_day_session': leaveDuration == "Half Day Only"
-                  ? halfDaySession ?? ""
-                  : "",
+              'half_day_session': '-',
 
               'from_date': _formatDate(fromDate!),
-
               'to_date': _formatDate(toDate!),
 
               'days': _formatLeaveDays(requestedDays),
 
+              'worked_dates': '-',
+
+              'emergency': 'No',
+
               'reason': reasonController.text.trim(),
+
+              'status': 'Pending',
             },
             emailjs.Options(
               publicKey: '8erlfJzc6WZtfnz0o',
-
               privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
             ),
           );
 
-          debugPrint("Leave email sent to: $receiverEmail");
+          debugPrint("WFH email sent to: $receiverEmail");
         } catch (emailError) {
           debugPrint(
-            "Failed to send leave email to "
+            "Failed to send WFH email to "
             "$receiverEmail: $emailError",
           );
         }
@@ -754,14 +603,18 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
       await FirebaseFirestore.instance.collection('notifications').add({
         "role": "admin",
+
         "uid": null,
-        "title": "New Leave Request",
+
+        "title": "New WFH Request",
+
         "body":
-            "${userData['name']} applied for "
-            "$selectedLeaveType "
+            "$employeeName applied for WFH "
             "(${_formatLeaveDays(requestedDays)} day(s))",
+
         "isRead": false,
-        "createdAt": Timestamp.now(),
+
+        "createdAt": FieldValue.serverTimestamp(),
       });
 
       // ==========================================================
@@ -772,21 +625,21 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Leave Applied Successfully")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("WFH Applied Successfully")));
 
       Navigator.pop(context);
     } catch (e) {
-      debugPrint("Submit leave error: $e");
+      debugPrint("Submit WFH error: $e");
 
       if (!mounted) {
         return;
       }
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst("Exception: ", ""))),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -797,7 +650,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
   }
 
   // ============================================================
-  // FORMAT LEAVE DAYS
+  // FORMAT DAYS
   // ============================================================
 
   String _formatLeaveDays(double days) {
@@ -840,7 +693,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
     return InkWell(
       borderRadius: BorderRadius.circular(16),
-      onTap: onTap,
+      onTap: loading ? null : onTap,
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
@@ -957,7 +810,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
       appBar: AppBar(
         title: const Text(
-          "Apply Leave",
+          "Apply WFH",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.white,
@@ -972,11 +825,12 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
             physics: const BouncingScrollPhysics(),
             children: [
               // ========================================================
-              // LEAVE TYPE
+              // REQUEST TYPE
               // ========================================================
-              _sectionLabel("Leave Type"),
+              _sectionLabel("Request Type"),
 
               Container(
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
@@ -989,251 +843,70 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
                     ),
                   ],
                 ),
-                child: DropdownButtonFormField<String>(
-                  value: selectedLeaveType,
-
-                  icon: const Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    color: Color(0xFF64748B),
-                  ),
-
-                  decoration: InputDecoration(
-                    prefixIcon: Container(
-                      margin: const EdgeInsets.all(10),
-                      width: 38,
-                      height: 38,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
                       decoration: BoxDecoration(
                         color: const Color(0xFFF0E9FF),
-                        borderRadius: BorderRadius.circular(11),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
-                        Icons.event_note_rounded,
+                        Icons.home_work_rounded,
                         color: Color(0xFF6D28D9),
-                        size: 20,
                       ),
                     ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 15,
-                    ),
-                    labelText: "Leave Type",
-                    labelStyle: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF64748B),
-                    ),
-                  ),
 
-                  items: leaveTypes.map((type) {
-                    return DropdownMenuItem<String>(
-                      value: type,
-                      child: Text(
-                        type,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF172033),
-                        ),
+                    const SizedBox(width: 12),
+
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Work From Home",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF172033),
+                            ),
+                          ),
+
+                          SizedBox(height: 3),
+
+                          Text(
+                            "Apply for working remotely",
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
                       ),
-                    );
-                  }).toList(),
-
-                  onChanged: (value) {
-                    setState(() {
-                      selectedLeaveType = value;
-                    });
-                  },
-
-                  validator: (value) {
-                    if (value == null) {
-                      return "Select Leave Type";
-                    }
-
-                    return null;
-                  },
-                ),
-              ),
-
-              const SizedBox(height: 18),
-
-              // ========================================================
-              // LEAVE DURATION
-              // ========================================================
-              _sectionLabel("Leave Duration"),
-
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE5E7EB)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(.03),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
                     ),
-                  ],
-                ),
-                child: DropdownButtonFormField<String>(
-                  value: leaveDuration,
 
-                  icon: const Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    color: Color(0xFF64748B),
-                  ),
-
-                  decoration: InputDecoration(
-                    prefixIcon: Container(
-                      margin: const EdgeInsets.all(10),
-                      width: 38,
-                      height: 38,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
-                        borderRadius: BorderRadius.circular(11),
+                        color: const Color(0xFFEDE9FE),
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Icon(
-                        Icons.access_time_rounded,
-                        color: Color(0xFF2563EB),
-                        size: 20,
-                      ),
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 15,
-                    ),
-                    labelText: "Duration",
-                    labelStyle: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF64748B),
-                    ),
-                  ),
-
-                  items: const [
-                    DropdownMenuItem(
-                      value: "Full Day",
-                      child: Text(
-                        "Full Day",
+                      child: const Text(
+                        "WFH",
                         style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    DropdownMenuItem(
-                      value: "Half Day Only",
-                      child: Text(
-                        "Half Day Only",
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF6D28D9),
                         ),
                       ),
                     ),
                   ],
-
-                  onChanged: (value) {
-                    setState(() {
-                      leaveDuration = value!;
-
-                      if (leaveDuration == "Full Day") {
-                        halfDaySession = null;
-                      }
-                    });
-
-                    calculateTotalDays();
-                  },
                 ),
               ),
-
-              // ========================================================
-              // HALF DAY SESSION
-              // ========================================================
-              if (leaveDuration == "Half Day Only") ...[
-                const SizedBox(height: 18),
-
-                _sectionLabel("Half Day Session"),
-
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
-                  ),
-                  child: DropdownButtonFormField<String>(
-                    value: halfDaySession,
-
-                    icon: const Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: Color(0xFF64748B),
-                    ),
-
-                    decoration: InputDecoration(
-                      prefixIcon: Container(
-                        margin: const EdgeInsets.all(10),
-                        width: 38,
-                        height: 38,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF7ED),
-                          borderRadius: BorderRadius.circular(11),
-                        ),
-                        child: const Icon(
-                          Icons.timelapse_rounded,
-                          color: Color(0xFFEA580C),
-                          size: 20,
-                        ),
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 15,
-                      ),
-                      labelText: "Session",
-                      labelStyle: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF64748B),
-                      ),
-                    ),
-
-                    items: const [
-                      DropdownMenuItem(
-                        value: "First Half",
-                        child: Text(
-                          "First Half",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      DropdownMenuItem(
-                        value: "Second Half",
-                        child: Text(
-                          "Second Half",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-
-                    onChanged: (value) {
-                      setState(() {
-                        halfDaySession = value;
-                      });
-                    },
-
-                    validator: (value) {
-                      if (leaveDuration == "Half Day Only" && value == null) {
-                        return "Select Session";
-                      }
-
-                      return null;
-                    },
-                  ),
-                ),
-              ],
 
               const SizedBox(height: 18),
 
@@ -1253,6 +926,8 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
                   maxLines: 4,
 
+                  enabled: !loading,
+
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -1260,11 +935,13 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
                   ),
 
                   decoration: const InputDecoration(
-                    hintText: "Tell us why you are taking leave...",
+                    hintText: "Tell us why you want to work from home...",
+
                     hintStyle: TextStyle(
                       color: Color(0xFF9CA3AF),
                       fontSize: 13,
                     ),
+
                     prefixIcon: Padding(
                       padding: EdgeInsets.only(left: 14, right: 8, top: 14),
                       child: Icon(
@@ -1272,11 +949,14 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
                         color: Color(0xFF6D28D9),
                       ),
                     ),
+
                     prefixIconConstraints: BoxConstraints(
                       minWidth: 45,
                       minHeight: 45,
                     ),
+
                     border: InputBorder.none,
+
                     contentPadding: EdgeInsets.all(16),
                   ),
 
@@ -1299,7 +979,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
               // ========================================================
               // DATES
               // ========================================================
-              _sectionLabel("Leave Dates"),
+              _sectionLabel("WFH Dates"),
 
               Row(
                 children: [
@@ -1330,7 +1010,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
               // ========================================================
               // SUMMARY
               // ========================================================
-              if (fromDate != null && toDate != null) _buildLeaveSummary(),
+              if (fromDate != null && toDate != null) _buildWFHSummary(),
 
               if (fromDate != null && toDate != null)
                 const SizedBox(height: 18),
@@ -1371,7 +1051,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            "Leave Request",
+                            "WFH Request",
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
@@ -1406,12 +1086,15 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: loading ? null : submitLeave,
+                  onPressed: loading ? null : submitWFH,
 
                   style: ElevatedButton.styleFrom(
                     elevation: 0,
+
                     backgroundColor: const Color(0xFF6D28D9),
+
                     disabledBackgroundColor: const Color(0xFFB8A5E8),
+
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(17),
                     ),
@@ -1419,6 +1102,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 250),
+
                     child: loading
                         ? const SizedBox(
                             key: ValueKey("loading"),
@@ -1438,9 +1122,11 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
                                 color: Colors.white,
                                 size: 19,
                               ),
+
                               SizedBox(width: 9),
+
                               Text(
-                                "Submit Leave Request",
+                                "Submit WFH Request",
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 15,
@@ -1457,7 +1143,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
               const Center(
                 child: Text(
-                  "Your request will be sent for approval",
+                  "Your WFH request will be sent for approval",
                   style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
                 ),
               ),
@@ -1471,10 +1157,10 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
   }
 
   // ============================================================
-  // LEAVE SUMMARY UI
+  // WFH SUMMARY UI
   // ============================================================
 
-  Widget _buildLeaveSummary() {
+  Widget _buildWFHSummary() {
     final int workingDays = calculateWorkingDays(
       fromDate!,
       toDate!,
@@ -1498,7 +1184,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
-              Icons.calendar_month_rounded,
+              Icons.home_work_rounded,
               color: Color(0xFF6D28D9),
             ),
           ),
@@ -1510,7 +1196,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  "Total Leave",
+                  "Total WFH",
                   style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
                 ),
 
@@ -1549,20 +1235,6 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
                     ),
                   ),
                 ],
-
-                if (leaveDuration == "Half Day Only" &&
-                    halfDaySession != null) ...[
-                  const SizedBox(height: 3),
-
-                  Text(
-                    halfDaySession!,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFFEA580C),
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
@@ -1570,8 +1242,4 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
       ),
     );
   }
-
-  // ============================================================
-  // FORMAT / END
-  // ============================================================
 }
