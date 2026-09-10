@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:leave_application/screens/admin_attedance_screen.dart';
 import 'package:leave_application/screens/admin_calendar_screen.dart';
 import 'package:leave_application/screens/admin_notification_screen.dart';
-import 'package:leave_application/screens/employee_attedance_screen.dart';
 import 'package:leave_application/screens/hr_coff_screen.dart';
 import 'package:leave_application/screens/leave_history_screen.dart';
 import 'package:leave_application/screens/login_screen.dart';
@@ -2167,279 +2166,275 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
                                 // ==========================================
                                 // APPROVE / REJECT
                                 // ==========================================
-                                Row(
-                                  children: [
-                                    // ============================================================
-                                    // APPROVE BUTTON
-                                    // ============================================================
-                                    Expanded(
-                                      child: ElevatedButton.icon(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(
-                                            0xFF16A34A,
+                                if (isApproved)
+                                  ?Row(
+                                    children: [
+                                      // ============================================================
+                                      // APPROVE BUTTON
+                                      // ============================================================
+                                      Expanded(
+                                        child: ElevatedButton.icon(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(
+                                              0xFF16A34A,
+                                            ),
+                                            foregroundColor: Colors.white,
+                                            elevation: 0,
+                                            disabledBackgroundColor:
+                                                const Color(0xFFD1D5DB),
+                                            disabledForegroundColor:
+                                                Colors.white70,
+                                            minimumSize: const Size(0, 46),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(13),
+                                            ),
                                           ),
-                                          foregroundColor: Colors.white,
-                                          elevation: 0,
-                                          disabledBackgroundColor: const Color(
-                                            0xFFD1D5DB,
+
+                                          onPressed: isOldLeave
+                                              ? null
+                                              : () {
+                                                  showDialog(
+                                                    context: context,
+                                                    builder: (dialogContext) {
+                                                      return AlertDialog(
+                                                        shape: RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                18,
+                                                              ),
+                                                        ),
+
+                                                        title: const Row(
+                                                          children: [
+                                                            Icon(
+                                                              Icons
+                                                                  .check_circle_outline_rounded,
+                                                              color: Color(
+                                                                0xFF16A34A,
+                                                              ),
+                                                            ),
+                                                            SizedBox(width: 10),
+                                                            Text(
+                                                              "Confirm Approval",
+                                                            ),
+                                                          ],
+                                                        ),
+
+                                                        content: const Text(
+                                                          "Are you sure you want to approve this leave?",
+                                                        ),
+
+                                                        actions: [
+                                                          TextButton(
+                                                            onPressed: () {
+                                                              Navigator.pop(
+                                                                dialogContext,
+                                                              );
+                                                            },
+                                                            child: const Text(
+                                                              "Cancel",
+                                                              style: TextStyle(
+                                                                color: Color(
+                                                                  0xFF6B7280,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+
+                                                          ElevatedButton(
+                                                            style: ElevatedButton.styleFrom(
+                                                              backgroundColor:
+                                                                  const Color(
+                                                                    0xFF16A34A,
+                                                                  ),
+                                                              foregroundColor:
+                                                                  Colors.white,
+                                                            ),
+
+                                                            onPressed: () async {
+                                                              // CLOSE DIALOG FIRST
+                                                              Navigator.pop(
+                                                                dialogContext,
+                                                              );
+
+                                                              // THEN APPROVE
+                                                              await approveLeave(
+                                                                data.id,
+                                                                data['uid'],
+                                                                data['leaveType'],
+                                                                double.parse(
+                                                                  data['days']
+                                                                      .toString(),
+                                                                ),
+                                                                data['status'],
+                                                              );
+                                                            },
+
+                                                            child: const Text(
+                                                              "Approve",
+                                                              style: TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w700,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      );
+                                                    },
+                                                  );
+                                                },
+
+                                          icon: const Icon(
+                                            Icons.check_circle_outline_rounded,
+                                            size: 18,
                                           ),
-                                          disabledForegroundColor:
-                                              Colors.white70,
-                                          minimumSize: const Size(0, 46),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              13,
+
+                                          label: const Text(
+                                            "Approve",
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w700,
                                             ),
                                           ),
                                         ),
+                                      ),
 
-                                        onPressed: isOldLeave
-                                            ? null
-                                            : () {
-                                                showDialog(
-                                                  context: context,
-                                                  builder: (dialogContext) {
-                                                    return AlertDialog(
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              18,
+                                      const SizedBox(width: 10),
+
+                                      // ============================================================
+                                      // REJECT BUTTON
+                                      // ============================================================
+                                      Expanded(
+                                        child: ElevatedButton.icon(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(
+                                              0xFFDC2626,
+                                            ),
+                                            foregroundColor: Colors.white,
+                                            elevation: 0,
+                                            disabledBackgroundColor:
+                                                const Color(0xFFD1D5DB),
+                                            disabledForegroundColor:
+                                                Colors.white70,
+                                            minimumSize: const Size(0, 46),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(13),
+                                            ),
+                                          ),
+
+                                          onPressed: isOldLeave
+                                              ? null
+                                              : () {
+                                                  showDialog(
+                                                    context: context,
+                                                    builder: (dialogContext) {
+                                                      return AlertDialog(
+                                                        shape: RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                18,
+                                                              ),
+                                                        ),
+
+                                                        title: const Row(
+                                                          children: [
+                                                            Icon(
+                                                              Icons
+                                                                  .cancel_outlined,
+                                                              color: Color(
+                                                                0xFFDC2626,
+                                                              ),
                                                             ),
-                                                      ),
+                                                            SizedBox(width: 10),
+                                                            Text(
+                                                              "Reject Leave",
+                                                            ),
+                                                          ],
+                                                        ),
 
-                                                      title: const Row(
-                                                        children: [
-                                                          Icon(
-                                                            Icons
-                                                                .check_circle_outline_rounded,
-                                                            color: Color(
-                                                              0xFF16A34A,
+                                                        content: const Text(
+                                                          "Are you sure you want to reject this leave?",
+                                                        ),
+
+                                                        actions: [
+                                                          TextButton(
+                                                            onPressed: () {
+                                                              Navigator.pop(
+                                                                dialogContext,
+                                                              );
+                                                            },
+                                                            child: const Text(
+                                                              "Cancel",
+                                                              style: TextStyle(
+                                                                color: Color(
+                                                                  0xFF6B7280,
+                                                                ),
+                                                              ),
                                                             ),
                                                           ),
-                                                          SizedBox(width: 10),
-                                                          Text(
-                                                            "Confirm Approval",
+
+                                                          ElevatedButton(
+                                                            style: ElevatedButton.styleFrom(
+                                                              backgroundColor:
+                                                                  const Color(
+                                                                    0xFFDC2626,
+                                                                  ),
+                                                              foregroundColor:
+                                                                  Colors.white,
+                                                            ),
+
+                                                            onPressed: () async {
+                                                              // Close confirmation popup
+                                                              Navigator.pop(
+                                                                dialogContext,
+                                                              );
+
+                                                              // Reject leave
+                                                              await rejectLeave(
+                                                                data.id,
+                                                                data['uid'],
+                                                                data['leaveType'],
+                                                                double.parse(
+                                                                  data['days']
+                                                                      .toString(),
+                                                                ),
+                                                                data['status'],
+                                                              );
+                                                            },
+
+                                                            child: const Text(
+                                                              "Reject",
+                                                              style: TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w700,
+                                                              ),
+                                                            ),
                                                           ),
                                                         ],
-                                                      ),
+                                                      );
+                                                    },
+                                                  );
+                                                },
 
-                                                      content: const Text(
-                                                        "Are you sure you want to approve this leave?",
-                                                      ),
-
-                                                      actions: [
-                                                        TextButton(
-                                                          onPressed: () {
-                                                            Navigator.pop(
-                                                              dialogContext,
-                                                            );
-                                                          },
-                                                          child: const Text(
-                                                            "Cancel",
-                                                            style: TextStyle(
-                                                              color: Color(
-                                                                0xFF6B7280,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-
-                                                        ElevatedButton(
-                                                          style:
-                                                              ElevatedButton.styleFrom(
-                                                                backgroundColor:
-                                                                    const Color(
-                                                                      0xFF16A34A,
-                                                                    ),
-                                                                foregroundColor:
-                                                                    Colors
-                                                                        .white,
-                                                              ),
-
-                                                          onPressed: () async {
-                                                            // CLOSE DIALOG FIRST
-                                                            Navigator.pop(
-                                                              dialogContext,
-                                                            );
-
-                                                            // THEN APPROVE
-                                                            await approveLeave(
-                                                              data.id,
-                                                              data['uid'],
-                                                              data['leaveType'],
-                                                              double.parse(
-                                                                data['days']
-                                                                    .toString(),
-                                                              ),
-                                                              data['status'],
-                                                            );
-                                                          },
-
-                                                          child: const Text(
-                                                            "Approve",
-                                                            style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w700,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    );
-                                                  },
-                                                );
-                                              },
-
-                                        icon: const Icon(
-                                          Icons.check_circle_outline_rounded,
-                                          size: 18,
-                                        ),
-
-                                        label: const Text(
-                                          "Approve",
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w700,
+                                          icon: const Icon(
+                                            Icons.cancel_outlined,
+                                            size: 18,
                                           ),
-                                        ),
-                                      ),
-                                    ),
 
-                                    const SizedBox(width: 10),
-
-                                    // ============================================================
-                                    // REJECT BUTTON
-                                    // ============================================================
-                                    Expanded(
-                                      child: ElevatedButton.icon(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(
-                                            0xFFDC2626,
-                                          ),
-                                          foregroundColor: Colors.white,
-                                          elevation: 0,
-                                          disabledBackgroundColor: const Color(
-                                            0xFFD1D5DB,
-                                          ),
-                                          disabledForegroundColor:
-                                              Colors.white70,
-                                          minimumSize: const Size(0, 46),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              13,
+                                          label: const Text(
+                                            "Reject",
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w700,
                                             ),
                                           ),
                                         ),
-
-                                        onPressed: isOldLeave
-                                            ? null
-                                            : () {
-                                                showDialog(
-                                                  context: context,
-                                                  builder: (dialogContext) {
-                                                    return AlertDialog(
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              18,
-                                                            ),
-                                                      ),
-
-                                                      title: const Row(
-                                                        children: [
-                                                          Icon(
-                                                            Icons
-                                                                .cancel_outlined,
-                                                            color: Color(
-                                                              0xFFDC2626,
-                                                            ),
-                                                          ),
-                                                          SizedBox(width: 10),
-                                                          Text("Reject Leave"),
-                                                        ],
-                                                      ),
-
-                                                      content: const Text(
-                                                        "Are you sure you want to reject this leave?",
-                                                      ),
-
-                                                      actions: [
-                                                        TextButton(
-                                                          onPressed: () {
-                                                            Navigator.pop(
-                                                              dialogContext,
-                                                            );
-                                                          },
-                                                          child: const Text(
-                                                            "Cancel",
-                                                            style: TextStyle(
-                                                              color: Color(
-                                                                0xFF6B7280,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-
-                                                        ElevatedButton(
-                                                          style:
-                                                              ElevatedButton.styleFrom(
-                                                                backgroundColor:
-                                                                    const Color(
-                                                                      0xFFDC2626,
-                                                                    ),
-                                                                foregroundColor:
-                                                                    Colors
-                                                                        .white,
-                                                              ),
-
-                                                          onPressed: () async {
-                                                            // Close confirmation popup
-                                                            Navigator.pop(
-                                                              dialogContext,
-                                                            );
-
-                                                            // Reject leave
-                                                            await rejectLeave(
-                                                              data.id,
-                                                              data['uid'],
-                                                              data['leaveType'],
-                                                              double.parse(
-                                                                data['days']
-                                                                    .toString(),
-                                                              ),
-                                                              data['status'],
-                                                            );
-                                                          },
-
-                                                          child: const Text(
-                                                            "Reject",
-                                                            style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w700,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    );
-                                                  },
-                                                );
-                                              },
-
-                                        icon: const Icon(
-                                          Icons.cancel_outlined,
-                                          size: 18,
-                                        ),
-
-                                        label: const Text(
-                                          "Reject",
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
+                                    ],
+                                  ),
+
                                 // ==========================================
                                 // OLD LEAVE MESSAGE
                                 // ==========================================
