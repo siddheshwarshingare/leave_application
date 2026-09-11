@@ -47,6 +47,7 @@ dependencies:
   geolocator: ^14.0.2
   permission_handler: ^12.0.3
   intl: ^0.20.3
+  table_calendar: ^3.2.1
 
 dev_dependencies:
   flutter_test:
@@ -84,6 +85,8 @@ flutter:
     - assets/login.jpg
     - assets/loginlatest.png
     - assets/MobApp.png
+    - assets/Enquadlogosign.jpg
+    - assets/applogor.jpg
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
