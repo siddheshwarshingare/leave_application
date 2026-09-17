@@ -463,9 +463,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       // ==================================================
                       // CREATE ACCOUNT
                       // ==================================================
-                      _CreateAccountButton(onTap: _openSignup),
-
-                      const SizedBox(height: 20),
+                      //  _CreateAccountButton(onTap: _openSignup),
+                      const SizedBox(height: 200),
                     ],
                   ),
                 ),
@@ -857,62 +856,62 @@ class _LoginCard extends StatelessWidget {
           // ========================================================
           // DIVIDER
           // ========================================================
-          Row(
-            children: [
-              Expanded(child: Divider(color: const Color(0xFFE2E4EA))),
+          // Row(
+          //   children: [
+          //     Expanded(child: Divider(color: const Color(0xFFE2E4EA))),
 
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12),
+          //     const Padding(
+          //       padding: EdgeInsets.symmetric(horizontal: 12),
 
-                child: Text(
-                  'or continue with',
+          //       child: Text(
+          //         'or continue with',
 
-                  style: TextStyle(fontSize: 12, color: Color(0xFF8A91A1)),
-                ),
-              ),
+          //         style: TextStyle(fontSize: 12, color: Color(0xFF8A91A1)),
+          //       ),
+          //     ),
 
-              Expanded(child: Divider(color: const Color(0xFFE2E4EA))),
-            ],
-          ),
+          //     Expanded(child: Divider(color: const Color(0xFFE2E4EA))),
+          //   ],
+          // ),
 
-          const SizedBox(height: 17),
+          // const SizedBox(height: 17),
 
-          // ========================================================
-          // GOOGLE + APPLE
-          // ========================================================
-          Row(
-            children: [
-              Expanded(
-                child: _SocialButton(
-                  child: const Text(
-                    'G',
+          // // ========================================================
+          // // GOOGLE + APPLE
+          // // ========================================================
+          // Row(
+          //   children: [
+          //     Expanded(
+          //       child: _SocialButton(
+          //         child: const Text(
+          //           'G',
 
-                    style: TextStyle(
-                      fontSize: 21,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF4285F4),
-                    ),
-                  ),
+          //           style: TextStyle(
+          //             fontSize: 21,
+          //             fontWeight: FontWeight.w700,
+          //             color: Color(0xFF4285F4),
+          //           ),
+          //         ),
 
-                  onTap: () {
-                    debugPrint('Google login requires Google Sign-In setup.');
-                  },
-                ),
-              ),
+          //         onTap: () {
+          //           debugPrint('Google login requires Google Sign-In setup.');
+          //         },
+          //       ),
+          //     ),
 
-              const SizedBox(width: 12),
+          //     const SizedBox(width: 12),
 
-              Expanded(
-                child: _SocialButton(
-                  child: const Icon(Icons.apple, size: 25, color: Colors.black),
+          //     Expanded(
+          //       child: _SocialButton(
+          //         child: const Icon(Icons.apple, size: 25, color: Colors.black),
 
-                  onTap: () {
-                    debugPrint('Apple login requires Apple Sign-In setup.');
-                  },
-                ),
-              ),
-            ],
-          ),
+          //         onTap: () {
+          //           debugPrint('Apple login requires Apple Sign-In setup.');
+          //         },
+          //       ),
+          //     ),
+          //   ],
+          // ),
         ],
       ),
     );
