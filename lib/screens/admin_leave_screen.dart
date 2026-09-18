@@ -250,16 +250,12 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
 
   void testEmail() async {
     try {
-      final response = await emailjs.send(
-        'service_90wr32y',
-        'template_b04xilb',
-        {
-          'email': 'siddheshwarshingare1999@gmail.com',
-          'title': 'TEST SUBJECT',
-          'name': 'TEST MESSAGE',
-        },
-        emailjs.Options(publicKey: '8erlfJzc6WZtfnz0o'),
-      );
+      final response = await emailjs
+          .send('service_90wr32y', 'template_b04xilb', {
+            'email': 'siddheshwarshingare1999@gmail.com',
+            'title': 'TEST SUBJECT',
+            'name': 'TEST MESSAGE',
+          }, emailjs.Options(publicKey: '8erlfJzc6WZtfnz0o'));
 
       print("SUCCESS = ${response.text}");
     } catch (e) {
@@ -1865,7 +1861,9 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
                           final bool isApproved = status == "Approved";
 
                           final bool isRejected = status == "Rejected";
-
+                          print("11111111111111111111111$status");
+                          print("11111111111111111111111$isApproved");
+                          print("111111111111111111111111111111111$isRejected");
                           // ------------------------------------------------
                           // STATUS COLORS
                           // ------------------------------------------------
@@ -2166,8 +2164,8 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
                                 // ==========================================
                                 // APPROVE / REJECT
                                 // ==========================================
-                                if (isApproved)
-                                  ?Row(
+                                if (!isApproved)
+                                  Row(
                                     children: [
                                       // ============================================================
                                       // APPROVE BUTTON
