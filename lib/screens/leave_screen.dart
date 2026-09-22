@@ -38,7 +38,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
   final List<String> leaveTypes = [
     "Casual Leave",
     "Sick Leave",
-    "Paid Leave",
+    "UnPaid Leave",
     //"LWP",
     "C-OFF",
   ];
@@ -703,50 +703,51 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
       // SEND EMAIL
       // ==========================================================
 
-      for (final String receiverEmail in notifyEmails) {
-        try {
-          await emailjs.send(
-            'service_90wr32y',
-            'template_mga5feh',
-            {
-              'to_email': receiverEmail,
-              'request_type': "Leave ",
+      // for (final String receiverEmail in notifyEmails) {
+      try {
+        await emailjs.send(
+          'service_90wr32y',
+          'template_mga5feh',
+          {
+            'to_email': notifyEmails,
+            'request_type': "Leave ",
 
-              'employee_name': userData['name']?.toString() ?? "",
+            'employee_name': userData['name']?.toString() ?? "",
 
-              'employee_email': userData['email']?.toString() ?? "",
+            'employee_email': userData['email']?.toString() ?? "",
 
-              'leave_type': selectedLeaveType ?? "",
+            'leave_type': selectedLeaveType ?? "",
 
-              'leave_duration': leaveDuration,
+            'leave_duration': leaveDuration,
 
-              'half_day_session': leaveDuration == "Half Day Only"
-                  ? halfDaySession ?? ""
-                  : "",
+            'half_day_session': leaveDuration == "Half Day Only"
+                ? halfDaySession ?? ""
+                : "",
 
-              'from_date': _formatDate(fromDate!),
+            'from_date': _formatDate(fromDate!),
 
-              'to_date': _formatDate(toDate!),
+            'to_date': _formatDate(toDate!),
 
-              'days': _formatLeaveDays(requestedDays),
+            'days': _formatLeaveDays(requestedDays),
 
-              'reason': reasonController.text.trim(),
-            },
-            emailjs.Options(
-              publicKey: '8erlfJzc6WZtfnz0o',
+            'reason': reasonController.text.trim(),
+          },
+          emailjs.Options(
+            publicKey: '8erlfJzc6WZtfnz0o',
 
-              privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
-            ),
-          );
+            privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
+          ),
+        );
 
-          debugPrint("Leave email sent to: $receiverEmail");
-        } catch (emailError) {
-          debugPrint(
-            "Failed to send leave email to "
-            "$receiverEmail: $emailError",
-          );
-        }
+        debugPrint("Leave email sent to: $notifyEmails");
+      } catch (emailError) {
+        debugPrint(
+          "Failed to send leave email to "
+          "$notifyEmails: $emailError",
+        );
       }
+
+      // }
 
       // ==========================================================
       // ADMIN NOTIFICATION
