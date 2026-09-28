@@ -431,40 +431,40 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
       // EMAIL
       // ============================================================
 
-      await emailjs.send(
-        'service_90wr32y',
-        'template_b04xilb',
-        {
-          'employee_name': leaveData['employeeName'],
+      // await emailjs.send(
+      //   'service_90wr32y',
+      //   'template_b04xilb',
+      //   {
+      //     'employee_name': leaveData['employeeName'],
 
-          //   'employee_email': "siddheshwar.shingare@en3.ca",
-          'employee_email': leaveData['employeeEmail'],
-          'leave_type': leaveData['leaveType'],
+      //     //   'employee_email': "siddheshwar.shingare@en3.ca",
+      //     'employee_email': leaveData['employeeEmail'],
+      //     'leave_type': leaveData['leaveType'],
 
-          'from_date': (leaveData['fromDate'] as Timestamp)
-              .toDate()
-              .toString()
-              .split(' ')[0],
+      //     'from_date': (leaveData['fromDate'] as Timestamp)
+      //         .toDate()
+      //         .toString()
+      //         .split(' ')[0],
 
-          'to_date': (leaveData['toDate'] as Timestamp)
-              .toDate()
-              .toString()
-              .split(' ')[0],
+      //     'to_date': (leaveData['toDate'] as Timestamp)
+      //         .toDate()
+      //         .toString()
+      //         .split(' ')[0],
 
-          'days': leaveData['days'].toString(),
+      //     'days': leaveData['days'].toString(),
 
-          //  'status': "Approved",
-          'approved': true,
-          'rejected': false,
-        },
+      //     //  'status': "Approved",
+      //     'approved': true,
+      //     'rejected': false,
+      //   },
 
-        //  publicKey: '8erlfJzc6WZtfnz0o',
-        //  privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
-        emailjs.Options(
-          publicKey: '8erlfJzc6WZtfnz0o',
-          privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
-        ),
-      );
+      //   //  publicKey: '8erlfJzc6WZtfnz0o',
+      //   //  privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
+      //   emailjs.Options(
+      //     publicKey: '8erlfJzc6WZtfnz0o',
+      //     privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
+      //   ),
+      // );
 
       // ============================================================
       // SUCCESS
@@ -636,39 +636,39 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
       // SEND EMAIL
       // ============================================================
 
-      await emailjs.send(
-        'service_90wr32y',
-        'template_b04xilb',
-        {
-          'employee_name': leaveData['employeeName'],
+      // await emailjs.send(
+      //   'service_90wr32y',
+      //   'template_b04xilb',
+      //   {
+      //     'employee_name': leaveData['employeeName'],
 
-          'employee_email': leaveData['employeeEmail'],
-          // 'employee_email': "siddheshwar.shingare@en3.ca",
-          'leave_type': leaveData['leaveType'],
+      //     'employee_email': leaveData['employeeEmail'],
+      //     // 'employee_email': "siddheshwar.shingare@en3.ca",
+      //     'leave_type': leaveData['leaveType'],
 
-          'from_date': (leaveData['fromDate'] as Timestamp)
-              .toDate()
-              .toString()
-              .split(' ')[0],
+      //     'from_date': (leaveData['fromDate'] as Timestamp)
+      //         .toDate()
+      //         .toString()
+      //         .split(' ')[0],
 
-          'to_date': (leaveData['toDate'] as Timestamp)
-              .toDate()
-              .toString()
-              .split(' ')[0],
+      //     'to_date': (leaveData['toDate'] as Timestamp)
+      //         .toDate()
+      //         .toString()
+      //         .split(' ')[0],
 
-          'days': leaveData['days'].toString(),
-          'approved': false,
-          'rejected': true,
-          // 'status': 'Rejected',
+      //     'days': leaveData['days'].toString(),
+      //     'approved': false,
+      //     'rejected': true,
+      //     // 'status': 'Rejected',
 
-          // IMPORTANT
-        },
+      //     // IMPORTANT
+      //   },
 
-        emailjs.Options(
-          publicKey: '8erlfJzc6WZtfnz0o',
-          privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
-        ),
-      );
+      //   emailjs.Options(
+      //     publicKey: '8erlfJzc6WZtfnz0o',
+      //     privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
+      //   ),
+      // );
 
       // ============================================================
       // REFRESH LEAVE SUMMARY
@@ -793,7 +793,7 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
           value,
           style: TextStyle(
             color: color,
-            fontSize: 20,
+            fontSize: 16,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -1499,7 +1499,7 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
                               "Leave Summary",
                               style: TextStyle(
                                 color: Color(0xFF17133A),
-                                fontSize: 17,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -1671,88 +1671,87 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
           // ==========================================================
           // REFRESH + ATTENDANCE
           // ==========================================================
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-            child: Row(
-              children: [
-                // ------------------------------------------------------
-                // REFRESH
-                // ------------------------------------------------------
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      if (selectedUid == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Please select an employee first"),
-                          ),
-                        );
-                        return;
-                      }
+          // Padding(
+          //   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+          //   child: Row(
+          //     children: [
+          //       // ------------------------------------------------------
+          //       // REFRESH
+          //       // ------------------------------------------------------
+          //       Expanded(
+          //         child: ElevatedButton.icon(
+          //           onPressed: () {
+          //             if (selectedUid == null) {
+          //               ScaffoldMessenger.of(context).showSnackBar(
+          //                 const SnackBar(
+          //                   content: Text("Please select an employee first"),
+          //                 ),
+          //               );
+          //               return;
+          //             }
 
-                      getLeaveData(selectedUid!);
-                    },
+          //             getLeaveData(selectedUid!);
+          //           },
 
-                    icon: const Icon(Icons.refresh_rounded, size: 19),
+          //           icon: const Icon(Icons.refresh_rounded, size: 19),
 
-                    label: const Text(
-                      "Refresh",
-                      style: TextStyle(fontWeight: FontWeight.w700),
-                    ),
+          //           label: const Text(
+          //             "Refresh",
+          //             style: TextStyle(fontWeight: FontWeight.w700),
+          //           ),
 
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6D28D9),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      minimumSize: const Size(0, 48),
+          //           style: ElevatedButton.styleFrom(
+          //             backgroundColor: const Color(0xFF6D28D9),
+          //             foregroundColor: Colors.white,
+          //             elevation: 0,
+          //             minimumSize: const Size(0, 48),
 
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                  ),
-                ),
+          //             shape: RoundedRectangleBorder(
+          //               borderRadius: BorderRadius.circular(14),
+          //             ),
+          //           ),
+          //         ),
+          //       ),
 
-                const SizedBox(width: 12),
+          //       const SizedBox(width: 12),
 
-                // ------------------------------------------------------
-                // ATTENDANCE
-                // ------------------------------------------------------
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              AdminAttendanceScreen(selectedUid: selectedUid),
-                        ),
-                      );
-                    },
+          //       // ------------------------------------------------------
+          //       // ATTENDANCE
+          //       // ------------------------------------------------------
+          //       Expanded(
+          //         child: ElevatedButton.icon(
+          //           onPressed: () {
+          //             Navigator.push(
+          //               context,
+          //               MaterialPageRoute(
+          //                 builder: (_) =>
+          //                     AdminAttendanceScreen(selectedUid: selectedUid),
+          //               ),
+          //             );
+          //           },
 
-                    icon: const Icon(Icons.access_time_rounded, size: 19),
+          //           icon: const Icon(Icons.access_time_rounded, size: 19),
 
-                    label: const Text(
-                      "Attendance",
-                      style: TextStyle(fontWeight: FontWeight.w700),
-                    ),
+          //           label: const Text(
+          //             "Attendance",
+          //             style: TextStyle(fontWeight: FontWeight.w700),
+          //           ),
 
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF5B21E8),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      minimumSize: const Size(0, 48),
+          //           style: ElevatedButton.styleFrom(
+          //             backgroundColor: const Color(0xFF5B21E8),
+          //             foregroundColor: Colors.white,
+          //             elevation: 0,
+          //             minimumSize: const Size(0, 48),
 
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
+          //             shape: RoundedRectangleBorder(
+          //               borderRadius: BorderRadius.circular(14),
+          //             ),
+          //           ),
+          //         ),
+          //       ),
+          //     ],
+          //   ),
+          // ),
           const SizedBox(height: 8),
 
           // ==========================================================
@@ -2189,100 +2188,96 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
                                             ),
                                           ),
 
-                                          onPressed: isOldLeave
-                                              ? null
-                                              : () {
-                                                  showDialog(
-                                                    context: context,
-                                                    builder: (dialogContext) {
-                                                      return AlertDialog(
-                                                        shape: RoundedRectangleBorder(
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                18,
-                                                              ),
+                                          onPressed: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (dialogContext) {
+                                                return AlertDialog(
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          18,
                                                         ),
+                                                  ),
 
-                                                        title: const Row(
-                                                          children: [
-                                                            Icon(
-                                                              Icons
-                                                                  .check_circle_outline_rounded,
-                                                              color: Color(
-                                                                0xFF16A34A,
-                                                              ),
-                                                            ),
-                                                            SizedBox(width: 10),
-                                                            Text(
-                                                              "Confirm Approval",
-                                                            ),
-                                                          ],
+                                                  title: const Row(
+                                                    children: [
+                                                      Icon(
+                                                        Icons
+                                                            .check_circle_outline_rounded,
+                                                        color: Color(
+                                                          0xFF16A34A,
                                                         ),
+                                                      ),
+                                                      SizedBox(width: 10),
+                                                      Text("Confirm Approval"),
+                                                    ],
+                                                  ),
 
-                                                        content: const Text(
-                                                          "Are you sure you want to approve this leave?",
+                                                  content: const Text(
+                                                    "Are you sure you want to approve this leave?",
+                                                  ),
+
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () {
+                                                        Navigator.pop(
+                                                          dialogContext,
+                                                        );
+                                                      },
+                                                      child: const Text(
+                                                        "Cancel",
+                                                        style: TextStyle(
+                                                          color: Color(
+                                                            0xFF6B7280,
+                                                          ),
                                                         ),
+                                                      ),
+                                                    ),
 
-                                                        actions: [
-                                                          TextButton(
-                                                            onPressed: () {
-                                                              Navigator.pop(
-                                                                dialogContext,
-                                                              );
-                                                            },
-                                                            child: const Text(
-                                                              "Cancel",
-                                                              style: TextStyle(
-                                                                color: Color(
-                                                                  0xFF6B7280,
+                                                    ElevatedButton(
+                                                      style:
+                                                          ElevatedButton.styleFrom(
+                                                            backgroundColor:
+                                                                const Color(
+                                                                  0xFF16A34A,
                                                                 ),
-                                                              ),
-                                                            ),
+                                                            foregroundColor:
+                                                                Colors.white,
                                                           ),
 
-                                                          ElevatedButton(
-                                                            style: ElevatedButton.styleFrom(
-                                                              backgroundColor:
-                                                                  const Color(
-                                                                    0xFF16A34A,
-                                                                  ),
-                                                              foregroundColor:
-                                                                  Colors.white,
-                                                            ),
+                                                      onPressed: () async {
+                                                        // CLOSE DIALOG FIRST
+                                                        Navigator.pop(
+                                                          dialogContext,
+                                                        );
 
-                                                            onPressed: () async {
-                                                              // CLOSE DIALOG FIRST
-                                                              Navigator.pop(
-                                                                dialogContext,
-                                                              );
-
-                                                              // THEN APPROVE
-                                                              await approveLeave(
-                                                                data.id,
-                                                                data['uid'],
-                                                                data['leaveType'],
-                                                                double.parse(
-                                                                  data['days']
-                                                                      .toString(),
-                                                                ),
-                                                                data['status'],
-                                                              );
-                                                            },
-
-                                                            child: const Text(
-                                                              "Approve",
-                                                              style: TextStyle(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w700,
-                                                              ),
-                                                            ),
+                                                        // THEN APPROVE
+                                                        await approveLeave(
+                                                          data.id,
+                                                          data['uid'],
+                                                          data['leaveType'],
+                                                          double.parse(
+                                                            data['days']
+                                                                .toString(),
                                                           ),
-                                                        ],
-                                                      );
-                                                    },
-                                                  );
-                                                },
+                                                          data['status'],
+                                                        );
+                                                      },
+
+                                                      child: const Text(
+                                                        "Approve",
+                                                        style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                            );
+                                          },
 
                                           icon: const Icon(
                                             Icons.check_circle_outline_rounded,
@@ -2322,100 +2317,95 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
                                             ),
                                           ),
 
-                                          onPressed: isOldLeave
-                                              ? null
-                                              : () {
-                                                  showDialog(
-                                                    context: context,
-                                                    builder: (dialogContext) {
-                                                      return AlertDialog(
-                                                        shape: RoundedRectangleBorder(
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                18,
-                                                              ),
+                                          onPressed: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (dialogContext) {
+                                                return AlertDialog(
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          18,
                                                         ),
+                                                  ),
 
-                                                        title: const Row(
-                                                          children: [
-                                                            Icon(
-                                                              Icons
-                                                                  .cancel_outlined,
-                                                              color: Color(
-                                                                0xFFDC2626,
-                                                              ),
-                                                            ),
-                                                            SizedBox(width: 10),
-                                                            Text(
-                                                              "Reject Leave",
-                                                            ),
-                                                          ],
+                                                  title: const Row(
+                                                    children: [
+                                                      Icon(
+                                                        Icons.cancel_outlined,
+                                                        color: Color(
+                                                          0xFFDC2626,
                                                         ),
+                                                      ),
+                                                      SizedBox(width: 10),
+                                                      Text("Reject Leave"),
+                                                    ],
+                                                  ),
 
-                                                        content: const Text(
-                                                          "Are you sure you want to reject this leave?",
+                                                  content: const Text(
+                                                    "Are you sure you want to reject this leave?",
+                                                  ),
+
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () {
+                                                        Navigator.pop(
+                                                          dialogContext,
+                                                        );
+                                                      },
+                                                      child: const Text(
+                                                        "Cancel",
+                                                        style: TextStyle(
+                                                          color: Color(
+                                                            0xFF6B7280,
+                                                          ),
                                                         ),
+                                                      ),
+                                                    ),
 
-                                                        actions: [
-                                                          TextButton(
-                                                            onPressed: () {
-                                                              Navigator.pop(
-                                                                dialogContext,
-                                                              );
-                                                            },
-                                                            child: const Text(
-                                                              "Cancel",
-                                                              style: TextStyle(
-                                                                color: Color(
-                                                                  0xFF6B7280,
+                                                    ElevatedButton(
+                                                      style:
+                                                          ElevatedButton.styleFrom(
+                                                            backgroundColor:
+                                                                const Color(
+                                                                  0xFFDC2626,
                                                                 ),
-                                                              ),
-                                                            ),
+                                                            foregroundColor:
+                                                                Colors.white,
                                                           ),
 
-                                                          ElevatedButton(
-                                                            style: ElevatedButton.styleFrom(
-                                                              backgroundColor:
-                                                                  const Color(
-                                                                    0xFFDC2626,
-                                                                  ),
-                                                              foregroundColor:
-                                                                  Colors.white,
-                                                            ),
+                                                      onPressed: () async {
+                                                        // Close confirmation popup
+                                                        Navigator.pop(
+                                                          dialogContext,
+                                                        );
 
-                                                            onPressed: () async {
-                                                              // Close confirmation popup
-                                                              Navigator.pop(
-                                                                dialogContext,
-                                                              );
-
-                                                              // Reject leave
-                                                              await rejectLeave(
-                                                                data.id,
-                                                                data['uid'],
-                                                                data['leaveType'],
-                                                                double.parse(
-                                                                  data['days']
-                                                                      .toString(),
-                                                                ),
-                                                                data['status'],
-                                                              );
-                                                            },
-
-                                                            child: const Text(
-                                                              "Reject",
-                                                              style: TextStyle(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w700,
-                                                              ),
-                                                            ),
+                                                        // Reject leave
+                                                        await rejectLeave(
+                                                          data.id,
+                                                          data['uid'],
+                                                          data['leaveType'],
+                                                          double.parse(
+                                                            data['days']
+                                                                .toString(),
                                                           ),
-                                                        ],
-                                                      );
-                                                    },
-                                                  );
-                                                },
+                                                          data['status'],
+                                                        );
+                                                      },
+
+                                                      child: const Text(
+                                                        "Reject",
+                                                        style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                            );
+                                          },
 
                                           icon: const Icon(
                                             Icons.cancel_outlined,

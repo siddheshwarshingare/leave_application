@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emailjs/emailjs.dart' as emailjs;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:leave_application/screens/leave_screen.dart';
+import 'package:leave_application/screens/to_admin_seletion_screen.dart';
 
 class ApplyCOffScreen extends StatefulWidget {
   const ApplyCOffScreen({super.key});
@@ -13,6 +15,22 @@ class ApplyCOffScreen extends StatefulWidget {
 class _ApplyCOffScreenState extends State<ApplyCOffScreen> {
   final formKey = GlobalKey<FormState>();
   final reasonController = TextEditingController();
+  final Set<String> selectedCcEmails = {};
+  // ==========================================================
+  // TO / CC EMPLOYEE SELECTION
+  // ==========================================================
+
+  List<Map<String, String>> employees = [];
+
+  List<Map<String, String>> admins = [];
+
+  final Set<String> selectedToEmails = {};
+
+  //  final Set<String> selectedCcEmails = {};
+
+  bool loadingEmployees = false;
+
+  static const int maxCcEmployees = 100;
 
   // ==========================================================
   // SELECTED DATES
@@ -52,11 +70,408 @@ class _ApplyCOffScreenState extends State<ApplyCOffScreen> {
   // ==========================================================
   // INIT
   // ==========================================================
+  // ==========================================================
+  // LOAD EMPLOYEES + ADMINS
+  // ==========================================================
+  String getToDisplayText() {
+    if (selectedToEmails.isEmpty) {
+      return "Select admin(s)";
+    }
+
+    if (selectedToEmails.length == 1) {
+      return selectedToEmails.first;
+    }
+
+    return "${selectedToEmails.length} admins selected";
+  }
+
+  Future<void> loadEmployeesAndAdmins() async {
+    try {
+      if (mounted) {
+        setState(() {
+          loadingEmployees = true;
+        });
+      }
+
+      final User? currentUser = FirebaseAuth.instance.currentUser;
+
+      final QuerySnapshot employeeSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('role', isEqualTo: 'Employee')
+          .get();
+
+      final QuerySnapshot adminSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('role', isEqualTo: 'admin')
+          .get();
+
+      final List<Map<String, String>> loadedEmployees = [];
+      final List<Map<String, String>> loadedAdmins = [];
+
+      final Set<String> addedEmails = {};
+
+      final String currentUserEmail =
+          currentUser?.email?.trim().toLowerCase() ?? '';
+
+      // ========================================================
+      // EMPLOYEES
+      // ========================================================
+
+      for (final QueryDocumentSnapshot doc in employeeSnapshot.docs) {
+        final Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+
+        final String email = data['email']?.toString().trim() ?? '';
+
+        final String name = data['name']?.toString().trim() ?? '';
+
+        if (email.isEmpty) {
+          continue;
+        }
+
+        if (email.toLowerCase() == currentUserEmail) {
+          continue;
+        }
+
+        final String normalizedEmail = email.toLowerCase();
+
+        if (addedEmails.contains(normalizedEmail)) {
+          continue;
+        }
+
+        addedEmails.add(normalizedEmail);
+
+        loadedEmployees.add({
+          'uid': doc.id,
+          'name': name.isEmpty ? email : name,
+          'email': email,
+          'role': 'Employee',
+        });
+      }
+
+      // ========================================================
+      // ADMINS
+      // ========================================================
+
+      for (final QueryDocumentSnapshot doc in adminSnapshot.docs) {
+        final Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+
+        final String email = data['email']?.toString().trim() ?? '';
+
+        final String name = data['name']?.toString().trim() ?? '';
+
+        if (email.isEmpty) {
+          continue;
+        }
+
+        if (email.toLowerCase() == currentUserEmail) {
+          continue;
+        }
+
+        final String normalizedEmail = email.toLowerCase();
+
+        if (addedEmails.contains(normalizedEmail)) {
+          continue;
+        }
+
+        addedEmails.add(normalizedEmail);
+
+        loadedEmployees.add({
+          'uid': doc.id,
+          'name': name.isEmpty ? email : name,
+          'email': email,
+          'role': 'admin',
+        });
+
+        loadedAdmins.add({
+          'uid': doc.id,
+          'name': name.isEmpty ? email : name,
+          'email': email,
+          'role': 'admin',
+        });
+      }
+
+      // ========================================================
+      // SORT
+      // ========================================================
+
+      loadedEmployees.sort(
+        (a, b) => a['name']!.toLowerCase().compareTo(b['name']!.toLowerCase()),
+      );
+
+      loadedAdmins.sort(
+        (a, b) => a['name']!.toLowerCase().compareTo(b['name']!.toLowerCase()),
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        employees = loadedEmployees;
+        admins = loadedAdmins;
+        loadingEmployees = false;
+      });
+
+      debugPrint("C-OFF CC EMPLOYEES = ${employees.length}");
+      debugPrint("C-OFF TO ADMINS = ${admins.length}");
+    } catch (e) {
+      debugPrint("Failed to load employees/admins: $e");
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        loadingEmployees = false;
+      });
+    }
+  }
+
+  // ==========================================================
+  // TO ADMIN SELECTOR
+  // ==========================================================
+  Widget buildToAdminSelector() {
+    final bool hasSelection = selectedToEmails.isNotEmpty;
+
+    String? selectedName;
+
+    if (selectedToEmails.length == 1) {
+      final email = selectedToEmails.first;
+
+      final admin = admins.cast<Map<String, String>?>().firstWhere(
+        (item) =>
+            item?['email']?.trim().toLowerCase() == email.trim().toLowerCase(),
+        orElse: () => null,
+      );
+
+      selectedName = admin?['name'];
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: loadingEmployees ? null : openToAdminSelector,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: const Icon(
+                  Icons.person_rounded,
+                  color: Color(0xFF2563EB),
+                  size: 20,
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "To Admin",
+                      style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    ),
+
+                    const SizedBox(height: 4),
+
+                    Text(
+                      loadingEmployees
+                          ? "Loading admins..."
+                          : getToDisplayText(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: hasSelection
+                            ? const Color(0xFF172033)
+                            : const Color(0xFF94A3B8),
+                      ),
+                    ),
+
+                    if (hasSelection && selectedToEmails.length == 1) ...[
+                      const SizedBox(height: 2),
+
+                      Text(
+                        selectedName ?? selectedToEmails.first,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+
+              const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: Color(0xFF64748B),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> openToAdminSelector() async {
+    final Set<String>? result = await showDialog<Set<String>>(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) {
+        return ToAdminSelectionDialog(
+          admins: admins,
+          initialSelection: Set<String>.from(selectedToEmails),
+        );
+      },
+    );
+
+    if (!mounted || result == null) {
+      return;
+    }
+
+    setState(() {
+      selectedToEmails
+        ..clear()
+        ..addAll(result);
+    });
+  }
+
+  // ==========================================================
+  // CC SELECTOR
+  // ==========================================================
+
+  Widget buildCcEmployeeSelector() {
+    String displayText;
+
+    if (selectedCcEmails.isEmpty) {
+      displayText = "Select employees/admins";
+    } else if (selectedCcEmails.length == 1) {
+      final String email = selectedCcEmails.first;
+
+      final Map<String, String>? employee = employees
+          .cast<Map<String, String>?>()
+          .firstWhere((item) => item?['email'] == email, orElse: () => null);
+
+      displayText = employee?['name'] ?? email;
+    } else {
+      displayText = "${selectedCcEmails.length} employees selected";
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: loadingEmployees ? null : openCcEmployeeSelector,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0E9FF),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: const Icon(
+                  Icons.people_alt_rounded,
+                  color: Color(0xFF6D28D9),
+                  size: 20,
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "CC Employees",
+                      style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    ),
+
+                    const SizedBox(height: 4),
+
+                    Text(
+                      loadingEmployees ? "Loading employees..." : displayText,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: selectedCcEmails.isEmpty
+                            ? const Color(0xFF94A3B8)
+                            : const Color(0xFF172033),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: Color(0xFF64748B),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> openCcEmployeeSelector() async {
+    final Set<String> initialSelection = Set<String>.from(selectedCcEmails);
+
+    final Set<String>? result = await showDialog<Set<String>>(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) {
+        return CcEmployeeSelectionDialog(
+          employees: employees,
+          initialSelection: initialSelection,
+          maxSelection: maxCcEmployees,
+        );
+      },
+    );
+
+    if (!mounted || result == null) {
+      return;
+    }
+
+    setState(() {
+      selectedCcEmails
+        ..clear()
+        ..addAll(result);
+    });
+  }
 
   @override
   void initState() {
     super.initState();
     loadCalendarData();
+    loadEmployeesAndAdmins();
   }
 
   // ==========================================================
@@ -697,6 +1112,14 @@ class _ApplyCOffScreenState extends State<ApplyCOffScreen> {
     if (!formKey.currentState!.validate()) {
       return;
     }
+    if (selectedToEmails.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please select at least one admin in To."),
+        ),
+      );
+      return;
+    }
 
     if (selectedWorkedDates.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -853,6 +1276,11 @@ class _ApplyCOffScreenState extends State<ApplyCOffScreen> {
               .data()?["secondaryEmail"]
               ?.toString()
               .trim();
+          final toEmails = selectedToEmails.toList();
+
+          final ccEmails = selectedCcEmails
+              .where((email) => !selectedToEmails.contains(email))
+              .toList();
 
           if (primaryEmail != null && primaryEmail.isNotEmpty) {
             notifyEmails.add(primaryEmail);
@@ -864,43 +1292,48 @@ class _ApplyCOffScreenState extends State<ApplyCOffScreen> {
             notifyEmails.add(secondaryEmail);
           }
 
-          for (final receiverEmail in notifyEmails) {
-            try {
-              await emailjs.send(
-                "service_90wr32y",
-                "template_mga5feh",
-                {
-                  "to_email": receiverEmail,
-                  'request_type': 'C-Off',
-                  "employee_name": employeeName,
+          //   for (final receiverEmail in notifyEmails) {
+          try {
+            await emailjs.send(
+              "service_90wr32y",
+              "template_mga5feh",
+              {
+                "to_email": toEmails.join(","),
+                "cc_email": selectedCcEmails
+                    .where((email) => !selectedToEmails.contains(email))
+                    .join(","),
 
-                  "employee_email": employeeEmail,
+                'request_type': 'C-Off',
 
-                  "leave_type": "C-Off",
+                "employee_name": employeeName,
 
-                  "from_date": formatDate(dates.first),
+                "employee_email": employeeEmail,
 
-                  "to_date": formatDate(dates.last),
+                "leave_type": "C-Off",
 
-                  "days": dates.length.toString(),
+                "from_date": formatDate(dates.first),
 
-                  "reason": reasonController.text.trim(),
+                "to_date": formatDate(dates.last),
 
-                  "worked_dates": formattedDates,
-                },
-                emailjs.Options(
-                  publicKey: "8erlfJzc6WZtfnz0o",
-                  privateKey: "wRTOsFZnkQi6yxQX7D-rF",
+                "days": dates.length.toString(),
 
-                  // privateKey: const String.fromEnvironment(
-                  //   "wRTOsFZnkQi6yxQX7D-rF",
-                  // ),
-                ),
-              );
-            } catch (emailError) {
-              debugPrint("C-Off email failed: $emailError");
-            }
+                "reason": reasonController.text.trim(),
+
+                "worked_dates": formattedDates,
+              },
+              emailjs.Options(
+                publicKey: "8erlfJzc6WZtfnz0o",
+                privateKey: "wRTOsFZnkQi6yxQX7D-rF",
+
+                // privateKey: const String.fromEnvironment(
+                //   "wRTOsFZnkQi6yxQX7D-rF",
+                // ),
+              ),
+            );
+          } catch (emailError) {
+            debugPrint("C-Off email failed: $emailError");
           }
+          // }
         }
       } catch (emailError) {
         debugPrint("Email configuration error: $emailError");
@@ -1056,6 +1489,37 @@ class _ApplyCOffScreenState extends State<ApplyCOffScreen> {
               // REASON
               // =================================================
               sectionLabel("Reason"),
+              // =================================================
+              // TO ADMIN
+              // =================================================
+
+              sectionLabel("To"),
+
+              buildToAdminSelector(),
+
+              const SizedBox(height: 17),
+
+              // =================================================
+              // CC EMPLOYEES / ADMINS
+              // =================================================
+              sectionLabel("CC"),
+
+              buildCcEmployeeSelector(),
+
+              if (selectedCcEmails.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 7, left: 4),
+                  child: Text(
+                    "${selectedCcEmails.length} employee/admin(s) "
+                    "will receive this C-Off email in CC.",
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ),
+
+              const SizedBox(height: 17),
 
               TextFormField(
                 controller: reasonController,

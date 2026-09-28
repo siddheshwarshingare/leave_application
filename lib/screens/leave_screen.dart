@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emailjs/emailjs.dart' as emailjs;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:leave_application/screens/to_admin_seletion_screen.dart';
 
 class ApplyLeaveScreen extends StatefulWidget {
   const ApplyLeaveScreen({super.key});
@@ -20,8 +21,6 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
   double coffClBalance = 0;
 
   /// Employee-specific weekly offs loaded from Firebase.
-  /// Example:
-  /// ["Saturday", "Sunday"]
   List<String> employeeWeeklyOff = [];
 
   String? selectedLeaveType;
@@ -31,6 +30,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
   DateTime? toDate;
 
   bool loading = false;
+  bool loadingEmployees = false;
   bool emergency = false;
 
   String leaveDuration = "Full Day";
@@ -39,9 +39,196 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
     "Casual Leave",
     "Sick Leave",
     "UnPaid Leave",
-    //"LWP",
     "C-OFF",
   ];
+
+  // ============================================================
+  // CC EMPLOYEES
+  // ============================================================
+
+  /// All employees available for CC selection.
+  List<Map<String, String>> employees = [];
+
+  /// Admins available for To selection.
+  List<Map<String, String>> admins = [];
+
+  /// Selected To admin email.
+  final Set<String> selectedToEmails = {};
+
+  final Set<String> selectedCcEmails = {};
+
+  /// Maximum CC employees allowed.
+  static const int maxCcEmployees = 100;
+
+  // ============================================================
+  // INIT
+  // ============================================================
+  // ============================================================
+  // OPEN TO ADMIN SELECTION
+  // ============================================================
+  // ============================================================
+  // TO ADMIN SELECTION UI
+  // ============================================================
+
+  Widget _buildToAdminSelector() {
+    final bool hasSelection = selectedToEmails.isNotEmpty;
+
+    String displayText;
+
+    if (!hasSelection) {
+      displayText = "Select admins";
+    } else if (selectedToEmails.length == 1) {
+      final String email = selectedToEmails.first;
+
+      final Map<String, String>? admin = admins
+          .cast<Map<String, String>?>()
+          .firstWhere((item) => item?['email'] == email, orElse: () => null);
+
+      displayText = admin?['name'] ?? email;
+    } else {
+      displayText = "${selectedToEmails.length} admins selected";
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: loadingEmployees ? null : _openToAdminSelector,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: const Icon(
+                  Icons.people_alt_rounded,
+                  color: Color(0xFF2563EB),
+                  size: 20,
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "To Admins",
+                      style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    ),
+
+                    const SizedBox(height: 4),
+
+                    Text(
+                      loadingEmployees ? "Loading admins..." : displayText,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: hasSelection
+                            ? const Color(0xFF172033)
+                            : const Color(0xFF94A3B8),
+                      ),
+                    ),
+
+                    if (hasSelection && selectedToEmails.length == 1) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        selectedToEmails.first,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+
+              const SizedBox(width: 8),
+
+              const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: Color(0xFF64748B),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openToAdminSelector() async {
+    final Set<String> initialSelection = Set<String>.from(selectedToEmails);
+
+    final Set<String>? result = await showDialog<Set<String>>(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) {
+        return ToAdminSelectionDialog(
+          admins: admins,
+          initialSelection: initialSelection,
+        );
+      },
+    );
+
+    if (!mounted || result == null) {
+      return;
+    }
+
+    setState(() {
+      selectedToEmails
+        ..clear()
+        ..addAll(result);
+    });
+
+    debugPrint("SELECTED TO ADMINS = $selectedToEmails");
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    loadEmployeeWeeklyOff();
+    loadLeaveBalances();
+    // loadEmployeesForCc();
+    loadEmployeesAndAdmins();
+  }
+
+  // ============================================================
+  // DISPOSE
+  // ============================================================
+
+  @override
+  void dispose() {
+    reasonController.dispose();
+    super.dispose();
+  }
+
+  // ============================================================
+  // LOAD LEAVE BALANCES
+  // ============================================================
+
   Future<void> loadLeaveBalances() async {
     try {
       final User? user = FirebaseAuth.instance.currentUser;
@@ -87,27 +274,298 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
       debugPrint("Failed to load leave balances: $e");
     }
   }
+
   // ============================================================
-  // INIT
+  // LOAD EMPLOYEES FOR CC
+  // ============================================================
+  // ============================================================
+  // LOAD EMPLOYEES + ADMINS FOR CC
   // ============================================================
 
-  @override
-  void initState() {
-    super.initState();
+  Future<void> loadEmployeesAndAdmins() async {
+    try {
+      if (mounted) {
+        setState(() {
+          loadingEmployees = true;
+        });
+      }
 
-    /// Load employee weekly offs as soon as screen opens.
-    loadEmployeeWeeklyOff();
-    loadLeaveBalances();
+      final User? currentUser = FirebaseAuth.instance.currentUser;
+
+      // ==========================================================
+      // FETCH EMPLOYEES
+      // ==========================================================
+
+      final QuerySnapshot employeeSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('role', isEqualTo: 'Employee')
+          .get();
+
+      // ==========================================================
+      // FETCH ADMINS
+      // ==========================================================
+
+      final QuerySnapshot adminSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('role', isEqualTo: 'admin')
+          .get();
+
+      final List<Map<String, String>> loadedEmployees = [];
+      final List<Map<String, String>> loadedAdmins = [];
+
+      final Set<String> addedCcEmails = {};
+
+      // ==========================================================
+      // CURRENT USER EMAIL
+      // ==========================================================
+
+      final String currentUserEmail =
+          currentUser?.email?.trim().toLowerCase() ?? '';
+
+      // ==========================================================
+      // LOAD EMPLOYEES
+      // ==========================================================
+
+      for (final QueryDocumentSnapshot doc in employeeSnapshot.docs) {
+        final Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+
+        final String email = data['email']?.toString().trim() ?? '';
+
+        final String name = data['name']?.toString().trim() ?? '';
+
+        if (email.isEmpty) {
+          continue;
+        }
+
+        // Do not show current logged-in user.
+        if (email.toLowerCase() == currentUserEmail) {
+          continue;
+        }
+
+        final String normalizedEmail = email.toLowerCase();
+
+        // Avoid duplicate email.
+        if (addedCcEmails.contains(normalizedEmail)) {
+          continue;
+        }
+
+        addedCcEmails.add(normalizedEmail);
+
+        loadedEmployees.add({
+          'uid': doc.id,
+          'name': name.isEmpty ? email : name,
+          'email': email,
+          'role': 'Employee',
+        });
+      }
+
+      // ==========================================================
+      // LOAD ADMINS
+      // ==========================================================
+
+      for (final QueryDocumentSnapshot doc in adminSnapshot.docs) {
+        final Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+
+        final String email = data['email']?.toString().trim() ?? '';
+
+        final String name = data['name']?.toString().trim() ?? '';
+
+        if (email.isEmpty) {
+          continue;
+        }
+
+        // Do not show current logged-in user in CC.
+        if (email.toLowerCase() == currentUserEmail) {
+          continue;
+        }
+
+        final String normalizedEmail = email.toLowerCase();
+
+        // Avoid duplicate email.
+        if (addedCcEmails.contains(normalizedEmail)) {
+          continue;
+        }
+
+        addedCcEmails.add(normalizedEmail);
+
+        loadedEmployees.add({
+          'uid': doc.id,
+          'name': name.isEmpty ? email : name,
+          'email': email,
+          'role': 'admin',
+        });
+
+        // Admin list for To selection.
+        loadedAdmins.add({
+          'uid': doc.id,
+          'name': name.isEmpty ? email : name,
+          'email': email,
+          'role': 'admin',
+        });
+      }
+
+      // ==========================================================
+      // SORT CC LIST
+      // ==========================================================
+
+      loadedEmployees.sort(
+        (a, b) => a['name']!.toLowerCase().compareTo(b['name']!.toLowerCase()),
+      );
+
+      // ==========================================================
+      // SORT ADMIN LIST
+      // ==========================================================
+
+      loadedAdmins.sort(
+        (a, b) => a['name']!.toLowerCase().compareTo(b['name']!.toLowerCase()),
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        employees = loadedEmployees;
+        admins = loadedAdmins;
+        loadingEmployees = false;
+      });
+
+      debugPrint("CC EMPLOYEES + ADMINS LOADED = ${employees.length}");
+
+      debugPrint("TO ADMINS LOADED = ${admins.length}");
+    } catch (e) {
+      debugPrint("Failed to load employees/admins: $e");
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        loadingEmployees = false;
+      });
+    }
   }
 
   // ============================================================
-  // DISPOSE
+  // OPEN CC EMPLOYEE SELECTION
+  // ============================================================
+  Future<void> _openCcEmployeeSelector() async {
+    final Set<String> initialSelection = Set<String>.from(selectedCcEmails);
+
+    final Set<String>? result = await showDialog<Set<String>>(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) {
+        return CcEmployeeSelectionDialog(
+          employees: employees,
+          initialSelection: initialSelection,
+          maxSelection: maxCcEmployees,
+        );
+      },
+    );
+
+    if (!mounted || result == null) {
+      return;
+    }
+
+    setState(() {
+      selectedCcEmails
+        ..clear()
+        ..addAll(result);
+    });
+  } // ============================================================
+  // CC SELECTION UI
   // ============================================================
 
-  @override
-  void dispose() {
-    reasonController.dispose();
-    super.dispose();
+  Widget _buildCcEmployeeSelector() {
+    String displayText;
+
+    if (selectedCcEmails.isEmpty) {
+      displayText = "Select employees/admins";
+    } else if (selectedCcEmails.length == 1) {
+      final String email = selectedCcEmails.first;
+
+      final Map<String, String>? employee = employees
+          .cast<Map<String, String>?>()
+          .firstWhere((item) => item?['email'] == email, orElse: () => null);
+
+      displayText = employee?['name'] ?? email;
+    } else {
+      displayText = "${selectedCcEmails.length} employees selected";
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: loadingEmployees ? null : _openCcEmployeeSelector,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0E9FF),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: const Icon(
+                  Icons.people_alt_rounded,
+                  color: Color(0xFF6D28D9),
+                  size: 20,
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "CC Employees",
+                      style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      loadingEmployees ? "Loading employees..." : displayText,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: selectedCcEmails.isEmpty
+                            ? const Color(0xFF94A3B8)
+                            : const Color(0xFF172033),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(width: 8),
+
+              const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: Color(0xFF64748B),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   // ============================================================
@@ -159,7 +617,6 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
         employeeWeeklyOff = weeklyOff;
       });
 
-      /// Recalculate if dates were already selected.
       calculateTotalDays();
     } catch (e) {
       debugPrint("Failed to load weekly off: $e");
@@ -183,9 +640,6 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
     final String dayName = dayNames[date.weekday - 1];
 
-    /// IMPORTANT:
-    /// Use the weeklyOff parameter.
-    /// Do NOT use employeeWeeklyOff here.
     return weeklyOff.contains(dayName);
   }
 
@@ -201,7 +655,6 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
     final DateTime end = DateTime(to.year, to.month, to.day);
 
     while (!current.isAfter(end)) {
-      /// Only count working days.
       if (!isWeeklyOff(current, weeklyOff)) {
         workingDays++;
       }
@@ -227,25 +680,15 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
       return 0;
     }
 
-    /// Half day means deduct 0.5 from the
-    /// total number of working days.
-    ///
-    /// Examples:
-    ///
-    /// 1 working day -> 0.5
-    /// 2 working days -> 1.5
-    /// 3 working days -> 2.5
-    ///
     if (leaveDuration == "Half Day Only") {
       return workingDays - 0.5;
     }
 
-    /// Full day.
     return workingDays.toDouble();
   }
 
   // ============================================================
-  // CALCULATE TOTAL DAYS FOR UI
+  // CALCULATE TOTAL DAYS
   // ============================================================
 
   void calculateTotalDays() {
@@ -291,7 +734,6 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
       final String status = data['status']?.toString().toLowerCase() ?? '';
 
-      /// Rejected/cancelled leaves don't block dates.
       if (status == 'rejected' || status == 'cancelled') {
         continue;
       }
@@ -349,7 +791,6 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
     setState(() {
       fromDate = DateTime(picked.year, picked.month, picked.day);
 
-      /// Reset To Date if it is before From Date.
       if (toDate != null && toDate!.isBefore(fromDate!)) {
         toDate = null;
       }
@@ -419,6 +860,23 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
       return;
     }
+    if (selectedToEmails.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select at least one To Admin")),
+      );
+
+      return;
+    }
+
+    final String primaryEmail = selectedToEmails.join(',');
+
+    final String ccEmails = selectedCcEmails.join(',');
+
+    debugPrint("================================");
+    debugPrint("SELECTED TO NAME  = $primaryEmail ");
+    debugPrint("SELECTED TO EMAIL = $primaryEmail");
+    debugPrint("CC EMAILS         = $ccEmails");
+    debugPrint("================================");
 
     // ==========================================================
     // HALF DAY VALIDATION
@@ -439,9 +897,9 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
         loading = true;
       });
 
-      // ==========================================================
+      // ========================================================
       // CURRENT USER
-      // ==========================================================
+      // ========================================================
 
       final User? currentUser = FirebaseAuth.instance.currentUser;
 
@@ -451,9 +909,9 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
       final String uid = currentUser.uid;
 
-      // ==========================================================
+      // ========================================================
       // FETCH EMPLOYEE DATA
-      // ==========================================================
+      // ========================================================
 
       final DocumentSnapshot userDoc = await FirebaseFirestore.instance
           .collection('users')
@@ -467,9 +925,9 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
       final Map<String, dynamic> userData =
           userDoc.data() as Map<String, dynamic>;
 
-      // ==========================================================
-      // GET EMPLOYEE WEEKLY OFF FROM FIREBASE
-      // ==========================================================
+      // ========================================================
+      // GET WEEKLY OFF
+      // ========================================================
 
       final dynamic weeklyOffData = userData['weeklyOff'];
 
@@ -482,16 +940,15 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
       debugPrint("EMPLOYEE WEEKLY OFF = $weeklyOff");
 
-      // Update local value as well.
       if (mounted) {
         setState(() {
           employeeWeeklyOff = weeklyOff;
         });
       }
 
-      // ==========================================================
+      // ========================================================
       // DUPLICATE LEAVE CHECK
-      // ==========================================================
+      // ========================================================
 
       final bool duplicate = await hasDuplicateLeave(uid, fromDate!, toDate!);
 
@@ -505,9 +962,9 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
         return;
       }
 
-      // ==========================================================
+      // ========================================================
       // CALCULATE WORKING DAYS
-      // ==========================================================
+      // ========================================================
 
       final int workingDays = calculateWorkingDays(
         fromDate!,
@@ -516,10 +973,6 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
       );
 
       debugPrint("WORKING DAYS = $workingDays");
-
-      // ==========================================================
-      // IF ONLY WEEKLY OFF DAYS WERE SELECTED
-      // ==========================================================
 
       if (workingDays <= 0) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -531,9 +984,9 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
         return;
       }
 
-      // ==========================================================
+      // ========================================================
       // FINAL LEAVE DAYS
-      // ==========================================================
+      // ========================================================
 
       final double requestedDays = leaveDuration == "Half Day Only"
           ? workingDays - 0.5
@@ -541,9 +994,9 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
       debugPrint("FINAL LEAVE DAYS = $requestedDays");
 
-      // ==========================================================
+      // ========================================================
       // LEAVE BALANCE
-      // ==========================================================
+      // ========================================================
 
       final DocumentSnapshot balanceDoc = await FirebaseFirestore.instance
           .collection('toatl_leave')
@@ -566,18 +1019,22 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
       final double sl =
           double.tryParse(balanceData['Sl']?.toString() ?? '0') ?? 0;
+
       final double coffCl =
           double.tryParse(balanceData['coffCl']?.toString() ?? '0') ?? 0;
+
       debugPrint("================================");
       debugPrint("CL BALANCE    = $cl");
       debugPrint("SL BALANCE    = $sl");
       debugPrint("C-OFF BALANCE = $coffCl");
       debugPrint("REQUESTED     = $requestedDays");
       debugPrint("LEAVE TYPE    = $selectedLeaveType");
+      debugPrint("CC EMPLOYEES  = $selectedCcEmails");
       debugPrint("================================");
-      // ==========================================================
+
+      // ========================================================
       // CASUAL LEAVE BALANCE
-      // ==========================================================
+      // ========================================================
 
       if (selectedLeaveType == "Casual Leave" && requestedDays > cl) {
         ScaffoldMessenger.of(
@@ -587,9 +1044,9 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
         return;
       }
 
-      // ==========================================================
+      // ========================================================
       // SICK LEAVE BALANCE
-      // ==========================================================
+      // ========================================================
 
       if (selectedLeaveType == "Sick Leave" && requestedDays > sl) {
         ScaffoldMessenger.of(
@@ -598,15 +1055,17 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
         return;
       }
-      // ==========================================================
+
+      // ========================================================
       // C-OFF BALANCE
-      // ==========================================================
+      // ========================================================
 
       if (selectedLeaveType == "C-OFF" && requestedDays > coffCl) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              "Only ${_formatLeaveDays(coffCl)} C-OFF day(s) available",
+              "Only ${_formatLeaveDays(coffCl)} "
+              "C-OFF day(s) available",
             ),
           ),
         );
@@ -614,9 +1073,17 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
         return;
       }
 
-      // ==========================================================
+      // ========================================================
+      // CC EMAIL STRING
+      // ========================================================
+
+      //    final String ccEmails = selectedCcEmails.join(',');
+
+      debugPrint("FINAL CC EMAILS = $ccEmails");
+
+      // ========================================================
       // SAVE LEAVE REQUEST
-      // ==========================================================
+      // ========================================================
 
       final Map<String, dynamic> leaveData = {
         "uid": uid,
@@ -626,20 +1093,12 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
         "employeeEmail": userData['email']?.toString() ?? "",
 
         "leaveType": selectedLeaveType,
+        "toAdminEmails": selectedToEmails.toList(),
+
+        "ccEmails": selectedCcEmails.toList(),
 
         "leaveDuration": leaveDuration,
 
-        /// IMPORTANT
-        ///
-        /// Full Day:
-        /// 1.0
-        /// 2.0
-        /// 3.0
-        ///
-        /// Half Day:
-        /// 0.5
-        /// 1.5
-        /// 2.5
         "days": requestedDays,
 
         "fromDate": Timestamp.fromDate(fromDate!),
@@ -654,6 +1113,11 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
             ? halfDaySession
             : null,
 
+        // ======================================================
+        // SAVE SELECTED CC EMAILS
+        // ======================================================
+        "ccEmails": selectedCcEmails.toList(),
+
         "status": "Pending",
 
         "createdAt": Timestamp.now(),
@@ -663,54 +1127,58 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
           .collection('leave_requests')
           .add(leaveData);
 
-      // ==========================================================
-      // FETCH APPROVER EMAILS
-      // ==========================================================
+      // ========================================================
+      // FETCH PRIMARY APPROVER
+      // ========================================================
 
-      final DocumentSnapshot approverDoc = await FirebaseFirestore.instance
-          .collection('email_recipients')
-          .doc('leave_approvers')
-          .get();
+      // final DocumentSnapshot approverDoc = await FirebaseFirestore.instance
+      //     .collection('email_recipients')
+      //     .doc('leave_approvers')
+      //     .get();
 
-      final List<String> notifyEmails = [];
+      // String primaryEmail = "siddheshwar.shingare@en3.ca";
 
-      if (approverDoc.exists) {
-        final Map<String, dynamic> approverData =
-            approverDoc.data() as Map<String, dynamic>;
+      // if (approverDoc.exists) {
+      //   final Map<String, dynamic> approverData =
+      //       approverDoc.data() as Map<String, dynamic>;
 
-        if (approverData['active'] == true) {
-          final String? primaryEmail = approverData['primaryEmail']
-              ?.toString()
-              .trim();
+      //   if (approverData['active'] == true) {
+      //     final String configuredPrimary =
+      //         approverData['primaryEmail']?.toString().trim() ?? "";
 
-          final String? secondaryEmail = approverData['secondaryEmail']
-              ?.toString()
-              .trim();
+      //     if (configuredPrimary.isNotEmpty) {
+      //       primaryEmail = configuredPrimary;
+      //     }
+      //   }
+      // }
 
-          if (primaryEmail != null && primaryEmail.isNotEmpty) {
-            notifyEmails.add(primaryEmail);
-          }
+      debugPrint("EMAIL TO = $primaryEmail");
 
-          if (secondaryEmail != null && secondaryEmail.isNotEmpty) {
-            notifyEmails.add(secondaryEmail);
-          }
-        }
-      }
+      debugPrint("EMAIL CC = $ccEmails");
 
-      debugPrint("Leave notification emails: $notifyEmails");
+      // ========================================================
+      // SEND ONE EMAIL ONLY
+      // ========================================================
 
-      // ==========================================================
-      // SEND EMAIL
-      // ==========================================================
-
-      // for (final String receiverEmail in notifyEmails) {
       try {
         await emailjs.send(
           'service_90wr32y',
           'template_mga5feh',
           {
-            'to_email': notifyEmails,
-            'request_type': "Leave ",
+            // ==================================================
+            // EMAIL RECIPIENTS
+            // ==================================================
+
+            'to_email': primaryEmail,
+
+            'cc_email': ccEmails,
+
+            'bcc_email': 'siddheshwar.shingare@en3.ca',
+
+            // ==================================================
+            // LEAVE INFORMATION
+            // ==================================================
+            'request_type': "Leave",
 
             'employee_name': userData['name']?.toString() ?? "",
 
@@ -731,27 +1199,40 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
             'days': _formatLeaveDays(requestedDays),
 
             'reason': reasonController.text.trim(),
+
+            'emergency': emergency ? "Yes" : "No",
           },
+
           emailjs.Options(
             publicKey: '8erlfJzc6WZtfnz0o',
 
+            // IMPORTANT:
+            // This private key should NOT be stored
+            // inside a production Flutter application.
+            // Rotate it and move email sending to
+            // Firebase Cloud Functions for production.
             privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
           ),
         );
 
-        debugPrint("Leave email sent to: $notifyEmails");
+        debugPrint("================================");
+
+        debugPrint("LEAVE EMAIL SENT SUCCESSFULLY");
+
+        debugPrint("TO  = $primaryEmail");
+
+        debugPrint("CC  = $ccEmails");
+
+        debugPrint("BCC = siddheshwar.shingare@en3.ca");
+
+        debugPrint("================================");
       } catch (emailError) {
-        debugPrint(
-          "Failed to send leave email to "
-          "$notifyEmails: $emailError",
-        );
+        debugPrint("Failed to send leave email: $emailError");
       }
 
-      // }
-
-      // ==========================================================
+      // ========================================================
       // ADMIN NOTIFICATION
-      // ==========================================================
+      // ========================================================
 
       await FirebaseFirestore.instance.collection('notifications').add({
         "role": "admin",
@@ -765,9 +1246,9 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
         "createdAt": Timestamp.now(),
       });
 
-      // ==========================================================
+      // ========================================================
       // SUCCESS
-      // ==========================================================
+      // ========================================================
 
       if (!mounted) {
         return;
@@ -872,9 +1353,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
                   ),
                   child: Icon(icon, size: 18, color: const Color(0xFF6D28D9)),
                 ),
-
                 const Spacer(),
-
                 const Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 13,
@@ -882,16 +1361,12 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
                 ),
               ],
             ),
-
             const SizedBox(height: 12),
-
             Text(
               title,
               style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
             ),
-
             const SizedBox(height: 4),
-
             Text(
               selected
                   ? "${date.day.toString().padLeft(2, '0')} "
@@ -972,9 +1447,10 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
           child: ListView(
             physics: const BouncingScrollPhysics(),
             children: [
-              // ========================================================
+              // ====================================================
               // LEAVE TYPE
-              // ========================================================
+              // ====================================================
+
               _sectionLabel("Leave Type"),
 
               Container(
@@ -1057,9 +1533,9 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
               const SizedBox(height: 18),
 
-              // ========================================================
+              // ====================================================
               // LEAVE DURATION
-              // ========================================================
+              // ====================================================
               _sectionLabel("Leave Duration"),
 
               Container(
@@ -1147,9 +1623,9 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
                 ),
               ),
 
-              // ========================================================
+              // ====================================================
               // HALF DAY SESSION
-              // ========================================================
+              // ====================================================
               if (leaveDuration == "Half Day Only") ...[
                 const SizedBox(height: 18),
 
@@ -1238,9 +1714,9 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
               const SizedBox(height: 18),
 
-              // ========================================================
+              // ====================================================
               // REASON
-              // ========================================================
+              // ====================================================
               _sectionLabel("Reason"),
 
               Container(
@@ -1297,9 +1773,51 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
               const SizedBox(height: 18),
 
-              // ========================================================
+              // ====================================================
+              // TO ADMIN
+              // ====================================================
+              _sectionLabel("To"),
+
+              _buildToAdminSelector(),
+
+              const SizedBox(height: 18),
+
+              // ====================================================
+              // CC EMPLOYEES + ADMINS
+              // ====================================================
+              _sectionLabel("CC"),
+
+              _buildCcEmployeeSelector(),
+
+              if (selectedCcEmails.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 7, left: 4),
+                  child: Text(
+                    "Selected employees/admins will receive this leave email in CC.",
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ),
+
+              if (selectedCcEmails.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 7, left: 4),
+                  child: Text(
+                    "Selected employees will receive this leave email in CC.",
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ),
+
+              const SizedBox(height: 18),
+
+              // ====================================================
               // DATES
-              // ========================================================
+              // ====================================================
               _sectionLabel("Leave Dates"),
 
               Row(
@@ -1328,17 +1846,17 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
               const SizedBox(height: 18),
 
-              // ========================================================
+              // ====================================================
               // SUMMARY
-              // ========================================================
+              // ====================================================
               if (fromDate != null && toDate != null) _buildLeaveSummary(),
 
               if (fromDate != null && toDate != null)
                 const SizedBox(height: 18),
 
-              // ========================================================
+              // ====================================================
               // INFO
-              // ========================================================
+              // ====================================================
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -1400,9 +1918,9 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
               const SizedBox(height: 22),
 
-              // ========================================================
+              // ====================================================
               // SUBMIT BUTTON
-              // ========================================================
+              // ====================================================
               SizedBox(
                 width: double.infinity,
                 height: 56,
@@ -1571,8 +2089,339 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
       ),
     );
   }
+}
 
-  // ============================================================
-  // FORMAT / END
-  // ============================================================
+class CcEmployeeSelectionDialog extends StatefulWidget {
+  final List<Map<String, String>> employees;
+  final Set<String> initialSelection;
+  final int maxSelection;
+
+  const CcEmployeeSelectionDialog({
+    super.key,
+    required this.employees,
+    required this.initialSelection,
+    required this.maxSelection,
+  });
+
+  @override
+  State<CcEmployeeSelectionDialog> createState() =>
+      _CcEmployeeSelectionDialogState();
+}
+
+class _CcEmployeeSelectionDialogState extends State<CcEmployeeSelectionDialog> {
+  late Set<String> selectedEmails;
+
+  final TextEditingController searchController = TextEditingController();
+
+  List<Map<String, String>> filteredEmployees = [];
+
+  @override
+  void initState() {
+    super.initState();
+
+    selectedEmails = Set<String>.from(widget.initialSelection);
+
+    filteredEmployees = List<Map<String, String>>.from(widget.employees);
+
+    searchController.addListener(_searchEmployees);
+  }
+
+  @override
+  void dispose() {
+    searchController.removeListener(_searchEmployees);
+    searchController.dispose();
+
+    super.dispose();
+  }
+
+  void _searchEmployees() {
+    final String search = searchController.text.trim().toLowerCase();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      if (search.isEmpty) {
+        filteredEmployees = List<Map<String, String>>.from(widget.employees);
+        return;
+      }
+
+      filteredEmployees = widget.employees.where((employee) {
+        final String name = employee['name']?.toLowerCase() ?? '';
+
+        final String email = employee['email']?.toLowerCase() ?? '';
+
+        return name.contains(search) || email.contains(search);
+      }).toList();
+    });
+  }
+
+  void _toggleEmployee(String email, bool checked) {
+    if (!mounted) {
+      return;
+    }
+
+    if (checked) {
+      if (selectedEmails.contains(email)) {
+        return;
+      }
+
+      if (selectedEmails.length >= widget.maxSelection) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "You can select maximum "
+              "${widget.maxSelection} employees.",
+            ),
+          ),
+        );
+
+        return;
+      }
+
+      setState(() {
+        selectedEmails.add(email);
+      });
+    } else {
+      setState(() {
+        selectedEmails.remove(email);
+      });
+    }
+  }
+
+  void _clearSearch() {
+    searchController.clear();
+  }
+
+  void _cancel() {
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    Navigator.of(context).pop();
+  }
+
+  void _done() {
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    final Set<String> result = Set<String>.from(selectedEmails);
+
+    Navigator.of(context).pop(result);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+      contentPadding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+      actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+
+      title: Row(
+        children: [
+          const Expanded(
+            child: Text(
+              "Select CC Employees",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0E9FF),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              "${selectedEmails.length}/${widget.maxSelection}",
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF6D28D9),
+              ),
+            ),
+          ),
+        ],
+      ),
+
+      content: SizedBox(
+        width: double.maxFinite,
+        height: 480,
+        child: Column(
+          children: [
+            // ==============================================
+            // SEARCH
+            // ==============================================
+
+            TextField(
+              controller: searchController,
+              textInputAction: TextInputAction.search,
+              decoration: InputDecoration(
+                hintText: "Search employee name or email",
+                prefixIcon: const Icon(Icons.search_rounded),
+
+                suffixIcon: searchController.text.isNotEmpty
+                    ? IconButton(
+                        onPressed: _clearSearch,
+                        icon: const Icon(Icons.clear_rounded),
+                      )
+                    : null,
+
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                ),
+
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF6D28D9),
+                    width: 1.5,
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // ==============================================
+            // SELECTED COUNT INFO
+            // ==============================================
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                selectedEmails.isEmpty
+                    ? "No employees selected"
+                    : "${selectedEmails.length} employee(s) selected",
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF64748B),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            // ==============================================
+            // EMPLOYEE LIST
+            // ==============================================
+            Expanded(
+              child: filteredEmployees.isEmpty
+                  ? const Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.person_search_rounded,
+                            size: 45,
+                            color: Color(0xFFCBD5E1),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            "No employees found",
+                            style: TextStyle(
+                              color: Color(0xFF64748B),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.separated(
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+
+                      itemCount: filteredEmployees.length,
+
+                      separatorBuilder: (_, __) {
+                        return const Divider(height: 1);
+                      },
+
+                      itemBuilder: (context, index) {
+                        final Map<String, String> employee =
+                            filteredEmployees[index];
+
+                        final String name = employee['name'] ?? '';
+
+                        final String email = employee['email'] ?? '';
+
+                        final bool selected = selectedEmails.contains(email);
+
+                        return CheckboxListTile(
+                          dense: true,
+
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 0,
+                            vertical: 2,
+                          ),
+
+                          value: selected,
+
+                          activeColor: const Color(0xFF6D28D9),
+
+                          checkColor: Colors.white,
+
+                          controlAffinity: ListTileControlAffinity.leading,
+
+                          title: Text(
+                            name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+
+                          subtitle: Text(
+                            email,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+
+                          onChanged: (bool? value) {
+                            _toggleEmployee(email, value ?? false);
+                          },
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+
+      actions: [
+        TextButton(
+          onPressed: _cancel,
+          child: const Text(
+            "Cancel",
+            style: TextStyle(color: Color(0xFF64748B)),
+          ),
+        ),
+
+        ElevatedButton(
+          onPressed: _done,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF6D28D9),
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          child: const Text(
+            "Done",
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ),
+      ],
+    );
+  }
 }

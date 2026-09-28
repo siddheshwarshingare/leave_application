@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:leave_application/screens/apply_c_off_screen.dart';
+import 'package:leave_application/screens/apply_leave_screen.dart'
+    hide ApplyLeaveScreen;
 import 'package:leave_application/screens/apply_wfh_screen.dart';
 import 'package:leave_application/screens/attendance_screen.dart';
 import 'package:leave_application/screens/employee_attedance_screen.dart';
@@ -755,7 +757,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const ApplyLeaveScreen()),
+                  MaterialPageRoute(builder: (_) => ApplyLeaveScreen()),
                 );
               },
             ),

@@ -463,7 +463,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       // ==================================================
                       // CREATE ACCOUNT
                       // ==================================================
-                      //  _CreateAccountButton(onTap: _openSignup),
+                      _CreateAccountButton(onTap: _openSignup),
                       const SizedBox(height: 200),
                     ],
                   ),

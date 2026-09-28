@@ -42,27 +42,27 @@ class EmailService {
     required String reason,
   }) async {
     try {
-      await emailjs.send(
-        'service_90wr32y',
-        'template_b04xilb',
+      // await emailjs.send(
+      //   'service_90wr32y',
+      //   'template_b04xilb',
 
-        {
-          'employee_name': employeeName,
-          'employee_email': employeeEmail,
-          'leave_type': leaveType,
-          'from_date': fromDate.toString().split(' ')[0],
-          'to_date': toDate.toString().split(' ')[0],
-          'days': days.toString(),
-          'reason': reason,
-        },
+      //   {
+      //     'employee_name': employeeName,
+      //     'employee_email': employeeEmail,
+      //     'leave_type': leaveType,
+      //     'from_date': fromDate.toString().split(' ')[0],
+      //     'to_date': toDate.toString().split(' ')[0],
+      //     'days': days.toString(),
+      //     'reason': reason,
+      //   },
 
-        emailjs.Options(
-          publicKey: '8erlfJzc6WZtfnz0o',
-          privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
-        ),
-      );
+      //   emailjs.Options(
+      //     publicKey: '8erlfJzc6WZtfnz0o',
+      //     privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
+      //   ),
+      // );
 
-      print("EMAIL SUCCESS");
+      // print("EMAIL SUCCESS");
     } catch (e) {
       print("EMAIL ERROR = $e");
     }

@@ -484,72 +484,73 @@ class _HRCOffScreenState extends State<HRCOffScreen> {
       try {
         final employeeEmail = data['employeeEmail']?.toString().trim() ?? "";
 
-        if (employeeEmail.isNotEmpty) {
-          await emailjs.send(
-            "service_90wr32y",
-            "template_b04xilb",
-            {
-              // "to_email": employeeEmail,
-              "to_email": "siddheshwar.shingare@en3.ca",
-              // =========================
-              // REQUEST
-              // =========================
-              "request_type": "C-Off",
+        // if (employeeEmail.isNotEmpty) {
+        //   await emailjs.send(
+        //     "service_90wr32y",
+        //     "template_b04xilb",
+        //     {
+        //       // "to_email": employeeEmail,
+        //       "to_email": "siddheshwar.shingare@en3.ca",
+        //       // =========================
+        //       // REQUEST
+        //       // =========================
+        //       "request_type": "C-Off",
 
-              // =========================
-              // EMPLOYEE
-              // =========================
-              "employee_name": employeeName,
-              "employee_email": employeeEmail,
+        //       // =========================
+        //       // EMPLOYEE
+        //       // =========================
+        //       "employee_name": employeeName,
+        //       "employee_email": employeeEmail,
 
-              // =========================
-              // COMMON FIELDS
-              // =========================
-              "leave_type": "-",
-              "leave_duration": "Full Day",
-              "half_day_session": "-",
+        //       // =========================
+        //       // COMMON FIELDS
+        //       // =========================
+        //       "leave_type": "-",
+        //       "leave_duration": "Full Day",
+        //       "half_day_session": "-",
 
-              // =========================
-              // DATES
-              // =========================
-              "from_date": formatDate(workedDate),
-              "to_date": formatDate(workedDate),
+        //       // =========================
+        //       // DATES
+        //       // =========================
+        //       "from_date": formatDate(workedDate),
+        //       "to_date": formatDate(workedDate),
 
-              // =========================
-              // DAYS
-              // =========================
-              "days": data['coffDays']?.toString() ?? "1",
+        //       // =========================
+        //       // DAYS
+        //       // =========================
 
-              // =========================
-              // C-OFF SPECIFIC
-              // =========================
-              "worked_dates": formatDate(workedDate),
+        //       "days": data['coffDays']?.toString() ?? "1",
 
-              // =========================
-              // OTHER
-              // =========================
-              "emergency": "No",
+        //       // =========================
+        //       // C-OFF SPECIFIC
+        //       // =========================
+        //       "worked_dates": formatDate(workedDate),
 
-              "reason": data['reason']?.toString() ?? "-",
+        //       // =========================
+        //       // OTHER
+        //       // =========================
+        //       "emergency": "No",
 
-              // =========================
-              // STATUS
-              // =========================
-              "status": "Rejected",
+        //       "reason": data['reason']?.toString() ?? "-",
 
-              // =========================
-              // HR REMARKS
-              // =========================
-              "admin_remarks": rejectionReason.isEmpty
-                  ? "Rejected by HR"
-                  : rejectionReason,
-            },
-            emailjs.Options(
-              publicKey: "8erlfJzc6WZtfnz0o",
-              privateKey: "wRTOsFZnkQi6yxQX7D-rF",
-            ),
-          );
-        }
+        //       // =========================
+        //       // STATUS
+        //       // =========================
+        //       "status": "Rejected",
+
+        //       // =========================
+        //       // HR REMARKS
+        //       // =========================
+        //       "admin_remarks": rejectionReason.isEmpty
+        //           ? "Rejected by HR"
+        //           : rejectionReason,
+        //     },
+        //     emailjs.Options(
+        //       publicKey: "8erlfJzc6WZtfnz0o",
+        //       privateKey: "wRTOsFZnkQi6yxQX7D-rF",
+        //     ),
+        //   );
+        // }
       } catch (emailError) {
         debugPrint("C-Off rejection email failed: $emailError");
       }
