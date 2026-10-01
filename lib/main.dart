@@ -2,7 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:leave_application/screens/admin_leave_screen.dart';
+import 'package:flutter/services.dart';
+import 'package:leave_application/screens/admin/admin_leave_screen.dart';
 import 'package:leave_application/screens/dashboard_screen.dart';
 import 'package:leave_application/screens/login_screen.dart';
 import 'package:leave_application/screens/splash_screen.dart';
@@ -49,17 +50,9 @@ void main() async {
   await NotificationService.init();
 
   Widget screen = await checkLogin();
-
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(MyApp(screen: screen));
 }
-
-// void main() async {
-//   WidgetsFlutterBinding.ensureInitialized();
-
-//   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-//   await NotificationService.init();
-//   runApp(const MyApp());
-// }
 
 class MyApp extends StatelessWidget {
   final Widget screen;
@@ -70,6 +63,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(
+        fontFamily: 'poppins',
         scaffoldBackgroundColor: Color(0xFFF5F6FA),
         primaryColor: Color(0xFF5B5FEF),
         colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF5B5FEF)),
@@ -80,15 +74,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       debugShowCheckedModeBanner: false,
-
-//       home: const LoginScreen(),
-//     );
-//   }
-// }

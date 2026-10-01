@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:leave_application/screens/admin_leave_screen.dart';
+import 'package:leave_application/screens/admin/admin_leave_screen.dart';
 import 'package:leave_application/screens/dashboard_screen.dart';
 import 'package:leave_application/screens/signup_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';

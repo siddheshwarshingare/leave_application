@@ -3,7 +3,7 @@ import 'package:emailjs/emailjs.dart' as emailjs;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:leave_application/screens/leave_screen.dart';
-import 'package:leave_application/screens/to_admin_seletion_screen.dart';
+import 'package:leave_application/screens/admin/to_admin_seletion_screen.dart';
 
 class ApplyCOffScreen extends StatefulWidget {
   const ApplyCOffScreen({super.key});
@@ -1489,10 +1489,10 @@ class _ApplyCOffScreenState extends State<ApplyCOffScreen> {
               // REASON
               // =================================================
               sectionLabel("Reason"),
+
               // =================================================
               // TO ADMIN
               // =================================================
-
               sectionLabel("To"),
 
               buildToAdminSelector(),

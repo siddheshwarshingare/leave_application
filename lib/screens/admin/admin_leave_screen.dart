@@ -3,8 +3,8 @@ import 'package:emailjs/emailjs.dart' as emailjs;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:leave_application/screens/admin_attedance_screen.dart';
-import 'package:leave_application/screens/admin_calendar_screen.dart';
-import 'package:leave_application/screens/admin_notification_screen.dart';
+import 'package:leave_application/screens/admin/admin_calendar_screen.dart';
+import 'package:leave_application/screens/admin/admin_notification_screen.dart';
 import 'package:leave_application/screens/hr_coff_screen.dart';
 import 'package:leave_application/screens/leave_history_screen.dart';
 import 'package:leave_application/screens/login_screen.dart';
@@ -14,6 +14,8 @@ import 'package:leave_application/services/email_service.dart';
 import 'package:leave_application/services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:table_calendar/table_calendar.dart';
+
+import 'admin_attendance_screen.dart';
 
 class AdminLeaveScreen extends StatefulWidget {
   const AdminLeaveScreen({super.key});
@@ -250,12 +252,16 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
 
   void testEmail() async {
     try {
-      final response = await emailjs
-          .send('service_90wr32y', 'template_b04xilb', {
-            'email': 'siddheshwarshingare1999@gmail.com',
-            'title': 'TEST SUBJECT',
-            'name': 'TEST MESSAGE',
-          }, emailjs.Options(publicKey: '8erlfJzc6WZtfnz0o'));
+      final response = await emailjs.send(
+        'service_90wr32y',
+        'template_b04xilb',
+        {
+          'email': 'siddheshwarshingare1999@gmail.com',
+          'title': 'TEST SUBJECT',
+          'name': 'TEST MESSAGE',
+        },
+        emailjs.Options(publicKey: '8erlfJzc6WZtfnz0o'),
+      );
 
       print("SUCCESS = ${response.text}");
     } catch (e) {
@@ -965,19 +971,18 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
                 },
               ),
 
-              // _bottomNavItem(
-              //   icon: Icons.access_time_outlined,
-              //   label: "Attendance",
-              //   onTap: () {
-              //     Navigator.push(
-              //       context,
-              //       MaterialPageRoute(
-              //         builder: (_) =>
-              //             AdminAttendanceScreen(selectedUid: selectedUid),
-              //       ),
-              //     );
-              //   },
-              // ),
+              _bottomNavItem(
+                icon: Icons.access_time_outlined,
+                label: "Attendance",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AdminAttendanceScreen(),
+                    ),
+                  );
+                },
+              ),
               _bottomNavItem(
                 icon: Icons.event_repeat_rounded,
                 label: "Weekly Off",
@@ -1033,7 +1038,7 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
         surfaceTintColor: Colors.white,
 
         title: const Text(
-          "Admin Leave Requests",
+          "Employee Leave Requests",
           style: TextStyle(
             color: Color(0xFF17133A),
             fontSize: 20,
@@ -1049,8 +1054,8 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
             onPressed: logout,
             tooltip: "Logout",
             icon: Container(
-              width: 40,
-              height: 40,
+              width: 35,
+              height: 35,
               decoration: BoxDecoration(
                 color: const Color(0xFFF0E9FF),
                 borderRadius: BorderRadius.circular(12),
@@ -1058,7 +1063,7 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
               child: const Icon(
                 Icons.logout_rounded,
                 color: Color(0xFF6D28D9),
-                size: 21,
+                size: 18,
               ),
             ),
           ),
@@ -1084,8 +1089,8 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
                     IconButton(
                       tooltip: "Notifications",
                       icon: Container(
-                        width: 40,
-                        height: 40,
+                        width: 35,
+                        height: 35,
                         decoration: BoxDecoration(
                           color: const Color(0xFFF0E9FF),
                           borderRadius: BorderRadius.circular(12),
@@ -1093,7 +1098,7 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
                         child: const Icon(
                           Icons.notifications_none_rounded,
                           color: Color(0xFF6D28D9),
-                          size: 23,
+                          size: 18,
                         ),
                       ),
 

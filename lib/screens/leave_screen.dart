@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emailjs/emailjs.dart' as emailjs;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:leave_application/screens/to_admin_seletion_screen.dart';
+import 'package:leave_application/screens/admin/to_admin_seletion_screen.dart';
 
 class ApplyLeaveScreen extends StatefulWidget {
   const ApplyLeaveScreen({super.key});
@@ -1168,7 +1168,6 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
             // ==================================================
             // EMAIL RECIPIENTS
             // ==================================================
-
             'to_email': primaryEmail,
 
             'cc_email': ccEmails,
@@ -1450,7 +1449,6 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
               // ====================================================
               // LEAVE TYPE
               // ====================================================
-
               _sectionLabel("Leave Type"),
 
               Container(
@@ -2250,7 +2248,6 @@ class _CcEmployeeSelectionDialogState extends State<CcEmployeeSelectionDialog> {
             // ==============================================
             // SEARCH
             // ==============================================
-
             TextField(
               controller: searchController,
               textInputAction: TextInputAction.search,

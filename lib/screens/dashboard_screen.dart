@@ -6,8 +6,9 @@ import 'package:leave_application/screens/apply_c_off_screen.dart';
 import 'package:leave_application/screens/apply_leave_screen.dart'
     hide ApplyLeaveScreen;
 import 'package:leave_application/screens/apply_wfh_screen.dart';
+import 'package:leave_application/screens/admin/admin_attendance_screen.dart';
 import 'package:leave_application/screens/attendance_screen.dart';
-import 'package:leave_application/screens/employee_attedance_screen.dart';
+import 'package:leave_application/screens/attendance/employee_attedance_screen.dart';
 import 'package:leave_application/screens/leave_history_screen.dart';
 import 'package:leave_application/screens/leave_screen.dart';
 import 'package:leave_application/screens/notification.dart';
@@ -587,13 +588,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 22),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF7034E6), Color(0xFF8B4DE8)],
+                  colors: [Color(0xFF102A56), Color(0xFF173867)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // PROFILE AVATAR
                   Container(
@@ -622,57 +623,68 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 14),
+                  const SizedBox(width: 16),
 
-                  // NAME
-                  Text(
-                    name.isEmpty ? 'Employee' : name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
+                  // USER DETAILS
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // NAME
+                        Text(
+                          name.isEmpty ? 'Employee' : name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
 
-                  const SizedBox(height: 5),
+                        const SizedBox(height: 4),
 
-                  // ROLE
-                  Text(
-                    role.isEmpty ? 'Employee' : role,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // EMAIL
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.email_outlined,
-                        color: Colors.white70,
-                        size: 15,
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          email.isEmpty ? 'No email' : email,
+                        // ROLE
+                        Text(
+                          role.isEmpty ? 'Employee' : role,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: Colors.white70,
-                            fontSize: 11,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                      ),
-                    ],
+
+                        const SizedBox(height: 7),
+
+                        // EMAIL
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.email_outlined,
+                              color: Colors.white70,
+                              size: 15,
+                            ),
+
+                            const SizedBox(width: 6),
+
+                            Expanded(
+                              child: Text(
+                                email.isEmpty ? 'No email' : email,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -712,19 +724,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
             // ======================================================
             // ATTENDANCE
             // ======================================================
-            _drawerItem(
-              context,
-              icon: Icons.access_time_outlined,
-              title: 'Attendance',
-              onTap: () {
-                Navigator.pop(context);
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AttendanceScreen()),
-                );
-              },
-            ),
+            // _drawerItem(
+            //   context,
+            //   icon: Icons.access_time_outlined,
+            //   title: 'Attendance',
+            //   onTap: () {
+            //     Navigator.pop(context);
+            //
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(
+            //         builder: (_) => const EmployeeAttendanceScreen(),
+            //       ),
+            //     );
+            //   },
+            // ),
 
             // ======================================================
             // MY ATTENDANCE
@@ -732,7 +746,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             _drawerItem(
               context,
               icon: Icons.history_rounded,
-              title: 'My Attendance',
+              title: 'Attendance',
               onTap: () {
                 Navigator.pop(context);
 
@@ -740,6 +754,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   context,
                   MaterialPageRoute(
                     builder: (_) => const EmployeeAttendanceScreen(),
+                  ),
+                );
+              },
+            ),
+
+            _drawerItem(
+              context,
+              icon: Icons.history_rounded,
+              title: 'Admin Attendace',
+              onTap: () {
+                Navigator.pop(context);
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AdminAttendanceScreen(),
                   ),
                 );
               },
