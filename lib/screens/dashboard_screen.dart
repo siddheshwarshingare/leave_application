@@ -41,7 +41,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     getHolidays();
     getUserData();
     getLeaveData();
-    markAllRead();
+    //  markAllRead();
   }
 
   Future<void> getHolidays() async {
