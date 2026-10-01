@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:leave_application/screens/login_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -32,10 +31,7 @@ class ProfileScreen extends StatelessWidget {
 
       if (!context.mounted) return;
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => LoginScreen()),
-      );
+      Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
     } catch (e) {
       if (!context.mounted) return;
 
@@ -244,7 +240,7 @@ class ProfileScreen extends StatelessWidget {
                   // ==================================================
                   Container(
                     width: double.infinity,
-
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [Color(0xFF102A56), Color(0xFF173867)],
@@ -264,23 +260,8 @@ class ProfileScreen extends StatelessWidget {
                       alignment: Alignment.center,
                       children: [
                         Positioned(
-                          left: -10,
-                          bottom: 0,
-                          child: Container(
-                            height: 80,
-                            width: 80,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: _orange.withOpacity(.45),
-                                width: 1,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          right: 12,
-                          top: -20,
+                          right: 120,
+                          top: -25,
                           child: Container(
                             height: 80,
                             width: 100,
@@ -295,8 +276,8 @@ class ProfileScreen extends StatelessWidget {
                         ),
 
                         Positioned(
-                          right: 50,
-                          bottom: -30,
+                          right: 70,
+                          bottom: -35,
                           child: Container(
                             height: 80,
                             width: 80,
@@ -309,10 +290,8 @@ class ProfileScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-
                         Column(
                           children: [
-                            const SizedBox(height: 12),
                             _ProfileAvatar(imageUrl: profileImage, name: name),
 
                             const SizedBox(height: 12),
@@ -380,11 +359,11 @@ class ProfileScreen extends StatelessWidget {
 
                       const _ModernDivider(),
 
-                      _ModernProfileRow(
-                        icon: Icons.phone_outlined,
-                        label: 'Phone',
-                        value: phone,
-                      ),
+                      // _ModernProfileRow(
+                      //   icon: Icons.phone_outlined,
+                      //   label: 'Phone',
+                      //   value: phone,
+                      // ),
                     ],
                   ),
 
@@ -397,11 +376,11 @@ class ProfileScreen extends StatelessWidget {
                     title: 'Work Information',
 
                     children: [
-                      _ModernProfileRow(
-                        icon: Icons.badge_outlined,
-                        label: 'Employee ID',
-                        value: employeeId,
-                      ),
+                      // _ModernProfileRow(
+                      //   icon: Icons.badge_outlined,
+                      //   label: 'Employee ID',
+                      //   value: employeeId,
+                      // ),
 
                       const _ModernDivider(),
 
@@ -426,31 +405,30 @@ class ProfileScreen extends StatelessWidget {
                   // ==================================================
                   // EDIT PROFILE
                   // ==================================================
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton.icon(
-                      onPressed: () => _editProfile(context),
-                      icon: const Icon(Icons.edit_outlined, size: 18),
-                      label: const Text(
-                        "Edit Profile",
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF173867),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 9),
+                  // SizedBox(
+                  //   width: double.infinity,
+                  //   height: 50,
+                  //   child: ElevatedButton.icon(
+                  //     onPressed: () => _editProfile(context),
+                  //     icon: const Icon(Icons.edit_outlined, size: 18),
+                  //     label: const Text(
+                  //       "Edit Profile",
+                  //       style: TextStyle(
+                  //         fontSize: 14,
+                  //         fontWeight: FontWeight.w600,
+                  //       ),
+                  //     ),
+                  //     style: ElevatedButton.styleFrom(
+                  //       backgroundColor: const Color(0xFF173867),
+                  //       foregroundColor: Colors.white,
+                  //       elevation: 0,
+                  //       shape: RoundedRectangleBorder(
+                  //         borderRadius: BorderRadius.circular(14),
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
+                  const SizedBox(height: 200),
 
                   // ==================================================
                   // LOGOUT
@@ -461,7 +439,7 @@ class ProfileScreen extends StatelessWidget {
 
                     child: OutlinedButton(
                       onPressed: () {
-                        _showLogoutBottomSheet(context);
+                        _showLogoutDialog(context);
                       },
 
                       style: OutlinedButton.styleFrom(
@@ -536,129 +514,61 @@ class ProfileScreen extends StatelessWidget {
   // LOGOUT DIALOG
   // ============================================================
 
-  void _showLogoutBottomSheet(BuildContext context) {
-    showModalBottomSheet(
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (sheetContext) {
-        return SafeArea(
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Top drag indicator
-                Container(
-                  width: 42,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD8DEE8),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
 
-                const SizedBox(height: 22),
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
 
-                // Logout icon
-                Container(
-                  width: 58,
-                  height: 58,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFFECEC),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.logout_rounded,
-                    color: Color(0xFFDC2626),
-                    size: 28,
-                  ),
-                ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
 
-                const SizedBox(height: 16),
-
-                const Text(
-                  'Logout',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF172033),
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                const Text(
-                  'Are you sure you want to logout?',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-                ),
-
-                const SizedBox(height: 24),
-
-                Row(
-                  children: [
-                    // Cancel
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {
-                          Navigator.pop(sheetContext);
-                        },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF475569),
-                          side: const BorderSide(color: Color(0xFFE2E8F0)),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(width: 12),
-
-                    // Logout
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          Navigator.pop(sheetContext);
-
-                          await _logout(context);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFDC2626),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Logout',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+          title: const Text(
+            'Logout',
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF172033),
             ),
           ),
+
+          content: const Text(
+            'Are you sure you want to logout?',
+            style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+          ),
+
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+              },
+
+              child: const Text(
+                'Cancel',
+                style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+              ),
+            ),
+
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+
+                await _logout(context);
+              },
+
+              child: const Text(
+                'Logout',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFFDC2626),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         );
       },
     );

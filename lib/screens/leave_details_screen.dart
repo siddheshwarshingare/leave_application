@@ -310,12 +310,16 @@ class LeaveDetailsScreen extends StatelessWidget {
 
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: const Color(0xFF2563EB),
-        foregroundColor: Colors.white,
+        //  backgroundColor: const Color(0xFF2563EB),
+        // foregroundColor: Colors.white,
 
         title: const Text(
           "Leave Details",
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20),
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 20,
+            color: Colors.black,
+          ),
         ),
 
         centerTitle: false,

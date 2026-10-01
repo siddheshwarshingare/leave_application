@@ -9,6 +9,7 @@ import 'package:leave_application/screens/hr_coff_screen.dart';
 import 'package:leave_application/screens/leave_history_screen.dart';
 import 'package:leave_application/screens/login_screen.dart';
 import 'package:leave_application/screens/profile_screen.dart';
+import 'package:leave_application/screens/signup_screen.dart';
 import 'package:leave_application/screens/weekly_off_screen.dart';
 import 'package:leave_application/services/email_service.dart';
 import 'package:leave_application/services/notification_service.dart';
@@ -38,7 +39,311 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
     super.initState();
     getUsers();
     //  getLeaveData();
-    markAllRead();
+    // markAllRead();
+  }
+
+  Widget _drawerItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    Color color = const Color(0xFF334155),
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+      child: ListTile(
+        onTap: onTap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        leading: Icon(icon, size: 21, color: color),
+        title: Text(
+          title,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
+        ),
+        trailing: title == 'Dashboard'
+            ? const Icon(
+                Icons.chevron_right_rounded,
+                size: 19,
+                color: Color(0xFF94A3B8),
+              )
+            : null,
+      ),
+    );
+  }
+
+  Widget _buildDrawer(BuildContext context) {
+    return Drawer(
+      backgroundColor: const Color(0xFFF8FAFC),
+      width: MediaQuery.of(context).size.width * 0.80,
+
+      child: SafeArea(
+        child: Column(
+          children: [
+            // ======================================================
+            // USER PROFILE HEADER
+            // ======================================================
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 22),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF102A56), Color(0xFF173867)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // PROFILE AVATAR
+                  const SizedBox(width: 16),
+
+                  // USER DETAILS
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // ======================================================
+            // DASHBOARD
+            // ======================================================
+            // _drawerItem(
+            //   context,
+            //   icon: Icons.dashboard_outlined,
+            //   title: 'Dashboard',
+            //   onTap: () {
+            //     Navigator.pop(context);
+            //   },
+            // ),
+
+            // ======================================================
+            // PROFILE
+
+            // ======================================================
+            // MY ATTENDANCE
+            // ======================================================
+            // _drawerItem(
+            //   context,
+            //   icon: Icons.history_rounded,
+            //   title: 'Attendance',
+            //   onTap: () {
+            //     Navigator.pop(context);
+
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(
+            //         builder: (_) => const EmployeeAttendanceScreen(),
+            //       ),
+            //     );
+            //   },
+            // ),
+            _drawerItem(
+              context,
+              icon: Icons.history_rounded,
+              title: 'C-OFF',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const HRCOffScreen()),
+                );
+              },
+            ),
+
+            _drawerItem(
+              context,
+              icon: Icons.event_available_outlined,
+              title: 'Create Account',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SignupScreen()),
+                );
+              },
+            ),
+
+            // ======================================================
+            // NOTIFICATIONS
+            // ======================================================
+            // _drawerItem(
+            //   context,
+            //   icon: Icons.notifications_none_rounded,
+            //   title: 'Notifications',
+            //   onTap: () async {
+            //     Navigator.pop(context);
+
+            //     await Navigator.push(
+            //       context,
+            //       MaterialPageRoute(builder: (_) => const NotificationScreen()),
+            //     );
+
+            //     if (mounted) {
+            //       setState(() {});
+            //     }
+            //   },
+            // ),
+            const Spacer(),
+
+            // ======================================================
+            // DIVIDER
+            // ======================================================
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Divider(height: 1, color: Color(0xFFE5E7EB)),
+            ),
+
+            const SizedBox(height: 6),
+
+            // ======================================================
+            // LOGOUT
+            // ======================================================
+            _drawerItem(
+              context,
+              icon: Icons.logout_rounded,
+              title: 'Logout',
+              color: const Color(0xFFDC2626),
+              onTap: () async {
+                Navigator.pop(context);
+
+                bool? shouldLogout = await showDialog<bool>(
+                  context: context,
+                  barrierDismissible: true,
+                  builder: (context) {
+                    return _logoutDialog(context);
+                  },
+                );
+
+                if (shouldLogout == true) {
+                  await logout();
+                }
+              },
+            ),
+
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _logoutDialog(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 28),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(.12),
+              blurRadius: 30,
+              offset: const Offset(0, 12),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              height: 58,
+              width: 58,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF1F2),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: const Icon(
+                Icons.logout_rounded,
+                color: Color(0xFFDC2626),
+                size: 27,
+              ),
+            ),
+
+            const SizedBox(height: 18),
+
+            const Text(
+              "Logout?",
+              style: TextStyle(
+                fontSize: 21,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF172033),
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            const Text(
+              "Are you sure you want to logout from your account?",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.5,
+                color: Color(0xFF6B7280),
+              ),
+            ),
+
+            const SizedBox(height: 22),
+
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 46,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.pop(context, false);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF374151),
+                        side: const BorderSide(color: Color(0xFFE5E7EB)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(13),
+                        ),
+                      ),
+                      child: const Text(
+                        "Cancel",
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 10),
+
+                Expanded(
+                  child: SizedBox(
+                    height: 46,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context, true);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF7C3AED),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(13),
+                        ),
+                      ),
+                      child: const Text(
+                        "Logout",
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget leaveCalendar() {
@@ -252,16 +557,12 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
 
   void testEmail() async {
     try {
-      final response = await emailjs.send(
-        'service_90wr32y',
-        'template_b04xilb',
-        {
-          'email': 'siddheshwarshingare1999@gmail.com',
-          'title': 'TEST SUBJECT',
-          'name': 'TEST MESSAGE',
-        },
-        emailjs.Options(publicKey: '8erlfJzc6WZtfnz0o'),
-      );
+      final response = await emailjs
+          .send('service_90wr32y', 'template_b04xilb', {
+            'email': 'siddheshwarshingare1999@gmail.com',
+            'title': 'TEST SUBJECT',
+            'name': 'TEST MESSAGE',
+          }, emailjs.Options(publicKey: '8erlfJzc6WZtfnz0o'));
 
       print("SUCCESS = ${response.text}");
     } catch (e) {
@@ -1006,16 +1307,26 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
               //     );
               //   },
               // ),
-              _bottomNavItem(
-                icon: Icons.person_outline_rounded,
-                label: "C-OFF",
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const HRCOffScreen()),
-                  );
-                },
-              ),
+              // _bottomNavItem(
+              //   icon: Icons.person_outline_rounded,
+              //   label: "C-OFF",
+              //   onTap: () {
+              //     Navigator.push(
+              //       context,
+              //       MaterialPageRoute(builder: (_) => const HRCOffScreen()),
+              //     );
+              //   },
+              // ),
+              // _bottomNavItem(
+              //   icon: Icons.person_outline_rounded,
+              //   label: "Create",
+              //   onTap: () {
+              //     Navigator.push(
+              //       context,
+              //       MaterialPageRoute(builder: (_) => const SignupScreen()),
+              //     );
+              //   },
+              // ),
             ],
           ),
         ),
@@ -1028,6 +1339,7 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
     return Scaffold(
       bottomNavigationBar: _bottomNavigationBar(),
       backgroundColor: const Color(0xFFF7F8FC),
+      drawer: _buildDrawer(context),
 
       // ============================================================
       // APP BAR
@@ -1035,7 +1347,7 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        surfaceTintColor: Colors.white,
+        surfaceTintColor: const Color.fromRGBO(255, 255, 255, 1),
 
         title: const Text(
           "Employee Leave Requests",
@@ -1050,23 +1362,23 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
           // ----------------------------------------------------------
           // LOGOUT
           // ----------------------------------------------------------
-          IconButton(
-            onPressed: logout,
-            tooltip: "Logout",
-            icon: Container(
-              width: 35,
-              height: 35,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0E9FF),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.logout_rounded,
-                color: Color(0xFF6D28D9),
-                size: 18,
-              ),
-            ),
-          ),
+          // IconButton(
+          //   onPressed: logout,
+          //   tooltip: "Logout",
+          //   icon: Container(
+          //     width: 35,
+          //     height: 35,
+          //     decoration: BoxDecoration(
+          //       color: const Color(0xFFF0E9FF),
+          //       borderRadius: BorderRadius.circular(12),
+          //     ),
+          //     child: const Icon(
+          //       Icons.logout_rounded,
+          //       color: Color(0xFF6D28D9),
+          //       size: 18,
+          //     ),
+          //   ),
+          // ),
 
           // ----------------------------------------------------------
           // NOTIFICATIONS
@@ -1496,81 +1808,105 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
 
                       const SizedBox(width: 14),
 
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Leave Summary",
-                              style: TextStyle(
-                                color: Color(0xFF17133A),
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                              ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Leave Summary",
+                            style: TextStyle(
+                              color: Color(0xFF17133A),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
                             ),
+                          ),
 
-                            SizedBox(height: 3),
+                          SizedBox(height: 3),
 
-                            Text(
-                              "Employee leave balance",
-                              style: TextStyle(
-                                color: Color(0xFF8A8FA3),
-                                fontSize: 12,
-                              ),
+                          Text(
+                            "Employee leave balance",
+                            style: TextStyle(
+                              color: Color(0xFF8A8FA3),
+                              fontSize: 12,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 14),
+
+                      Container(
+                        width: 1,
+                        height: 42,
+                        color: const Color(0xFFE5E7EB),
+                      ),
+                      const SizedBox(width: 14),
+
+                      _buildSummaryItem(
+                        title: "Used",
+                        value: "$usedLeave",
+                        color: const Color(0xFFF59E0B),
+                      ),
+                      const SizedBox(width: 14),
+
+                      Container(
+                        width: 1,
+                        height: 42,
+                        color: const Color(0xFFE5E7EB),
+                      ),
+                      const SizedBox(width: 14),
+
+                      _buildSummaryItem(
+                        title: "Remaining",
+                        value: "$remainingLeave",
+                        color: const Color(0xFF16A34A),
                       ),
                     ],
                   ),
 
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 14),
 
                   // ----------------------------------------------------
                   // SUMMARY VALUES
                   // ----------------------------------------------------
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildSummaryItem(
-                          title: "Total",
-                          value: formatLeave(clLeave + slLeave + coffLeave),
+                  // Row(
+                  //   children: [
+                  //     // Expanded(
+                  //     //   child: _buildSummaryItem(
+                  //     //     title: "Total",
+                  //     //     value: formatLeave(clLeave + slLeave + coffLeave),
 
-                          color: const Color(0xFF6D28D9),
-                        ),
-                      ),
+                  //     //     color: const Color(0xFF6D28D9),
+                  //     //   ),
+                  //     // ),
+                  //     Container(
+                  //       width: 1,
+                  //       height: 42,
+                  //       color: const Color(0xFFE5E7EB),
+                  //     ),
 
-                      Container(
-                        width: 1,
-                        height: 42,
-                        color: const Color(0xFFE5E7EB),
-                      ),
+                  //     Expanded(
+                  //       child: _buildSummaryItem(
+                  //         title: "Used",
+                  //         value: "$usedLeave",
+                  //         color: const Color(0xFFF59E0B),
+                  //       ),
+                  //     ),
 
-                      Expanded(
-                        child: _buildSummaryItem(
-                          title: "Used",
-                          value: "$usedLeave",
-                          color: const Color(0xFFF59E0B),
-                        ),
-                      ),
+                  //     Container(
+                  //       width: 1,
+                  //       height: 42,
+                  //       color: const Color(0xFFE5E7EB),
+                  //     ),
 
-                      Container(
-                        width: 1,
-                        height: 42,
-                        color: const Color(0xFFE5E7EB),
-                      ),
-
-                      Expanded(
-                        child: _buildSummaryItem(
-                          title: "Remaining",
-                          value: "$remainingLeave",
-                          color: const Color(0xFF16A34A),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 15),
+                  //     Expanded(
+                  //       child: _buildSummaryItem(
+                  //         title: "Remaining",
+                  //         value: "$remainingLeave",
+                  //         color: const Color(0xFF16A34A),
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
+                  // const SizedBox(height: 15),
 
                   // ----------------------------------------------------
                   // CL / SL
@@ -2177,9 +2513,13 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
                                       Expanded(
                                         child: ElevatedButton.icon(
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(
-                                              0xFF16A34A,
-                                            ),
+                                            backgroundColor:
+                                                const Color.fromARGB(
+                                                  255,
+                                                  108,
+                                                  229,
+                                                  153,
+                                                ),
                                             foregroundColor: Colors.white,
                                             elevation: 0,
                                             disabledBackgroundColor:
@@ -2287,12 +2627,14 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
                                           icon: const Icon(
                                             Icons.check_circle_outline_rounded,
                                             size: 18,
+                                            // color: Colors.black,
                                           ),
 
                                           label: const Text(
                                             "Approve",
                                             style: TextStyle(
                                               fontWeight: FontWeight.w700,
+                                              // color: Colors.black,
                                             ),
                                           ),
                                         ),
@@ -2306,9 +2648,13 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
                                       Expanded(
                                         child: ElevatedButton.icon(
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(
-                                              0xFFDC2626,
-                                            ),
+                                            backgroundColor:
+                                                const Color.fromARGB(
+                                                  255,
+                                                  206,
+                                                  83,
+                                                  83,
+                                                ),
                                             foregroundColor: Colors.white,
                                             elevation: 0,
                                             disabledBackgroundColor:

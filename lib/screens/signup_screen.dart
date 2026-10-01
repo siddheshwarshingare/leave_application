@@ -36,6 +36,24 @@ class _SignupScreenState extends State<SignupScreen> {
     "Sunday",
   ];
 
+  List<Map<String, dynamic>> leaveTypes = [
+    {"type": "Cl", "days": 0},
+    {"type": "Sl", "days": 0},
+    {"type": "coffCl", "days": 0},
+  ];
+
+  void addLeaveType() {
+    setState(() {
+      leaveTypes.add({"type": "", "days": 0});
+    });
+  }
+
+  void removeLeaveType(int index) {
+    setState(() {
+      leaveTypes.removeAt(index);
+    });
+  }
+
   bool loading = false;
 
   bool isValidEmail(String email) {
@@ -59,10 +77,23 @@ class _SignupScreenState extends State<SignupScreen> {
             email: emailController.text.trim(),
             password: passwordController.text.trim(),
           );
-
-      print("STEP 2: Auth success");
-
       String uid = userCredential.user!.uid;
+      final Map<String, dynamic> leaveData = {};
+
+      for (final leave in leaveTypes) {
+        final type = leave["type"]?.toString() ?? "";
+        final days = leave["days"] ?? 0;
+
+        if (type.isNotEmpty) {
+          leaveData[type] = days;
+        }
+      }
+
+      await FirebaseFirestore.instance.collection('toatl_leave').doc(uid).set({
+        ...leaveData,
+        // "createdAt": Timestamp.now(),
+      });
+      print("STEP 2: Auth success");
 
       String? token = await FirebaseMessaging.instance.getToken();
 
@@ -78,10 +109,10 @@ class _SignupScreenState extends State<SignupScreen> {
         "fcmToken": token,
         "createdAt": Timestamp.now(),
       });
-      await FirebaseFirestore.instance.collection('toatl_leave').doc(uid).set({
-        "Cl": "3",
-        "Sl": "10",
-      });
+      // await FirebaseFirestore.instance.collection('toatl_leave').doc(uid).set({
+      //   "Cl": "3",
+      //   "Sl": "10",
+      // });
       print("STEP 4: Firestore success");
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -524,6 +555,223 @@ class _SignupScreenState extends State<SignupScreen> {
                           }).toList(),
                         ),
                         const SizedBox(height: 17),
+                        const SizedBox(height: 25),
+
+                        // const Align(
+                        //   alignment: Alignment.centerLeft,
+                        //   child: Text(
+                        //     "Leave Allocation",
+                        //     style: TextStyle(
+                        //       fontSize: 16,
+                        //       fontWeight: FontWeight.bold,
+                        //       color: Color(0xff1E2454),
+                        //     ),
+                        //   ),
+                        // ),
+
+                        // const SizedBox(height: 12),
+
+                        // ...leaveTypes.asMap().entries.map((entry) {
+                        //   final index = entry.key;
+                        //   final leave = entry.value;
+
+                        //   return Padding(
+                        //     padding: const EdgeInsets.only(bottom: 12),
+                        //     child: Row(
+                        //       children: [
+                        //         // Leave Type
+                        //         Expanded(
+                        //           flex: 3,
+                        //           child: DropdownButtonFormField<String>(
+                        //             value: leave["type"].toString().isEmpty
+                        //                 ? null
+                        //                 : leave["type"],
+                        //             decoration: InputDecoration(
+                        //               hintText: "Leave Type",
+                        //               prefixIcon: const Icon(
+                        //                 Icons.event_available_outlined,
+                        //                 color: Color(0xff6C63FF),
+                        //               ),
+                        //               filled: true,
+                        //               fillColor: const Color(0xffF8F9FD),
+                        //               border: OutlineInputBorder(
+                        //                 borderRadius: BorderRadius.circular(18),
+                        //                 borderSide: const BorderSide(
+                        //                   color: Color(0xffE7EAF3),
+                        //                 ),
+                        //               ),
+                        //             ),
+                        //             items: const [
+                        //               DropdownMenuItem(
+                        //                 value: "Cl",
+                        //                 child: Text("CL"),
+                        //               ),
+                        //               DropdownMenuItem(
+                        //                 value: "Sl",
+                        //                 child: Text("SL"),
+                        //               ),
+                        //               DropdownMenuItem(
+                        //                 value: "coffCl",
+                        //                 child: Text("COFF"),
+                        //               ),
+                        //               DropdownMenuItem(
+                        //                 value: "",
+                        //                 child: Text(""),
+                        //               ),
+                        //             ],
+                        //             onChanged: (value) {
+                        //               setState(() {
+                        //                 leaveTypes[index]["type"] = value;
+                        //               });
+                        //             },
+                        //           ),
+                        //         ),
+
+                        //         const SizedBox(width: 10),
+
+                        //         // Number of leaves
+                        //         Expanded(
+                        //           flex: 2,
+                        //           child: TextFormField(
+                        //             initialValue: leave["days"].toString(),
+                        //             keyboardType: TextInputType.number,
+                        //             decoration: InputDecoration(
+                        //               hintText: "Days",
+                        //               prefixIcon: const Icon(
+                        //                 Icons.numbers,
+                        //                 color: Color(0xff6C63FF),
+                        //               ),
+                        //               filled: true,
+                        //               fillColor: const Color(0xffF8F9FD),
+                        //               border: OutlineInputBorder(
+                        //                 borderRadius: BorderRadius.circular(18),
+                        //                 borderSide: const BorderSide(
+                        //                   color: Color(0xffE7EAF3),
+                        //                 ),
+                        //               ),
+                        //             ),
+                        //             onChanged: (value) {
+                        //               setState(() {
+                        //                 leaveTypes[index]["days"] =
+                        //                     int.tryParse(value) ?? 0;
+                        //               });
+                        //             },
+                        //           ),
+                        //         ),
+
+                        //         const SizedBox(width: 5),
+
+                        //         // Delete
+                        //         if (leaveTypes.length > 1)
+                        //           IconButton(
+                        //             onPressed: () {
+                        //               removeLeaveType(index);
+                        //             },
+                        //             icon: const Icon(
+                        //               Icons.delete_outline,
+                        //               color: Colors.red,
+                        //             ),
+                        //           ),
+                        //       ],
+                        //     ),
+                        //   );
+                        // }),
+                        const SizedBox(height: 5),
+
+                        // SizedBox(
+                        //   width: double.infinity,
+                        //   child: OutlinedButton.icon(
+                        //     onPressed: addLeaveType,
+                        //     icon: const Icon(
+                        //       Icons.add,
+                        //       color: Color(0xff6C63FF),
+                        //     ),
+                        //     label: const Text(
+                        //       "Add Leave Type",
+                        //       style: TextStyle(
+                        //         color: Color(0xff6C63FF),
+                        //         fontWeight: FontWeight.bold,
+                        //       ),
+                        //     ),
+                        //     style: OutlinedButton.styleFrom(
+                        //       side: const BorderSide(color: Color(0xff6C63FF)),
+                        //       shape: RoundedRectangleBorder(
+                        //         borderRadius: BorderRadius.circular(16),
+                        //       ),
+                        //       padding: const EdgeInsets.symmetric(vertical: 14),
+                        //     ),
+                        //   ),
+                        // ),
+                        const SizedBox(height: 25),
+
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            "Leave Allocation",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xff1E2454),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        ...leaveTypes.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final leave = entry.value;
+
+                          String displayName;
+
+                          switch (leave["type"]) {
+                            case "Cl":
+                              displayName = "CL";
+                              break;
+                            case "Sl":
+                              displayName = "SL";
+                              break;
+                            case "coffCl":
+                              displayName = "COFF";
+                              break;
+                            default:
+                              displayName = leave["type"];
+                          }
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: TextFormField(
+                              keyboardType: TextInputType.number,
+                              initialValue: leave["days"].toString(),
+                              decoration: InputDecoration(
+                                labelText: displayName,
+                                hintText: "Enter $displayName leaves",
+                                prefixIcon: const Icon(
+                                  Icons.event_available_outlined,
+                                  color: Color(0xff6C63FF),
+                                ),
+                                filled: true,
+                                fillColor: const Color(0xffF8F9FD),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xffE7EAF3),
+                                  ),
+                                ),
+                              ),
+                              onChanged: (value) {
+                                setState(() {
+                                  leaveTypes[index]["days"] =
+                                      int.tryParse(value) ?? 0;
+                                });
+                              },
+                            ),
+                          );
+                        }),
+
+                        const SizedBox(height: 15),
+
+                        const SizedBox(height: 15),
 
                         SizedBox(
                           width: double.infinity,
