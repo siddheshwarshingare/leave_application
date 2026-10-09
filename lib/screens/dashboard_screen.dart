@@ -1,19 +1,21 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_instance/src/extension_instance.dart';
 import 'package:intl/intl.dart';
 import 'package:leave_application/screens/apply_c_off_screen.dart';
-import 'package:leave_application/screens/apply_leave_screen.dart'
-    hide ApplyLeaveScreen;
+
 import 'package:leave_application/screens/apply_wfh_screen.dart';
-import 'package:leave_application/screens/admin/admin_attendance_screen.dart';
-import 'package:leave_application/screens/attendance_screen.dart';
-import 'package:leave_application/screens/attendance/employee_attedance_screen.dart';
 import 'package:leave_application/screens/leave_history_screen.dart';
 import 'package:leave_application/screens/leave_screen.dart';
 import 'package:leave_application/screens/notification.dart';
 import 'package:leave_application/screens/profile_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../machine_api/controller/get_all_employee_controller.dart';
+import '../machine_api/screen/admin/admin_attendance_screen.dart';
+import '../machine_api/screen/attendance/employee_attedance_screen.dart';
 import 'holiday_list_screen.dart';
 import 'login_screen.dart';
 
@@ -25,6 +27,12 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  final EmployeeController employeeController = Get.put(
+    EmployeeController(
+      apiKey: "token 195b2bad9730c7b02b29b079a247fa5dd9974201",
+    ),
+  );
+
   String name = "";
   String role = "";
   String email = "";
@@ -764,6 +772,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               icon: Icons.history_rounded,
               title: 'Admin Attendace',
               onTap: () {
+                employeeController.fetchEmployees();
                 Navigator.pop(context);
 
                 Navigator.push(

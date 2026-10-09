@@ -3,8 +3,7 @@ import 'package:emailjs/emailjs.dart' as emailjs;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:leave_application/screens/admin_attedance_screen.dart';
-import 'package:leave_application/screens/admin/admin_calendar_screen.dart';
-import 'package:leave_application/screens/admin/admin_notification_screen.dart';
+
 import 'package:leave_application/screens/hr_coff_screen.dart';
 import 'package:leave_application/screens/leave_history_screen.dart';
 import 'package:leave_application/screens/login_screen.dart';
@@ -17,6 +16,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import 'admin_attendance_screen.dart';
+import 'admin_calendar_screen.dart';
+import 'admin_notification_screen.dart';
 
 class AdminLeaveScreen extends StatefulWidget {
   const AdminLeaveScreen({super.key});
@@ -557,12 +558,16 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
 
   void testEmail() async {
     try {
-      final response = await emailjs
-          .send('service_90wr32y', 'template_b04xilb', {
-            'email': 'siddheshwarshingare1999@gmail.com',
-            'title': 'TEST SUBJECT',
-            'name': 'TEST MESSAGE',
-          }, emailjs.Options(publicKey: '8erlfJzc6WZtfnz0o'));
+      final response = await emailjs.send(
+        'service_90wr32y',
+        'template_b04xilb',
+        {
+          'email': 'siddheshwarshingare1999@gmail.com',
+          'title': 'TEST SUBJECT',
+          'name': 'TEST MESSAGE',
+        },
+        emailjs.Options(publicKey: '8erlfJzc6WZtfnz0o'),
+      );
 
       print("SUCCESS = ${response.text}");
     } catch (e) {

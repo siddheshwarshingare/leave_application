@@ -3,13 +3,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:leave_application/screens/admin/admin_leave_screen.dart';
 import 'package:leave_application/screens/dashboard_screen.dart';
 import 'package:leave_application/screens/login_screen.dart';
 import 'package:leave_application/screens/splash_screen.dart';
 import 'package:leave_application/services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
+import 'machine_api/screen/admin/admin_leave_screen.dart';
 
 Future<Widget> checkLogin() async {
   try {

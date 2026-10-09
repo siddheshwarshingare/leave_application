@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:leave_application/machine_api/controller/get_all_employee_controller.dart';
 
 class AdminAttendanceScreen extends StatefulWidget {
   const AdminAttendanceScreen({super.key});
@@ -8,6 +10,12 @@ class AdminAttendanceScreen extends StatefulWidget {
 }
 
 class _AdminAttendanceScreenState extends State<AdminAttendanceScreen> {
+  final EmployeeController employeeController = Get.put(
+    EmployeeController(
+      apiKey: const String.fromEnvironment('EMPLOYEE_API_KEY'),
+    ),
+  );
+
   static const Color primaryBlue = Color(0xFF0878D1);
   static const Color darkText = Color(0xFF101828);
   static const Color subText = Color(0xFF52627A);
@@ -24,74 +32,40 @@ class _AdminAttendanceScreenState extends State<AdminAttendanceScreen> {
 
   final List<String> filters = ['All', 'Present', 'Absent', 'Late', 'On Leave'];
 
-  final List<Map<String, String>> employees = [
-    {
-      'initial': 'RS',
-      'name': 'Ravi Sharma',
-      'id': 'EMP-1001',
-      'in': '09:05 AM',
-      'out': '06:12 PM',
-      'hours': '09h 07m',
-      'status': 'Present',
-      'department': 'Development',
-      'email': 'ravi@company.com',
-    },
-    {
-      'initial': 'PP',
-      'name': 'Priya Patel',
-      'id': 'EMP-1002',
-      'in': '08:57 AM',
-      'out': '--:--',
-      'hours': '07h 50m',
-      'status': 'Currently IN',
-      'department': 'HR',
-      'email': 'priya@company.com',
-    },
-    {
-      'initial': 'AK',
-      'name': 'Amit Kumar',
-      'id': 'EMP-1003',
-      'in': '09:45 AM',
-      'out': '06:20 PM',
-      'hours': '08h 35m',
-      'status': 'Late',
-      'department': 'Accounts',
-      'email': 'amit@company.com',
-    },
-    {
-      'initial': 'NS',
-      'name': 'Neha Singh',
-      'id': 'EMP-1004',
-      'in': '09:02 AM',
-      'out': '03:32 PM',
-      'hours': '06h 30m',
-      'status': 'Left Early',
-      'department': 'Design',
-      'email': 'neha@company.com',
-    },
-    {
-      'initial': 'VK',
-      'name': 'Vikas Kumar',
-      'id': 'EMP-1005',
-      'in': '--:--',
-      'out': '--:--',
-      'hours': '--:--',
-      'status': 'Absent',
-      'department': 'Development',
-      'email': 'vikas@company.com',
-    },
-    {
-      'initial': 'PM',
-      'name': 'Pooja Mehta',
-      'id': 'EMP-1006',
-      'in': '--:--',
-      'out': '--:--',
-      'hours': '--:--',
-      'status': 'On Leave',
-      'department': 'Support',
-      'email': 'pooja@company.com',
-    },
-  ];
+  // Adapt API employee objects to the existing attendance card design.
+  // Attendance-specific values require a separate attendance API.
+  List<Map<String, String>> get employees {
+    final response = employeeController.employeeList.value;
+    if (response == null) return [];
+    return response.data.map<Map<String, String>>((employee) {
+      final name = employee.fullName.trim();
+      final parts = name
+          .split(RegExp(r'\s+'))
+          .where((s) => s.isNotEmpty)
+          .toList();
+      final initials = parts.isEmpty
+          ? '?'
+          : parts.take(2).map((part) => part[0].toUpperCase()).join();
+      return <String, String>{
+        'initial': initials,
+        'name': name.isEmpty ? 'Unknown Employee' : name,
+        'id': employee.empCode.toString(),
+        'in': '--:--',
+        'out': '--:--',
+        'hours': '--:--',
+        'status': 'Not Available',
+        'department': employee.department?.deptName ?? 'N/A',
+        'email': employee.email.isEmpty ? 'N/A' : employee.email,
+      };
+    }).toList();
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+
+    super.initState();
+  }
 
   @override
   void dispose() {
@@ -176,7 +150,7 @@ class _AdminAttendanceScreenState extends State<AdminAttendanceScreen> {
 
           const SizedBox(height: 10),
 
-          _overviewGrid(),
+          Obx(() => _overviewGrid()),
 
           const SizedBox(height: 22),
 
@@ -234,37 +208,85 @@ class _AdminAttendanceScreenState extends State<AdminAttendanceScreen> {
           child: Column(
             children: [
               _dateSelector(),
-
               const SizedBox(height: 14),
-
               _searchBar(),
-
               const SizedBox(height: 10),
-
               _filterBar(),
             ],
           ),
         ),
-
         const SizedBox(height: 10),
-
         Expanded(
-          child: filteredEmployees.isEmpty
-              ? _emptyEmployeeState()
-              : ListView.builder(
+          child: Obx(() {
+            if (employeeController.isLoading.value &&
+                employeeController.employeeList.value == null) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (employeeController.employeeList.value == null &&
+                employeeController.errorMessage.value.isNotEmpty) {
+              return _employeeErrorState();
+            }
+            final list = filteredEmployees;
+            if (list.isEmpty) return _emptyEmployeeState();
+            return RefreshIndicator(
+              onRefresh: employeeController.refreshEmployees,
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (notification) {
+                  if (notification is ScrollUpdateNotification &&
+                      notification.metrics.extentAfter < 200 &&
+                      employeeController.hasMore &&
+                      !employeeController.isLoadMore.value) {
+                    employeeController.loadMoreEmployees();
+                  }
+                  return false;
+                },
+                child: ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-                  itemCount: filteredEmployees.length,
+                  itemCount:
+                      list.length +
+                      (employeeController.isLoadMore.value ? 1 : 0),
                   itemBuilder: (context, index) {
-                    final employee = filteredEmployees[index];
-
+                    if (index == list.length) {
+                      return const Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 10),
-                      child: _employeeCard(employee),
+                      child: _employeeCard(list[index]),
                     );
                   },
                 ),
+              ),
+            );
+          }),
         ),
       ],
+    );
+  }
+
+  Widget _employeeErrorState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red, size: 36),
+            const SizedBox(height: 10),
+            Text(
+              employeeController.errorMessage.value,
+              textAlign: TextAlign.center,
+            ),
+            TextButton(
+              onPressed: employeeController.fetchEmployees,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -593,7 +615,7 @@ class _AdminAttendanceScreenState extends State<AdminAttendanceScreen> {
     final items = [
       {
         'title': 'Total\nEmployees',
-        'value': '120',
+        'value': employeeController.totalCount.value.toString(),
         'percent': '',
         'filter': 'All',
         'icon': Icons.groups_rounded,
@@ -602,8 +624,8 @@ class _AdminAttendanceScreenState extends State<AdminAttendanceScreen> {
       },
       {
         'title': 'Present',
-        'value': '98',
-        'percent': '81.7%',
+        'value': '--',
+        'percent': '',
         'filter': 'Present',
         'icon': Icons.check,
         'color': const Color(0xFF29B967),
@@ -611,8 +633,8 @@ class _AdminAttendanceScreenState extends State<AdminAttendanceScreen> {
       },
       {
         'title': 'Absent',
-        'value': '12',
-        'percent': '10.0%',
+        'value': '--',
+        'percent': '',
         'filter': 'Absent',
         'icon': Icons.close,
         'color': const Color(0xFFFF4C52),
@@ -620,8 +642,8 @@ class _AdminAttendanceScreenState extends State<AdminAttendanceScreen> {
       },
       {
         'title': 'Late',
-        'value': '10',
-        'percent': '8.3%',
+        'value': '--',
+        'percent': '',
         'filter': 'Late',
         'icon': Icons.access_time_filled,
         'color': const Color(0xFFE6A415),
@@ -629,7 +651,7 @@ class _AdminAttendanceScreenState extends State<AdminAttendanceScreen> {
       },
       {
         'title': 'Currently IN',
-        'value': '86',
+        'value': '--',
         'percent': '',
         'filter': 'Present',
         'icon': Icons.login_rounded,
@@ -638,7 +660,7 @@ class _AdminAttendanceScreenState extends State<AdminAttendanceScreen> {
       },
       {
         'title': 'Currently OUT',
-        'value': '34',
+        'value': '--',
         'percent': '',
         'filter': 'All',
         'icon': Icons.logout_rounded,
@@ -741,67 +763,16 @@ class _AdminAttendanceScreenState extends State<AdminAttendanceScreen> {
 
   Widget _attendanceGraphCard() {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(18),
       decoration: _cardDecoration(),
-      child: Row(
+      child: const Row(
         children: [
-          SizedBox(
-            width: 125,
-            height: 125,
-            child: CustomPaint(
-              painter: AttendanceCirclePainter(),
-              child: const Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '120',
-                      style: TextStyle(
-                        color: darkText,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    Text(
-                      'Employees',
-                      style: TextStyle(color: subText, fontSize: 11),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 20),
-
-          const Expanded(
-            child: Column(
-              children: [
-                AttendanceLegend(
-                  color: Color(0xFF22B85B),
-                  title: 'Present',
-                  value: '98',
-                  percent: '81.7%',
-                ),
-                AttendanceLegend(
-                  color: Color(0xFFFF5353),
-                  title: 'Absent',
-                  value: '12',
-                  percent: '10.0%',
-                ),
-                AttendanceLegend(
-                  color: Color(0xFFFFBD32),
-                  title: 'Late',
-                  value: '10',
-                  percent: '8.3%',
-                ),
-                AttendanceLegend(
-                  color: Color(0xFF7765E5),
-                  title: 'On Leave',
-                  value: '6',
-                  percent: '5.0%',
-                ),
-              ],
+          Icon(Icons.info_outline, color: primaryBlue),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Attendance summary will appear after connecting the transactions API.',
+              style: TextStyle(fontSize: 12, color: subText),
             ),
           ),
         ],
@@ -926,24 +897,34 @@ class _AdminAttendanceScreenState extends State<AdminAttendanceScreen> {
   // ============================================================
 
   Widget _employeeList({int? limit}) {
-    var list = filteredEmployees;
-
-    if (limit != null && list.length > limit) {
-      list = list.take(limit).toList();
-    }
-
-    if (list.isEmpty) {
-      return _emptyEmployeeState();
-    }
-
-    return Column(
-      children: list.map((employee) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 9),
-          child: _employeeCard(employee),
+    return Obx(() {
+      if (employeeController.isLoading.value &&
+          employeeController.employeeList.value == null) {
+        return const Padding(
+          padding: EdgeInsets.all(30),
+          child: Center(child: CircularProgressIndicator()),
         );
-      }).toList(),
-    );
+      }
+      if (employeeController.employeeList.value == null &&
+          employeeController.errorMessage.value.isNotEmpty) {
+        return _employeeErrorState();
+      }
+      var list = filteredEmployees;
+      if (limit != null && list.length > limit) {
+        list = list.take(limit).toList();
+      }
+      if (list.isEmpty) return _emptyEmployeeState();
+      return Column(
+        children: list
+            .map(
+              (employee) => Padding(
+                padding: const EdgeInsets.only(bottom: 9),
+                child: _employeeCard(employee),
+              ),
+            )
+            .toList(),
+      );
+    });
   }
 
   Widget _employeeCard(Map<String, String> employee) {
@@ -1372,6 +1353,7 @@ class _AdminAttendanceScreenState extends State<AdminAttendanceScreen> {
       'On Leave',
       'Currently IN',
       'Left Early',
+      'Not Available',
     ];
 
     showModalBottomSheet(
@@ -1467,7 +1449,7 @@ class _AdminAttendanceScreenState extends State<AdminAttendanceScreen> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                '${employee['name']} attendance updated to $tempStatus',
+                                'Status changed locally (not saved to server): $tempStatus',
                               ),
                               backgroundColor: const Color(0xFF16A34A),
                             ),
@@ -1914,33 +1896,35 @@ class _AdminAttendanceScreenState extends State<AdminAttendanceScreen> {
                 const SizedBox(height: 12),
 
                 Expanded(
-                  child: ListView.separated(
-                    itemCount: employees.length,
-                    separatorBuilder: (_, __) => const Divider(),
-                    itemBuilder: (context, index) {
-                      final employee = employees[index];
+                  child: Obx(
+                    () => ListView.separated(
+                      itemCount: employees.length,
+                      separatorBuilder: (_, __) => const Divider(),
+                      itemBuilder: (context, index) {
+                        final employee = employees[index];
 
-                      return ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: CircleAvatar(
-                          backgroundColor: const Color(0xFFE6F3FF),
-                          child: Text(
-                            employee['initial']!,
-                            style: const TextStyle(color: primaryBlue),
+                        return ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: CircleAvatar(
+                            backgroundColor: const Color(0xFFE6F3FF),
+                            child: Text(
+                              employee['initial']!,
+                              style: const TextStyle(color: primaryBlue),
+                            ),
                           ),
-                        ),
-                        title: Text(employee['name']!),
-                        subtitle: Text(employee['id']!),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () {
-                          Navigator.pop(sheetContext);
+                          title: Text(employee['name']!),
+                          subtitle: Text(employee['id']!),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () {
+                            Navigator.pop(sheetContext);
 
-                          _showExportSheet(
-                            reportName: '${employee['name']} Attendance',
-                          );
-                        },
-                      );
-                    },
+                            _showExportSheet(
+                              reportName: '${employee['name']} Attendance',
+                            );
+                          },
+                        );
+                      },
+                    ),
                   ),
                 ),
               ],

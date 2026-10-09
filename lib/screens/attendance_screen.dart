@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:leave_application/screens/attendance/employee_attedance_screen.dart';
+
 import 'package:leave_application/services/attendance_service.dart';
+
+import '../machine_api/screen/attendance/employee_attedance_screen.dart';
 
 class AttendanceScreen extends StatefulWidget {
   const AttendanceScreen({super.key});

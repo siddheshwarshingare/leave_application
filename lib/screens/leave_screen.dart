@@ -2,7 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emailjs/emailjs.dart' as emailjs;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:leave_application/screens/admin/to_admin_seletion_screen.dart';
+
+import '../machine_api/screen/admin/to_admin_seletion_screen.dart';
 
 class ApplyLeaveScreen extends StatefulWidget {
   const ApplyLeaveScreen({super.key});

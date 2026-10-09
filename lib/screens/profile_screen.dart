@@ -45,16 +45,6 @@ class ProfileScreen extends StatelessWidget {
   }
 
   // ============================================================
-  // EDIT PROFILE
-  // ============================================================
-
-  void _editProfile(BuildContext context) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Edit Profile')));
-  }
-
-  // ============================================================
   // BUILD
   // ============================================================
   static const Color _orange = Color(0xFFFF6B1A);
@@ -207,7 +197,10 @@ class ProfileScreen extends StatelessWidget {
               data['phone']?.toString().trim().isNotEmpty == true
               ? data['phone'].toString().trim()
               : '-';
-
+          final String empCode =
+              data['emp_code']?.toString().trim().isNotEmpty == true
+              ? data['emp_code'].toString().trim()
+              : '-';
           final String employeeId =
               data['employeeId']?.toString().trim().isNotEmpty == true
               ? data['employeeId'].toString().trim()
@@ -260,8 +253,8 @@ class ProfileScreen extends StatelessWidget {
                       alignment: Alignment.center,
                       children: [
                         Positioned(
-                          right: 120,
-                          top: -25,
+                          right: 0,
+                          top: -20,
                           child: Container(
                             height: 80,
                             width: 100,
@@ -359,11 +352,17 @@ class ProfileScreen extends StatelessWidget {
 
                       const _ModernDivider(),
 
-                      // _ModernProfileRow(
-                      //   icon: Icons.phone_outlined,
-                      //   label: 'Phone',
-                      //   value: phone,
-                      // ),
+                      _ModernProfileRow(
+                        icon: Icons.phone_outlined,
+                        label: 'Phone',
+                        value: phone,
+                      ),
+
+                      _ModernProfileRow(
+                        icon: Icons.people,
+                        label: 'Emp Code',
+                        value: empCode,
+                      ),
                     ],
                   ),
 
@@ -381,7 +380,6 @@ class ProfileScreen extends StatelessWidget {
                       //   label: 'Employee ID',
                       //   value: employeeId,
                       // ),
-
                       const _ModernDivider(),
 
                       _ModernProfileRow(
