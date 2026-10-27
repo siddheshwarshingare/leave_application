@@ -1295,42 +1295,42 @@ class _ApplyCOffScreenState extends State<ApplyCOffScreen> {
 
           //   for (final receiverEmail in notifyEmails) {
           try {
-            await emailjs.send(
-              "service_90wr32y",
-              "template_mga5feh",
-              {
-                "to_email": toEmails.join(","),
-                "cc_email": selectedCcEmails
-                    .where((email) => !selectedToEmails.contains(email))
-                    .join(","),
+            // await emailjs.send(
+            //   "service_90wr32y",
+            //   "template_mga5feh",
+            //   {
+            //     "to_email": toEmails.join(","),
+            //     "cc_email": selectedCcEmails
+            //         .where((email) => !selectedToEmails.contains(email))
+            //         .join(","),
 
-                'request_type': 'C-Off',
+            //     'request_type': 'C-Off',
 
-                "employee_name": employeeName,
+            //     "employee_name": employeeName,
 
-                "employee_email": employeeEmail,
+            //     "employee_email": employeeEmail,
 
-                "leave_type": "C-Off",
+            //     "leave_type": "C-Off",
 
-                "from_date": formatDate(dates.first),
+            //     "from_date": formatDate(dates.first),
 
-                "to_date": formatDate(dates.last),
+            //     "to_date": formatDate(dates.last),
 
-                "days": dates.length.toString(),
+            //     "days": dates.length.toString(),
 
-                "reason": reasonController.text.trim(),
+            //     "reason": reasonController.text.trim(),
 
-                "worked_dates": formattedDates,
-              },
-              emailjs.Options(
-                publicKey: "8erlfJzc6WZtfnz0o",
-                privateKey: "wRTOsFZnkQi6yxQX7D-rF",
+            //     "worked_dates": formattedDates,
+            //   },
+            //   emailjs.Options(
+            //     publicKey: "8erlfJzc6WZtfnz0o",
+            //     privateKey: "wRTOsFZnkQi6yxQX7D-rF",
 
-                // privateKey: const String.fromEnvironment(
-                //   "wRTOsFZnkQi6yxQX7D-rF",
-                // ),
-              ),
-            );
+            //     // privateKey: const String.fromEnvironment(
+            //     //   "wRTOsFZnkQi6yxQX7D-rF",
+            //     // ),
+            //   ),
+            // );
           } catch (emailError) {
             debugPrint("C-Off email failed: $emailError");
           }

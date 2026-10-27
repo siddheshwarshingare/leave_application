@@ -16,7 +16,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../machine_api/controller/get_all_employee_controller.dart';
 import '../machine_api/screen/admin/admin_attendance_screen.dart';
 import '../machine_api/screen/attendance/employee_attedance_screen.dart';
-import 'holiday_list_screen.dart';
+import 'holiday_list_screen.dart'; 
 import 'login_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -2055,74 +2055,74 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 // ==================================================
                 // BOTTOM PROMO CARD
                 // ==================================================
-                Container(
-                  width: double.infinity,
-                  height: 116,
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF102A56), Color(0xFF173867)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              "Stay organized,",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 17,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
+                // Container(
+                //   width: double.infinity,
+                //   height: 116,
+                //   padding: const EdgeInsets.all(18),
+                //   decoration: BoxDecoration(
+                //     gradient: const LinearGradient(
+                //       colors: [Color(0xFF102A56), Color(0xFF173867)],
+                //       begin: Alignment.topLeft,
+                //       end: Alignment.bottomRight,
+                //     ),
+                //     borderRadius: BorderRadius.circular(16),
+                //   ),
+                //   child: Row(
+                //     children: [
+                //       Expanded(
+                //         child: Column(
+                //           crossAxisAlignment: CrossAxisAlignment.start,
+                //           mainAxisAlignment: MainAxisAlignment.center,
+                //           children: [
+                //             const Text(
+                //               "Stay organized,",
+                //               style: TextStyle(
+                //                 color: Colors.white,
+                //                 fontSize: 17,
+                //                 fontWeight: FontWeight.w800,
+                //               ),
+                //             ),
 
-                            const Text(
-                              "stay ahead!",
-                              style: TextStyle(
-                                color: _orange,
-                                fontSize: 17,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
+                //             const Text(
+                //               "stay ahead!",
+                //               style: TextStyle(
+                //                 color: _orange,
+                //                 fontSize: 17,
+                //                 fontWeight: FontWeight.w800,
+                //               ),
+                //             ),
 
-                            const SizedBox(height: 5),
+                //             const SizedBox(height: 5),
 
-                            const Text(
-                              "Apply leaves, track attendance\n"
-                              "and manage your work life.",
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 9,
-                                height: 1.4,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                //             const Text(
+                //               "Apply leaves, track attendance\n"
+                //               "and manage your work life.",
+                //               style: TextStyle(
+                //                 color: Colors.white70,
+                //                 fontSize: 9,
+                //                 height: 1.4,
+                //               ),
+                //             ),
+                //           ],
+                //         ),
+                //       ),
 
-                      Container(
-                        height: 68,
-                        width: 68,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(.08),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Icon(
-                          Icons.calendar_month_rounded,
-                          color: Colors.white,
-                          size: 42,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                //       Container(
+                //         height: 68,
+                //         width: 68,
+                //         decoration: BoxDecoration(
+                //           color: Colors.white.withOpacity(.08),
+                //           borderRadius: BorderRadius.circular(14),
+                //         ),
+                //         child: const Icon(
+                //           Icons.calendar_month_rounded,
+                //           color: Colors.white,
+                //           size: 42,
+                //         ),
+                //       ),
+                //     ],
+                //   ),
+                // ),
               ],
             ),
           ),
