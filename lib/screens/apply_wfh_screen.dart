@@ -1022,43 +1022,43 @@ class _ApplyWFHScreenState extends State<ApplyWFHScreen> {
 
       //  for (final String receiverEmail in notifyEmails) {
       try {
-        // await emailjs.send(
-        //   'service_90wr32y',
-        //   'template_mga5feh',
-        //   {
-        //     'to_email': notifyEmails,
+        await emailjs.send(
+          'service_90wr32y',
+          'template_mga5feh',
+          {
+            'to_email': notifyEmails,
 
-        //     //"toEmails": selectedToEmails.toList(),
-        //     "cc_email": selectedCcEmails.toList(),
-        //     'request_type': 'WFH',
+            //"toEmails": selectedToEmails.toList(),
+            "cc_email": selectedCcEmails.toList(),
+            'request_type': 'WFH',
 
-        //     'employee_name': employeeName,
-        //     'employee_email': employeeEmail,
+            'employee_name': employeeName,
+            'employee_email': employeeEmail,
 
-        //     'leave_type': 'WFH',
+            'leave_type': 'WFH',
 
-        //     'leave_duration': 'Full Day',
+            'leave_duration': 'Full Day',
 
-        //     'half_day_session': '-',
+            'half_day_session': '-',
 
-        //     'from_date': _formatDate(fromDate!),
-        //     'to_date': _formatDate(toDate!),
+            'from_date': _formatDate(fromDate!),
+            'to_date': _formatDate(toDate!),
 
-        //     'days': _formatLeaveDays(requestedDays),
+            'days': _formatLeaveDays(requestedDays),
 
-        //     'worked_dates': '-',
+            'worked_dates': '-',
 
-        //     'emergency': 'No',
+            'emergency': 'No',
 
-        //     'reason': reasonController.text.trim(),
+            'reason': reasonController.text.trim(),
 
-        //     'status': 'Pending',
-        //   },
-        //   emailjs.Options(
-        //     publicKey: '8erlfJzc6WZtfnz0o',
-        //     privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
-        //   ),
-        // );
+            'status': 'Pending',
+          },
+          emailjs.Options(
+            publicKey: '8erlfJzc6WZtfnz0o',
+            privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
+          ),
+        );
 
         debugPrint("WFH email sent to: $notifyEmails");
       } catch (emailError) {

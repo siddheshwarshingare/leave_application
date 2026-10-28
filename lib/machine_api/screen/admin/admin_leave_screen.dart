@@ -558,16 +558,12 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
 
   void testEmail() async {
     try {
-      final response = await emailjs.send(
-        'service_90wr32y',
-        'template_b04xilb',
-        {
-          'email': 'siddheshwarshingare1999@gmail.com',
-          'title': 'TEST SUBJECT',
-          'name': 'TEST MESSAGE',
-        },
-        emailjs.Options(publicKey: '8erlfJzc6WZtfnz0o'),
-      );
+      final response = await emailjs
+          .send('service_90wr32y', 'template_b04xilb', {
+            'email': 'siddheshwarshingare1999@gmail.com',
+            'title': 'TEST SUBJECT',
+            'name': 'TEST MESSAGE',
+          }, emailjs.Options(publicKey: '8erlfJzc6WZtfnz0o'));
 
       print("SUCCESS = ${response.text}");
     } catch (e) {
@@ -743,40 +739,40 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
       // EMAIL
       // ============================================================
 
-      // await emailjs.send(
-      //   'service_90wr32y',
-      //   'template_b04xilb',
-      //   {
-      //     'employee_name': leaveData['employeeName'],
+      await emailjs.send(
+        'service_90wr32y',
+        'template_b04xilb',
+        {
+          'employee_name': leaveData['employeeName'],
 
-      //     //   'employee_email': "siddheshwar.shingare@en3.ca",
-      //     'employee_email': leaveData['employeeEmail'],
-      //     'leave_type': leaveData['leaveType'],
+          //   'employee_email': "siddheshwar.shingare@en3.ca",
+          'employee_email': leaveData['employeeEmail'],
+          'leave_type': leaveData['leaveType'],
 
-      //     'from_date': (leaveData['fromDate'] as Timestamp)
-      //         .toDate()
-      //         .toString()
-      //         .split(' ')[0],
+          'from_date': (leaveData['fromDate'] as Timestamp)
+              .toDate()
+              .toString()
+              .split(' ')[0],
 
-      //     'to_date': (leaveData['toDate'] as Timestamp)
-      //         .toDate()
-      //         .toString()
-      //         .split(' ')[0],
+          'to_date': (leaveData['toDate'] as Timestamp)
+              .toDate()
+              .toString()
+              .split(' ')[0],
 
-      //     'days': leaveData['days'].toString(),
+          'days': leaveData['days'].toString(),
 
-      //     //  'status': "Approved",
-      //     'approved': true,
-      //     'rejected': false,
-      //   },
+          //  'status': "Approved",
+          'approved': true,
+          'rejected': false,
+        },
 
-      //   //  publicKey: '8erlfJzc6WZtfnz0o',
-      //   //  privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
-      //   emailjs.Options(
-      //     publicKey: '8erlfJzc6WZtfnz0o',
-      //     privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
-      //   ),
-      // );
+        //  publicKey: '8erlfJzc6WZtfnz0o',
+        //  privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
+        emailjs.Options(
+          publicKey: '8erlfJzc6WZtfnz0o',
+          privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
+        ),
+      );
 
       // ============================================================
       // SUCCESS
@@ -948,39 +944,39 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
       // SEND EMAIL
       // ============================================================
 
-      // await emailjs.send(
-      //   'service_90wr32y',
-      //   'template_b04xilb',
-      //   {
-      //     'employee_name': leaveData['employeeName'],
+      await emailjs.send(
+        'service_90wr32y',
+        'template_b04xilb',
+        {
+          'employee_name': leaveData['employeeName'],
 
-      //     'employee_email': leaveData['employeeEmail'],
-      //     // 'employee_email': "siddheshwar.shingare@en3.ca",
-      //     'leave_type': leaveData['leaveType'],
+          'employee_email': leaveData['employeeEmail'],
+          // 'employee_email': "siddheshwar.shingare@en3.ca",
+          'leave_type': leaveData['leaveType'],
 
-      //     'from_date': (leaveData['fromDate'] as Timestamp)
-      //         .toDate()
-      //         .toString()
-      //         .split(' ')[0],
+          'from_date': (leaveData['fromDate'] as Timestamp)
+              .toDate()
+              .toString()
+              .split(' ')[0],
 
-      //     'to_date': (leaveData['toDate'] as Timestamp)
-      //         .toDate()
-      //         .toString()
-      //         .split(' ')[0],
+          'to_date': (leaveData['toDate'] as Timestamp)
+              .toDate()
+              .toString()
+              .split(' ')[0],
 
-      //     'days': leaveData['days'].toString(),
-      //     'approved': false,
-      //     'rejected': true,
-      //     // 'status': 'Rejected',
+          'days': leaveData['days'].toString(),
+          'approved': false,
+          'rejected': true,
+          // 'status': 'Rejected',
 
-      //     // IMPORTANT
-      //   },
+          // IMPORTANT
+        },
 
-      //   emailjs.Options(
-      //     publicKey: '8erlfJzc6WZtfnz0o',
-      //     privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
-      //   ),
-      // );
+        emailjs.Options(
+          publicKey: '8erlfJzc6WZtfnz0o',
+          privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
+        ),
+      );
 
       // ============================================================
       // REFRESH LEAVE SUMMARY

@@ -1162,58 +1162,58 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
       // ========================================================
 
       try {
-        // await emailjs.send(
-        //   'service_90wr32y',
-        //   'template_mga5feh',
-        //   {
-        //     // ==================================================
-        //     // EMAIL RECIPIENTS
-        //     // ==================================================
-        //     'to_email': primaryEmail,
+        await emailjs.send(
+          'service_90wr32y',
+          'template_mga5feh',
+          {
+            // ==================================================
+            // EMAIL RECIPIENTS
+            // ==================================================
+            'to_email': primaryEmail,
 
-        //     'cc_email': ccEmails,
+            'cc_email': ccEmails,
 
-        //     'bcc_email': 'siddheshwar.shingare@en3.ca',
+            'bcc_email': 'siddheshwar.shingare@en3.ca',
 
-        //     // ==================================================
-        //     // LEAVE INFORMATION
-        //     // ==================================================
-        //     'request_type': "Leave",
+            // ==================================================
+            // LEAVE INFORMATION
+            // ==================================================
+            'request_type': "Leave",
 
-        //     'employee_name': userData['name']?.toString() ?? "",
+            'employee_name': userData['name']?.toString() ?? "",
 
-        //     'employee_email': userData['email']?.toString() ?? "",
+            'employee_email': userData['email']?.toString() ?? "",
 
-        //     'leave_type': selectedLeaveType ?? "",
+            'leave_type': selectedLeaveType ?? "",
 
-        //     'leave_duration': leaveDuration,
+            'leave_duration': leaveDuration,
 
-        //     'half_day_session': leaveDuration == "Half Day Only"
-        //         ? halfDaySession ?? ""
-        //         : "",
+            'half_day_session': leaveDuration == "Half Day Only"
+                ? halfDaySession ?? ""
+                : "",
 
-        //     'from_date': _formatDate(fromDate!),
+            'from_date': _formatDate(fromDate!),
 
-        //     'to_date': _formatDate(toDate!),
+            'to_date': _formatDate(toDate!),
 
-        //     'days': _formatLeaveDays(requestedDays),
+            'days': _formatLeaveDays(requestedDays),
 
-        //     'reason': reasonController.text.trim(),
+            'reason': reasonController.text.trim(),
 
-        //     'emergency': emergency ? "Yes" : "No",
-        //   },
+            'emergency': emergency ? "Yes" : "No",
+          },
 
-        //   emailjs.Options(
-        //     publicKey: '8erlfJzc6WZtfnz0o',
+          emailjs.Options(
+            publicKey: '8erlfJzc6WZtfnz0o',
 
-        //     // IMPORTANT:
-        //     // This private key should NOT be stored
-        //     // inside a production Flutter application.
-        //     // Rotate it and move email sending to
-        //     // Firebase Cloud Functions for production.
-        //     privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
-        //   ),
-        // );
+            // IMPORTANT:
+            // This private key should NOT be stored
+            // inside a production Flutter application.
+            // Rotate it and move email sending to
+            // Firebase Cloud Functions for production.
+            privateKey: 'wRTOsFZnkQi6yxQX7D-rF',
+          ),
+        );
 
         debugPrint("================================");
 

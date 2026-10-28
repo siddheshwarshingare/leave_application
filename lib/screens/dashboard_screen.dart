@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:leave_application/screens/apply_c_off_screen.dart';
 
 import 'package:leave_application/screens/apply_wfh_screen.dart';
+import 'package:leave_application/screens/coff_history_screen.dart';
 import 'package:leave_application/screens/leave_history_screen.dart';
 import 'package:leave_application/screens/leave_screen.dart';
 import 'package:leave_application/screens/notification.dart';
@@ -16,7 +17,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../machine_api/controller/get_all_employee_controller.dart';
 import '../machine_api/screen/admin/admin_attendance_screen.dart';
 import '../machine_api/screen/attendance/employee_attedance_screen.dart';
-import 'holiday_list_screen.dart'; 
+import 'holiday_list_screen.dart';
 import 'login_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -1809,9 +1810,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const LeaveHistoryScreen(),
+                        builder: (_) => const CoffHistoryScreen(),
                       ),
                     );
+                    // Navigator.push(
+                    //   context,
+                    //   MaterialPageRoute(
+                    //     builder: (_) => const LeaveHistoryScreen(),
+                    //   ),
+                    // );
                   },
                 ),
 
