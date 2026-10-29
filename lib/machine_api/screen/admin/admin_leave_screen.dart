@@ -43,6 +43,54 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
     // markAllRead();
   }
 
+  Future<void> deleteLeaveRequest(String requestId, String status) async {
+    try {
+      final shouldDelete = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text("Delete Leave Request"),
+          content: const Text(
+            "Are you sure you want to delete this leave request? "
+            "This action cannot be undone.",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text("Delete"),
+            ),
+          ],
+        ),
+      );
+
+      if (shouldDelete != true || !mounted) return;
+
+      await FirebaseFirestore.instance
+          .collection('leave_requests')
+          .doc(requestId)
+          .delete();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Leave request deleted successfully")),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to delete leave request: $e")),
+      );
+    }
+  }
+
   Widget _drawerItem(
     BuildContext context, {
     required IconData icon,
@@ -2802,6 +2850,41 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
                                         ),
                                       ),
                                     ],
+                                  ),
+                                  const SizedBox(height: 10),
+
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 44,
+                                    child: OutlinedButton.icon(
+                                      onPressed: () {
+                                        deleteLeaveRequest(
+                                          data.id,
+                                          data['status']?.toString() ?? '',
+                                        );
+                                      },
+                                      icon: const Icon(
+                                        Icons.delete_outline_rounded,
+                                        color: Colors.red,
+                                      ),
+                                      label: const Text(
+                                        "Delete Request",
+                                        style: TextStyle(
+                                          color: Colors.red,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      style: OutlinedButton.styleFrom(
+                                        side: const BorderSide(
+                                          color: Color(0xFFFECACA),
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ],

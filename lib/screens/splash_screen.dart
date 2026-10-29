@@ -8,10 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 class SplashScreen extends StatefulWidget {
   final Widget nextScreen;
 
-  const SplashScreen({
-    super.key,
-    required this.nextScreen,
-  });
+  const SplashScreen({super.key, required this.nextScreen});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -37,21 +34,16 @@ class _SplashScreenState extends State<SplashScreen> {
   // ============================================================
 
   Future<void> _startSplash() async {
-    await Future.delayed(
-      const Duration(seconds: 1),
-    );
+    await Future.delayed(const Duration(seconds: 1));
 
     if (!mounted) return;
 
-    final bool updateRequired =
-        await _checkUpdateRequired();
+    final bool updateRequired = await _checkUpdateRequired();
 
     if (!mounted) return;
 
     if (updateRequired) {
-      debugPrint(
-        'UPDATE REQUIRED -> SHOWING DIALOG',
-      );
+      debugPrint('UPDATE REQUIRED -> SHOWING DIALOG');
 
       _showUpdateDialog();
 
@@ -60,9 +52,7 @@ class _SplashScreenState extends State<SplashScreen> {
       return;
     }
 
-    debugPrint(
-      'NO UPDATE REQUIRED -> NEXT SCREEN',
-    );
+    debugPrint('NO UPDATE REQUIRED -> NEXT SCREEN');
 
     _goToNextScreen();
   }
@@ -83,44 +73,33 @@ class _SplashScreenState extends State<SplashScreen> {
       // INSTALLED APP VERSION
       // --------------------------------------------------------
 
-      final PackageInfo packageInfo =
-          await PackageInfo.fromPlatform();
+      final PackageInfo packageInfo = await PackageInfo.fromPlatform();
 
-      final String currentVersion =
-          packageInfo.version.trim();
+      final String currentVersion = packageInfo.version.trim();
 
-      final String buildNumber =
-          packageInfo.buildNumber.trim();
+      final String buildNumber = packageInfo.buildNumber.trim();
 
-      debugPrint(
-        'INSTALLED VERSION = $currentVersion',
-      );
+      debugPrint('INSTALLED VERSION = $currentVersion');
 
-      debugPrint(
-        'BUILD NUMBER = $buildNumber',
-      );
+      debugPrint('BUILD NUMBER = $buildNumber');
 
       // --------------------------------------------------------
       // FIREBASE
       // --------------------------------------------------------
 
-      final DocumentSnapshot<Map<String, dynamic>>
-          snapshot =
+      final DocumentSnapshot<Map<String, dynamic>> snapshot =
           await FirebaseFirestore.instance
               .collection('app_config')
               .doc('app_update')
               .get();
 
       if (!snapshot.exists) {
-        debugPrint(
-          'app_config/app_update NOT FOUND',
-        );
+        debugPrint('app_config/app_update NOT FOUND');
 
         return false;
       }
 
-      final Map<String, dynamic>? data =
-          snapshot.data();
+      final Map<String, dynamic>? data = snapshot.data();
 
       if (data == null) {
         return false;
@@ -130,30 +109,18 @@ class _SplashScreenState extends State<SplashScreen> {
       // UPDATE REQUIRED
       // --------------------------------------------------------
 
-      final bool updateRequired =
-          data['updateRequired'] == true;
+      final bool updateRequired = data['updateRequired'] == true;
 
-      String latestVersion =
-          data['latestVersion']
-                  ?.toString()
-                  .trim() ??
-              '';
+      String latestVersion = data['latestVersion']?.toString().trim() ?? '';
 
       // Remove accidental quotes from Firebase
-      latestVersion =
-          latestVersion.replaceAll('"', '');
+      latestVersion = latestVersion.replaceAll('"', '');
 
-      debugPrint(
-        'CURRENT APP VERSION = $currentVersion',
-      );
+      debugPrint('CURRENT APP VERSION = $currentVersion');
 
-      debugPrint(
-        'Firebase updateRequired = $updateRequired',
-      );
+      debugPrint('Firebase updateRequired = $updateRequired');
 
-      debugPrint(
-        'Firebase latestVersion = $latestVersion',
-      );
+      debugPrint('Firebase latestVersion = $latestVersion');
 
       // --------------------------------------------------------
       // ADMIN HAS DISABLED UPDATE
@@ -168,9 +135,7 @@ class _SplashScreenState extends State<SplashScreen> {
       // --------------------------------------------------------
 
       if (latestVersion.isEmpty) {
-        debugPrint(
-          'Update enabled but latestVersion is empty',
-        );
+        debugPrint('Update enabled but latestVersion is empty');
 
         return true;
       }
@@ -179,15 +144,9 @@ class _SplashScreenState extends State<SplashScreen> {
       // VERSION COMPARISON
       // --------------------------------------------------------
 
-      final int comparison =
-          _compareVersions(
-        currentVersion,
-        latestVersion,
-      );
+      final int comparison = _compareVersions(currentVersion, latestVersion);
 
-      debugPrint(
-        'Version comparison = $comparison',
-      );
+      debugPrint('Version comparison = $comparison');
 
       if (comparison < 0) {
         debugPrint(
@@ -198,19 +157,13 @@ class _SplashScreenState extends State<SplashScreen> {
         return true;
       }
 
-      debugPrint(
-        'Current version is already up to date.',
-      );
+      debugPrint('Current version is already up to date.');
 
       return false;
     } catch (e, stackTrace) {
-      debugPrint(
-        'Error checking app update: $e',
-      );
+      debugPrint('Error checking app update: $e');
 
-      debugPrint(
-        '$stackTrace',
-      );
+      debugPrint('$stackTrace');
 
       // If Firebase fails,
       // allow the user to continue.
@@ -224,31 +177,19 @@ class _SplashScreenState extends State<SplashScreen> {
   // VERSION COMPARISON
   // ============================================================
 
-  int _compareVersions(
-    String currentVersion,
-    String latestVersion,
-  ) {
-    final List<int> current =
-        _parseVersion(currentVersion);
+  int _compareVersions(String currentVersion, String latestVersion) {
+    final List<int> current = _parseVersion(currentVersion);
 
-    final List<int> latest =
-        _parseVersion(latestVersion);
+    final List<int> latest = _parseVersion(latestVersion);
 
-    final int maxLength =
-        current.length > latest.length
-            ? current.length
-            : latest.length;
+    final int maxLength = current.length > latest.length
+        ? current.length
+        : latest.length;
 
     for (int i = 0; i < maxLength; i++) {
-      final int currentPart =
-          i < current.length
-              ? current[i]
-              : 0;
+      final int currentPart = i < current.length ? current[i] : 0;
 
-      final int latestPart =
-          i < latest.length
-              ? latest[i]
-              : 0;
+      final int latestPart = i < latest.length ? latest[i] : 0;
 
       if (currentPart < latestPart) {
         return -1;
@@ -266,20 +207,11 @@ class _SplashScreenState extends State<SplashScreen> {
   // PARSE VERSION
   // ============================================================
 
-  List<int> _parseVersion(
-    String version,
-  ) {
+  List<int> _parseVersion(String version) {
     return version
         .split('.')
         .map(
-          (part) =>
-              int.tryParse(
-                part.replaceAll(
-                  RegExp(r'[^0-9]'),
-                  '',
-                ),
-              ) ??
-              0,
+          (part) => int.tryParse(part.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
         )
         .toList();
   }
@@ -291,9 +223,7 @@ class _SplashScreenState extends State<SplashScreen> {
   void _showUpdateDialog() {
     if (!mounted) return;
 
-    debugPrint(
-      'SHOWING UPDATE DIALOG',
-    );
+    debugPrint('SHOWING UPDATE DIALOG');
 
     showDialog(
       context: context,
@@ -302,9 +232,7 @@ class _SplashScreenState extends State<SplashScreen> {
         return PopScope(
           canPop: false,
           child: AlertDialog(
-            title: const Text(
-              'Update Available',
-            ),
+            title: const Text('Update Available'),
             content: const Text(
               'A new version of the app is available. '
               'Please update the app to continue.',
@@ -314,9 +242,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 onPressed: () {
                   _openPlayStore();
                 },
-                child: const Text(
-                  'Update Now',
-                ),
+                child: const Text('Update Now'),
               ),
             ],
           ),
@@ -334,9 +260,7 @@ class _SplashScreenState extends State<SplashScreen> {
     // PLAY STORE APP URL
     // ----------------------------------------------------------
 
-    final Uri playStoreAppUrl = Uri.parse(
-      'market://details?id=$packageName',
-    );
+    final Uri playStoreAppUrl = Uri.parse('market://details?id=$packageName');
 
     // ----------------------------------------------------------
     // PLAY STORE WEB URL
@@ -348,23 +272,18 @@ class _SplashScreenState extends State<SplashScreen> {
 
     try {
       // First try opening Google Play app
-      final bool openedPlayStore =
-          await launchUrl(
+      final bool openedPlayStore = await launchUrl(
         playStoreAppUrl,
         mode: LaunchMode.externalApplication,
       );
 
       if (openedPlayStore) {
-        debugPrint(
-          'Opened Google Play Store app',
-        );
+        debugPrint('Opened Google Play Store app');
 
         return;
       }
     } catch (e) {
-      debugPrint(
-        'Could not open Play Store app: $e',
-      );
+      debugPrint('Could not open Play Store app: $e');
     }
 
     // ----------------------------------------------------------
@@ -372,23 +291,18 @@ class _SplashScreenState extends State<SplashScreen> {
     // ----------------------------------------------------------
 
     try {
-      final bool openedBrowser =
-          await launchUrl(
+      final bool openedBrowser = await launchUrl(
         playStoreWebUrl,
         mode: LaunchMode.externalApplication,
       );
 
       if (openedBrowser) {
-        debugPrint(
-          'Opened Google Play Store in browser',
-        );
+        debugPrint('Opened Google Play Store in browser');
 
         return;
       }
     } catch (e) {
-      debugPrint(
-        'Could not open Play Store web: $e',
-      );
+      debugPrint('Could not open Play Store web: $e');
     }
 
     // ----------------------------------------------------------
@@ -398,11 +312,7 @@ class _SplashScreenState extends State<SplashScreen> {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Unable to open Google Play Store.',
-        ),
-      ),
+      const SnackBar(content: Text('Unable to open Google Play Store.')),
     );
   }
 
@@ -415,9 +325,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(
-        builder: (_) => widget.nextScreen,
-      ),
+      MaterialPageRoute(builder: (_) => widget.nextScreen),
     );
   }
 
@@ -428,25 +336,16 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          const Color(0xFFF5F7FA),
+      backgroundColor: const Color(0xFFF5F7FA),
       body: Center(
         child: Column(
-          mainAxisAlignment:
-              MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(
-              'assets/MobApp.png',
-              width: 800,
-              height: 800,
-            ),
+            Image.asset('assets/MobApp.png', width: 800, height: 800),
 
             const Text(
               'Leave Application',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 10),
