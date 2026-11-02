@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emailjs/emailjs.dart' as emailjs;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 import '../machine_api/screen/admin/to_admin_seletion_screen.dart';
 
@@ -27,8 +29,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
   String? selectedLeaveType;
   String? halfDaySession;
 
-  DateTime? fromDate;
-  DateTime? toDate;
+  List<DateTime> selectedDates = [];
 
   bool loading = false;
   bool loadingEmployees = false;
@@ -211,6 +212,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
     super.initState();
 
     loadEmployeeWeeklyOff();
+    loadHolidays();
     loadLeaveBalances();
     // loadEmployeesForCc();
     loadEmployeesAndAdmins();
@@ -648,44 +650,38 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
   // CALCULATE WORKING DAYS
   // ============================================================
 
-  int calculateWorkingDays(DateTime from, DateTime to, List<String> weeklyOff) {
-    int workingDays = 0;
+  // ============================================================
+  // LOAD HOLIDAYS & CHECK HOLIDAY
+  // ============================================================
 
-    DateTime current = DateTime(from.year, from.month, from.day);
+  List<DateTime> employeeHolidays = [];
 
-    final DateTime end = DateTime(to.year, to.month, to.day);
-
-    while (!current.isAfter(end)) {
-      if (!isWeeklyOff(current, weeklyOff)) {
-        workingDays++;
+  Future<void> loadHolidays() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('holidays')
+          .get();
+      final List<DateTime> loadedHolidays = [];
+      for (final doc in snap.docs) {
+        try {
+          final dt = DateFormat('dd-MMM-yyyy').parse(doc.id);
+          loadedHolidays.add(DateTime(dt.year, dt.month, dt.day));
+        } catch (_) {}
       }
-
-      current = current.add(const Duration(days: 1));
+      if (mounted) {
+        setState(() {
+          employeeHolidays = loadedHolidays;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error loading holidays: $e");
     }
-
-    return workingDays;
   }
 
-  // ============================================================
-  // CALCULATE FINAL LEAVE DAYS
-  // ============================================================
-
-  double calculateLeaveDays(
-    DateTime from,
-    DateTime to,
-    List<String> weeklyOff,
-  ) {
-    final int workingDays = calculateWorkingDays(from, to, weeklyOff);
-
-    if (workingDays <= 0) {
-      return 0;
-    }
-
-    if (leaveDuration == "Half Day Only") {
-      return workingDays - 0.5;
-    }
-
-    return workingDays.toDouble();
+  bool isHoliday(DateTime date) {
+    return employeeHolidays.any(
+      (h) => h.year == date.year && h.month == date.month && h.day == date.day,
+    );
   }
 
   // ============================================================
@@ -693,21 +689,25 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
   // ============================================================
 
   void calculateTotalDays() {
-    if (fromDate == null || toDate == null) {
+    if (selectedDates.isEmpty) {
       if (mounted) {
         setState(() {
           totalDays = 0;
         });
       }
-
       return;
     }
 
-    final double calculatedDays = calculateLeaveDays(
-      fromDate!,
-      toDate!,
-      employeeWeeklyOff,
-    );
+    int workingDays = 0;
+    for (final d in selectedDates) {
+      if (!isWeeklyOff(d, employeeWeeklyOff) && !isHoliday(d)) {
+        workingDays++;
+      }
+    }
+
+    final double calculatedDays = leaveDuration == "Half Day Only"
+        ? (workingDays > 0 ? workingDays - 0.5 : 0)
+        : workingDays.toDouble();
 
     if (mounted) {
       setState(() {
@@ -720,15 +720,11 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
   // DUPLICATE LEAVE CHECK
   // ============================================================
 
-  Future<bool> hasDuplicateLeave(String uid, DateTime from, DateTime to) async {
+  Future<bool> hasDuplicateLeave(String uid, List<DateTime> dates) async {
     final QuerySnapshot snap = await FirebaseFirestore.instance
         .collection('leave_requests')
         .where('uid', isEqualTo: uid)
         .get();
-
-    final DateTime selectedFrom = DateTime(from.year, from.month, from.day);
-
-    final DateTime selectedTo = DateTime(to.year, to.month, to.day);
 
     for (final doc in snap.docs) {
       final Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
@@ -759,12 +755,15 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
         existingTo.day,
       );
 
-      final bool overlap =
-          !(selectedTo.isBefore(existingFromDate) ||
-              selectedFrom.isAfter(existingToDate));
+      for (final d in dates) {
+        final DateTime normalized = DateTime(d.year, d.month, d.day);
+        final bool overlap =
+            !(normalized.isBefore(existingFromDate) ||
+                normalized.isAfter(existingToDate));
 
-      if (overlap) {
-        return true;
+        if (overlap) {
+          return true;
+        }
       }
     }
 
@@ -772,57 +771,275 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
   }
 
   // ============================================================
-  // PICK FROM DATE
+  // MULTI-DATE PICKER BOTTOM SHEET
   // ============================================================
 
-  Future<void> pickFromDate() async {
-    final DateTime today = DateTime.now();
+  Future<void> pickMultipleDates() async {
+    List<DateTime> tempSelected = List.from(selectedDates);
+    DateTime focusedDay = DateTime.now();
 
-    final DateTime? picked = await showDatePicker(
+    await showModalBottomSheet(
       context: context,
-      firstDate: DateTime(2025),
-      lastDate: DateTime(2030),
-      initialDate: fromDate ?? today,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+              height: MediaQuery.of(context).size.height * 0.78,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Select Leave Dates",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF172033),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: TableCalendar(
+                        firstDay: DateTime.now().subtract(
+                          const Duration(days: 30),
+                        ),
+                        lastDay: DateTime(2030),
+                        focusedDay: focusedDay,
+                        calendarFormat: CalendarFormat.month,
+                        headerStyle: const HeaderStyle(
+                          formatButtonVisible: false,
+                          titleCentered: true,
+                          titleTextStyle: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF172033),
+                          ),
+                          leftChevronIcon: Icon(
+                            Icons.chevron_left_rounded,
+                            color: Color(0xFF6D28D9),
+                          ),
+                          rightChevronIcon: Icon(
+                            Icons.chevron_right_rounded,
+                            color: Color(0xFF6D28D9),
+                          ),
+                        ),
+                        daysOfWeekStyle: const DaysOfWeekStyle(
+                          weekdayStyle: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF64748B),
+                          ),
+                          weekendStyle: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFFEF4444),
+                          ),
+                        ),
+                        rowHeight: 46,
+                        daysOfWeekHeight: 35,
+                        availableCalendarFormats: const {
+                          CalendarFormat.month: 'Month',
+                        },
+                        enabledDayPredicate: (day) {
+                          final normalized = DateTime(
+                            day.year,
+                            day.month,
+                            day.day,
+                          );
+                          return !isWeeklyOff(normalized, employeeWeeklyOff) &&
+                              !isHoliday(normalized);
+                        },
+                        selectedDayPredicate: (day) {
+                          return tempSelected.any(
+                            (d) =>
+                                d.year == day.year &&
+                                d.month == day.month &&
+                                d.day == day.day,
+                          );
+                        },
+                        onDaySelected: (selectedDay, focused) {
+                          setModalState(() {
+                            focusedDay = focused;
+                            final normalized = DateTime(
+                              selectedDay.year,
+                              selectedDay.month,
+                              selectedDay.day,
+                            );
+                            if (tempSelected.any(
+                              (d) =>
+                                  d.year == normalized.year &&
+                                  d.month == normalized.month &&
+                                  d.day == normalized.day,
+                            )) {
+                              tempSelected.removeWhere(
+                                (d) =>
+                                    d.year == normalized.year &&
+                                    d.month == normalized.month &&
+                                    d.day == normalized.day,
+                              );
+                            } else {
+                              tempSelected.add(normalized);
+                              tempSelected.sort();
+                            }
+                          });
+                        },
+                        calendarStyle: const CalendarStyle(
+                          outsideDaysVisible: false,
+                          selectedDecoration: BoxDecoration(
+                            color: Color(0xFF6D28D9),
+                            shape: BoxShape.circle,
+                          ),
+                          todayDecoration: BoxDecoration(
+                            color: Color(0xFFC4B5FD),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        calendarBuilders: CalendarBuilders(
+                          disabledBuilder: (context, day, focusedDay) {
+                            final normalized = DateTime(
+                              day.year,
+                              day.month,
+                              day.day,
+                            );
+                            final isWO = isWeeklyOff(
+                              normalized,
+                              employeeWeeklyOff,
+                            );
+                            final isHol = isHoliday(normalized);
+
+                            return Container(
+                              margin: const EdgeInsets.all(4),
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: isHol
+                                    ? const Color(
+                                        0xFFFEF3C7,
+                                      ) // soft amber for holiday
+                                    : isWO
+                                    ? const Color(
+                                        0xFFF1F5F9,
+                                      ) // soft grey for weekly off
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    '${day.day}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: isHol
+                                          ? const Color(0xFFD97706)
+                                          : isWO
+                                          ? const Color(0xFF94A3B8)
+                                          : const Color(0xFFCBD5E1),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    isHol ? 'HOL' : (isWO ? 'WO' : ''),
+                                    style: TextStyle(
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.bold,
+                                      color: isHol
+                                          ? const Color(0xFFD97706)
+                                          : const Color(0xFF94A3B8),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.check_circle_rounded,
+                        color: Color(0xFF6D28D9),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        "${tempSelected.length} date(s) selected",
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF6D28D9),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6D28D9),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          selectedDates = tempSelected;
+                        });
+                        calculateTotalDays();
+                        Navigator.pop(context);
+                      },
+                      child: const Text(
+                        "Confirm Dates",
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
-
-    if (picked == null) {
-      return;
-    }
-
-    setState(() {
-      fromDate = DateTime(picked.year, picked.month, picked.day);
-
-      if (toDate != null && toDate!.isBefore(fromDate!)) {
-        toDate = null;
-      }
-    });
-
-    calculateTotalDays();
   }
 
-  // ============================================================
-  // PICK TO DATE
-  // ============================================================
-
-  Future<void> pickToDate() async {
-    final DateTime today = DateTime.now();
-
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      firstDate: fromDate ?? today,
-      lastDate: DateTime(2030),
-      initialDate: toDate ?? fromDate ?? today,
-    );
-
-    if (picked == null) {
-      return;
+  String formatDatesSummary() {
+    if (selectedDates.isEmpty) return "Select dates";
+    if (selectedDates.length == 1) {
+      return _formatDate(selectedDates.first);
     }
-
-    setState(() {
-      toDate = DateTime(picked.year, picked.month, picked.day);
-    });
-
-    calculateTotalDays();
+    return "${selectedDates.length} dates selected";
   }
 
   // ============================================================
@@ -846,17 +1063,9 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
     // DATE VALIDATION
     // ==========================================================
 
-    if (fromDate == null || toDate == null) {
+    if (selectedDates.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select From Date and To Date")),
-      );
-
-      return;
-    }
-
-    if (toDate!.isBefore(fromDate!)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("To Date cannot be before From Date")),
+        const SnackBar(content: Text("Please select leave dates")),
       );
 
       return;
@@ -951,7 +1160,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
       // DUPLICATE LEAVE CHECK
       // ========================================================
 
-      final bool duplicate = await hasDuplicateLeave(uid, fromDate!, toDate!);
+      final bool duplicate = await hasDuplicateLeave(uid, selectedDates);
 
       if (duplicate) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -967,11 +1176,32 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
       // CALCULATE WORKING DAYS
       // ========================================================
 
-      final int workingDays = calculateWorkingDays(
-        fromDate!,
-        toDate!,
-        weeklyOff,
-      );
+      int workingDays = 0;
+      for (final d in selectedDates) {
+        if (isWeeklyOff(d, weeklyOff)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                "${_formatDate(d)} is your weekly off. Please remove it.",
+              ),
+            ),
+          );
+          return;
+        }
+
+        if (isHoliday(d)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                "${_formatDate(d)} is a public holiday. Leave cannot be applied on holidays.",
+              ),
+            ),
+          );
+          return;
+        }
+
+        workingDays++;
+      }
 
       debugPrint("WORKING DAYS = $workingDays");
 
@@ -990,7 +1220,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
       // ========================================================
 
       final double requestedDays = leaveDuration == "Half Day Only"
-          ? workingDays - 0.5
+          ? (workingDays > 0 ? workingDays - 0.5 : 0)
           : workingDays.toDouble();
 
       debugPrint("FINAL LEAVE DAYS = $requestedDays");
@@ -1102,9 +1332,13 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
         "days": requestedDays,
 
-        "fromDate": Timestamp.fromDate(fromDate!),
+        "fromDate": Timestamp.fromDate(selectedDates.first),
 
-        "toDate": Timestamp.fromDate(toDate!),
+        "toDate": Timestamp.fromDate(selectedDates.last),
+
+        "selectedDates": selectedDates
+            .map((d) => Timestamp.fromDate(d))
+            .toList(),
 
         "reason": reasonController.text.trim(),
 
@@ -1113,11 +1347,6 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
         "halfDaySession": leaveDuration == "Half Day Only"
             ? halfDaySession
             : null,
-
-        // ======================================================
-        // SAVE SELECTED CC EMAILS
-        // ======================================================
-        "ccEmails": selectedCcEmails.toList(),
 
         "status": "Pending",
 
@@ -1192,9 +1421,9 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
                 ? halfDaySession ?? ""
                 : "",
 
-            'from_date': _formatDate(fromDate!),
+            'from_date': _formatDate(selectedDates.first),
 
-            'to_date': _formatDate(toDate!),
+            'to_date': _formatDate(selectedDates.last),
 
             'days': _formatLeaveDays(requestedDays),
 
@@ -1314,11 +1543,16 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
   Widget _dateCard({
     required String title,
-    required DateTime? date,
+    DateTime? date,
+    String? displayText,
     required IconData icon,
     required VoidCallback onTap,
   }) {
-    final bool selected = date != null;
+    final bool selected =
+        date != null ||
+        (displayText != null &&
+            displayText != "Select dates" &&
+            displayText != "Select date");
 
     return InkWell(
       borderRadius: BorderRadius.circular(16),
@@ -1339,49 +1573,66 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Row(
-              children: [
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF0E9FF),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(icon, size: 18, color: const Color(0xFF6D28D9)),
-                ),
-                const Spacer(),
-                const Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 13,
-                  color: Color(0xFF94A3B8),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              selected
-                  ? "${date.day.toString().padLeft(2, '0')} "
-                        "${_monthName(date.month)} "
-                        "${date.year}"
-                  : "Select date",
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: selected
-                    ? const Color(0xFF172033)
-                    : const Color(0xFF94A3B8),
+            Container(
+              width: 34,
+              height: 34,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0E9FF),
+                borderRadius: BorderRadius.circular(10),
               ),
+              child: Icon(icon, size: 18, color: const Color(0xFF6D28D9)),
+            ),
+
+            const SizedBox(width: 12),
+
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  Text(
+                    displayText ??
+                        (selected && date != null
+                            ? "${date.day.toString().padLeft(2, '0')} "
+                                  "${_monthName(date.month)} "
+                                  "${date.year}"
+                            : "Select date"),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: selected
+                          ? const Color(0xFF172033)
+                          : const Color(0xFF94A3B8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(width: 8),
+
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 13,
+              color: Color(0xFF94A3B8),
             ),
           ],
         ),
@@ -1819,28 +2070,11 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
               // ====================================================
               _sectionLabel("Leave Dates"),
 
-              Row(
-                children: [
-                  Expanded(
-                    child: _dateCard(
-                      title: "From Date",
-                      date: fromDate,
-                      icon: Icons.calendar_today_rounded,
-                      onTap: pickFromDate,
-                    ),
-                  ),
-
-                  const SizedBox(width: 12),
-
-                  Expanded(
-                    child: _dateCard(
-                      title: "To Date",
-                      date: toDate,
-                      icon: Icons.event_rounded,
-                      onTap: pickToDate,
-                    ),
-                  ),
-                ],
+              _dateCard(
+                title: "Select Leave Dates",
+                displayText: formatDatesSummary(),
+                icon: Icons.calendar_month_rounded,
+                onTap: pickMultipleDates,
               ),
 
               const SizedBox(height: 18),
@@ -1848,10 +2082,10 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
               // ====================================================
               // SUMMARY
               // ====================================================
-              if (fromDate != null && toDate != null) _buildLeaveSummary(),
+              if (selectedDates.isNotEmpty) _buildLeaveSummary(),
 
-              if (fromDate != null && toDate != null)
-                const SizedBox(height: 18),
+              if (selectedDates.isNotEmpty) const SizedBox(height: 18),
+              const SizedBox(height: 18),
 
               // ====================================================
               // INFO
@@ -1993,11 +2227,12 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
   // ============================================================
 
   Widget _buildLeaveSummary() {
-    final int workingDays = calculateWorkingDays(
-      fromDate!,
-      toDate!,
-      employeeWeeklyOff,
-    );
+    int workingDays = 0;
+    for (final d in selectedDates) {
+      if (!isWeeklyOff(d, employeeWeeklyOff)) {
+        workingDays++;
+      }
+    }
 
     return Container(
       padding: const EdgeInsets.all(16),
