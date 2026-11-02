@@ -1515,1390 +1515,1382 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
       // ============================================================
       // BODY
       // ============================================================
-      body: Column(
-        children: [
-          SizedBox(height: 11),
-          // ==========================================================
-          // EMPLOYEE DROPDOWN
-          // ==========================================================
-          // ==========================================================
-          // EMPLOYEE DROPDOWN - SEARCH + ALPHABETICAL
-          // ==========================================================
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(11),
-              onTap: () async {
-                // ------------------------------------------------------
-                // SORT USERS ALPHABETICALLY
-                // ------------------------------------------------------
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            SizedBox(height: 11),
+            // ==========================================================
+            // EMPLOYEE DROPDOWN
+            // ==========================================================
+            // ==========================================================
+            // EMPLOYEE DROPDOWN - SEARCH + ALPHABETICAL
+            // ==========================================================
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(11),
+                onTap: () async {
+                  // ------------------------------------------------------
+                  // SORT USERS ALPHABETICALLY
+                  // ------------------------------------------------------
 
-                final sortedUsers = List<dynamic>.from(users);
+                  final sortedUsers = List<dynamic>.from(users);
 
-                sortedUsers.sort((a, b) {
-                  final nameA =
-                      a['name']?.toString().trim().toLowerCase() ?? '';
-                  final nameB =
-                      b['name']?.toString().trim().toLowerCase() ?? '';
+                  sortedUsers.sort((a, b) {
+                    final nameA =
+                        a['name']?.toString().trim().toLowerCase() ?? '';
+                    final nameB =
+                        b['name']?.toString().trim().toLowerCase() ?? '';
 
-                  return nameA.compareTo(nameB);
-                });
-
-                // ------------------------------------------------------
-                // SEARCH DIALOG
-                // ------------------------------------------------------
-
-                final String? selectedEmployee = await showDialog<String>(
-                  context: context,
-                  builder: (dialogContext) {
-                    String searchText = '';
-
-                    return StatefulBuilder(
-                      builder: (context, setDialogState) {
-                        // ------------------------------------------------
-                        // FILTER EMPLOYEES
-                        // ------------------------------------------------
-
-                        final filteredUsers = sortedUsers.where((user) {
-                          final name =
-                              user['name']?.toString().toLowerCase() ?? '';
-
-                          return name.contains(searchText.toLowerCase());
-                        }).toList();
-
-                        return AlertDialog(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          title: const Text(
-                            "Select Employee",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF17133A),
-                            ),
-                          ),
-
-                          content: SizedBox(
-                            width: double.maxFinite,
-                            height: MediaQuery.of(context).size.height / 1.5,
-
-                            child: Column(
-                              children: [
-                                // ==========================================
-                                // SEARCH FIELD
-                                // ==========================================
-                                TextField(
-                                  autofocus: true,
-                                  onChanged: (value) {
-                                    setDialogState(() {
-                                      searchText = value;
-                                    });
-                                  },
-                                  decoration: InputDecoration(
-                                    hintText: "Search employee...",
-                                    prefixIcon: const Icon(
-                                      Icons.search_rounded,
-                                      color: Color(0xFF6D28D9),
-                                    ),
-                                    suffixIcon: searchText.isNotEmpty
-                                        ? IconButton(
-                                            icon: const Icon(Icons.clear),
-                                            onPressed: () {
-                                              setDialogState(() {
-                                                searchText = '';
-                                              });
-                                            },
-                                          )
-                                        : null,
-                                    filled: true,
-                                    fillColor: const Color(0xFFF8F7FC),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                  ),
-                                ),
-
-                                const SizedBox(height: 12),
-
-                                // ==========================================
-                                // EMPLOYEE LIST
-                                // ==========================================
-                                Expanded(
-                                  child: filteredUsers.isEmpty
-                                      ? const Center(
-                                          child: Text(
-                                            "No employee found",
-                                            style: TextStyle(
-                                              color: Colors.grey,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                        )
-                                      : ListView.separated(
-                                          itemCount: filteredUsers.length,
-                                          separatorBuilder: (_, __) =>
-                                              const Divider(height: 1),
-                                          itemBuilder: (context, index) {
-                                            final user = filteredUsers[index];
-
-                                            final String uid = user.id;
-
-                                            final String name =
-                                                user['name']
-                                                    ?.toString()
-                                                    .trim() ??
-                                                "Unknown Employee";
-
-                                            final bool isSelected =
-                                                selectedUid == uid;
-
-                                            return ListTile(
-                                              contentPadding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 2,
-                                                  ),
-
-                                              leading: CircleAvatar(
-                                                backgroundColor: const Color(
-                                                  0xFFF0E9FF,
-                                                ),
-                                                child: Text(
-                                                  name.isNotEmpty
-                                                      ? name[0].toUpperCase()
-                                                      : "?",
-                                                  style: const TextStyle(
-                                                    color: Color(0xFF6D28D9),
-                                                    fontWeight: FontWeight.w700,
-                                                  ),
-                                                ),
-                                              ),
-
-                                              title: Text(
-                                                name,
-                                                style: const TextStyle(
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: Color(0xFF17133A),
-                                                ),
-                                              ),
-
-                                              trailing: isSelected
-                                                  ? const Icon(
-                                                      Icons.check_circle,
-                                                      color: Color(0xFF6D28D9),
-                                                    )
-                                                  : null,
-
-                                              onTap: () {
-                                                Navigator.pop(
-                                                  dialogContext,
-                                                  uid,
-                                                );
-                                              },
-                                            );
-                                          },
-                                        ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pop(dialogContext);
-                              },
-                              child: const Text("Cancel"),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                );
-
-                // ------------------------------------------------------
-                // EMPLOYEE SELECTED
-                // ------------------------------------------------------
-
-                if (selectedEmployee != null && mounted) {
-                  setState(() {
-                    selectedUid = selectedEmployee;
+                    return nameA.compareTo(nameB);
                   });
 
-                  getLeaveData(selectedEmployee);
-                }
-              },
+                  // ------------------------------------------------------
+                  // SEARCH DIALOG
+                  // ------------------------------------------------------
 
-              child: InputDecorator(
-                decoration: InputDecoration(
-                  labelText: "",
+                  final String? selectedEmployee = await showDialog<String>(
+                    context: context,
+                    builder: (dialogContext) {
+                      String searchText = '';
 
-                  labelStyle: const TextStyle(
-                    color: Color(0xFF6B7280),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
+                      return StatefulBuilder(
+                        builder: (context, setDialogState) {
+                          // ------------------------------------------------
+                          // FILTER EMPLOYEES
+                          // ------------------------------------------------
 
-                  prefixIcon: Container(
-                    height: 40,
-                    margin: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF0E9FF),
-                      borderRadius: BorderRadius.circular(10),
+                          final filteredUsers = sortedUsers.where((user) {
+                            final name =
+                                user['name']?.toString().toLowerCase() ?? '';
+
+                            return name.contains(searchText.toLowerCase());
+                          }).toList();
+
+                          return AlertDialog(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            title: const Text(
+                              "Select Employee",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF17133A),
+                              ),
+                            ),
+
+                            content: SizedBox(
+                              width: double.maxFinite,
+                              height: MediaQuery.of(context).size.height / 1.5,
+
+                              child: Column(
+                                children: [
+                                  // ==========================================
+                                  // SEARCH FIELD
+                                  // ==========================================
+                                  TextField(
+                                    autofocus: true,
+                                    onChanged: (value) {
+                                      setDialogState(() {
+                                        searchText = value;
+                                      });
+                                    },
+                                    decoration: InputDecoration(
+                                      hintText: "Search employee...",
+                                      prefixIcon: const Icon(
+                                        Icons.search_rounded,
+                                        color: Color(0xFF6D28D9),
+                                      ),
+                                      suffixIcon: searchText.isNotEmpty
+                                          ? IconButton(
+                                              icon: const Icon(Icons.clear),
+                                              onPressed: () {
+                                                setDialogState(() {
+                                                  searchText = '';
+                                                });
+                                              },
+                                            )
+                                          : null,
+                                      filled: true,
+                                      fillColor: const Color(0xFFF8F7FC),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 12),
+
+                                  // ==========================================
+                                  // EMPLOYEE LIST
+                                  // ==========================================
+                                  Expanded(
+                                    child: filteredUsers.isEmpty
+                                        ? const Center(
+                                            child: Text(
+                                              "No employee found",
+                                              style: TextStyle(
+                                                color: Colors.grey,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          )
+                                        : ListView.separated(
+                                            itemCount: filteredUsers.length,
+                                            separatorBuilder: (_, __) =>
+                                                const Divider(height: 1),
+                                            itemBuilder: (context, index) {
+                                              final user = filteredUsers[index];
+
+                                              final String uid = user.id;
+
+                                              final String name =
+                                                  user['name']
+                                                      ?.toString()
+                                                      .trim() ??
+                                                  "Unknown Employee";
+
+                                              final bool isSelected =
+                                                  selectedUid == uid;
+
+                                              return ListTile(
+                                                contentPadding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 2,
+                                                    ),
+
+                                                leading: CircleAvatar(
+                                                  backgroundColor: const Color(
+                                                    0xFFF0E9FF,
+                                                  ),
+                                                  child: Text(
+                                                    name.isNotEmpty
+                                                        ? name[0].toUpperCase()
+                                                        : "?",
+                                                    style: const TextStyle(
+                                                      color: Color(0xFF6D28D9),
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                    ),
+                                                  ),
+                                                ),
+
+                                                title: Text(
+                                                  name,
+                                                  style: const TextStyle(
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Color(0xFF17133A),
+                                                  ),
+                                                ),
+
+                                                trailing: isSelected
+                                                    ? const Icon(
+                                                        Icons.check_circle,
+                                                        color: Color(
+                                                          0xFF6D28D9,
+                                                        ),
+                                                      )
+                                                    : null,
+
+                                                onTap: () {
+                                                  // Navigator.pop(
+                                                  //   dialogContext,
+                                                  //   uid,
+                                                  // );
+                                                  Navigator.pop(
+                                                    dialogContext,
+                                                    isSelected ? '' : uid,
+                                                  );
+                                                },
+                                              );
+                                            },
+                                          ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(dialogContext);
+                                },
+                                child: const Text("Cancel"),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  );
+
+                  // ------------------------------------------------------
+                  // EMPLOYEE SELECTED
+                  // ------------------------------------------------------
+
+                  if (selectedEmployee != null && mounted) {
+                    setState(() {
+                      selectedUid = selectedEmployee;
+                    });
+
+                    getLeaveData(selectedEmployee);
+                  }
+                },
+
+                child: InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: "",
+
+                    labelStyle: const TextStyle(
+                      color: Color(0xFF6B7280),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
                     ),
-                    child: const Icon(
-                      Icons.person_outline_rounded,
-                      color: Color(0xFF6D28D9),
-                      size: 21,
-                    ),
-                  ),
 
-                  filled: true,
-                  fillColor: Colors.white,
-
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-                  ),
-
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 16,
-                  ),
-                ),
-
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        selectedUid == null
-                            ? "Select Employee"
-                            : users
-                                      .where((user) => user.id == selectedUid)
-                                      .map(
-                                        (user) =>
-                                            user['name']?.toString() ??
-                                            "Unknown Employee",
-                                      )
-                                      .firstOrNull ??
-                                  "Select Employee",
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: selectedUid == null
-                              ? FontWeight.w400
-                              : FontWeight.w600,
-                          color: selectedUid == null
-                              ? const Color(0xFF6B7280)
-                              : const Color(0xFF17133A),
-                        ),
+                    prefixIcon: Container(
+                      height: 40,
+                      margin: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0E9FF),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.person_outline_rounded,
+                        color: Color(0xFF6D28D9),
+                        size: 21,
                       ),
                     ),
 
-                    const Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: Color(0xFF6D28D9),
+                    filled: true,
+                    fillColor: Colors.white,
+
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                    ),
+
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 16,
+                    ),
+                  ),
+
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          selectedUid == null
+                              ? "Select Employee"
+                              : users
+                                        .where((user) => user.id == selectedUid)
+                                        .map(
+                                          (user) =>
+                                              user['name']?.toString() ??
+                                              "Unknown Employee",
+                                        )
+                                        .firstOrNull ??
+                                    "Select Employee",
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: selectedUid == null
+                                ? FontWeight.w400
+                                : FontWeight.w600,
+                            color: selectedUid == null
+                                ? const Color(0xFF6B7280)
+                                : const Color(0xFF17133A),
+                          ),
+                        ),
+                      ),
+
+                      const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: Color(0xFF6D28D9),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // ==========================================================
+            // LEAVE SUMMARY
+            // ==========================================================
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(22),
+
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(.035),
+                      blurRadius: 15,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+
+                child: Column(
+                  children: [
+                    // ----------------------------------------------------
+                    // SUMMARY HEADER
+                    // ----------------------------------------------------
+                    Row(
+                      children: [
+                        Container(
+                          width: 52,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF6D28D9),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Icon(
+                            Icons.event_available_rounded,
+                            color: Colors.white,
+                            size: 27,
+                          ),
+                        ),
+
+                        const SizedBox(width: 14),
+
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Leave Summary",
+                              style: TextStyle(
+                                color: Color(0xFF17133A),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+
+                            SizedBox(height: 3),
+
+                            Text(
+                              "Employee leave balance",
+                              style: TextStyle(
+                                color: Color(0xFF8A8FA3),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(width: 14),
+
+                        Container(
+                          width: 1,
+                          height: 42,
+                          color: const Color(0xFFE5E7EB),
+                        ),
+                        const SizedBox(width: 14),
+
+                        _buildSummaryItem(
+                          title: "Used",
+                          value: "$usedLeave",
+                          color: const Color(0xFFF59E0B),
+                        ),
+                        const SizedBox(width: 14),
+
+                        Container(
+                          width: 1,
+                          height: 42,
+                          color: const Color(0xFFE5E7EB),
+                        ),
+                        const SizedBox(width: 14),
+
+                        _buildSummaryItem(
+                          title: "Remaining",
+                          value: "$remainingLeave",
+                          color: const Color(0xFF16A34A),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    // ----------------------------------------------------
+                    // SUMMARY VALUES
+                    // ----------------------------------------------------
+                    // Row(
+                    //   children: [
+                    //     // Expanded(
+                    //     //   child: _buildSummaryItem(
+                    //     //     title: "Total",
+                    //     //     value: formatLeave(clLeave + slLeave + coffLeave),
+
+                    //     //     color: const Color(0xFF6D28D9),
+                    //     //   ),
+                    //     // ),
+                    //     Container(
+                    //       width: 1,
+                    //       height: 42,
+                    //       color: const Color(0xFFE5E7EB),
+                    //     ),
+
+                    //     Expanded(
+                    //       child: _buildSummaryItem(
+                    //         title: "Used",
+                    //         value: "$usedLeave",
+                    //         color: const Color(0xFFF59E0B),
+                    //       ),
+                    //     ),
+
+                    //     Container(
+                    //       width: 1,
+                    //       height: 42,
+                    //       color: const Color(0xFFE5E7EB),
+                    //     ),
+
+                    //     Expanded(
+                    //       child: _buildSummaryItem(
+                    //         title: "Remaining",
+                    //         value: "$remainingLeave",
+                    //         color: const Color(0xFF16A34A),
+                    //       ),
+                    //     ),
+                    //   ],
+                    // ),
+                    // const SizedBox(height: 15),
+
+                    // ----------------------------------------------------
+                    // CL / SL
+                    // ----------------------------------------------------
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 11,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF7F5FF),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.info_outline_rounded,
+                            size: 17,
+                            color: Color(0xFF6D28D9),
+                          ),
+
+                          const SizedBox(width: 8),
+
+                          Text(
+                            "$clLeave CL",
+                            style: const TextStyle(
+                              color: Color(0xFF6D28D9),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+
+                          const SizedBox(width: 8),
+
+                          const Text(
+                            "•",
+                            style: TextStyle(color: Color(0xFF9CA3AF)),
+                          ),
+
+                          const SizedBox(width: 8),
+
+                          Text(
+                            "$slLeave SL",
+                            style: const TextStyle(
+                              color: Color(0xFF6D28D9),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            "•",
+                            style: TextStyle(color: Color(0xFF9CA3AF)),
+                          ),
+
+                          const SizedBox(width: 8),
+                          Text(
+                            "$coffLeave COFF",
+                            style: const TextStyle(
+                              color: Color(0xFF6D28D9),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+
+                          const Spacer(),
+                          const Text(
+                            "Available",
+                            style: TextStyle(
+                              color: Color(0xFF16A34A),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
-          ),
-          // ==========================================================
-          // LEAVE SUMMARY
-          // ==========================================================
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(18),
+            // Padding(
+            //   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+            //   child: Container(
+            //     width: double.infinity,
+            //     padding: const EdgeInsets.all(12),
+            //     decoration: BoxDecoration(
+            //       color: Colors.white,
+            //       borderRadius: BorderRadius.circular(22),
+            //       boxShadow: [
+            //         BoxShadow(
+            //           color: Colors.black.withOpacity(.035),
+            //           blurRadius: 15,
+            //           offset: const Offset(0, 5),
+            //         ),
+            //       ],
+            //     ),
+            //     child: leaveCalendar(),
+            //   ),
+            // ),
 
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(22),
+            // ==========================================================
+            // REFRESH + ATTENDANCE
+            // ==========================================================
+            // Padding(
+            //   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+            //   child: Row(
+            //     children: [
+            //       // ------------------------------------------------------
+            //       // REFRESH
+            //       // ------------------------------------------------------
+            //       Expanded(
+            //         child: ElevatedButton.icon(
+            //           onPressed: () {
+            //             if (selectedUid == null) {
+            //               ScaffoldMessenger.of(context).showSnackBar(
+            //                 const SnackBar(
+            //                   content: Text("Please select an employee first"),
+            //                 ),
+            //               );
+            //               return;
+            //             }
 
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(.035),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
+            //             getLeaveData(selectedUid!);
+            //           },
 
-              child: Column(
-                children: [
-                  // ----------------------------------------------------
-                  // SUMMARY HEADER
-                  // ----------------------------------------------------
-                  Row(
-                    children: [
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF6D28D9),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Icon(
-                          Icons.event_available_rounded,
-                          color: Colors.white,
-                          size: 27,
-                        ),
-                      ),
+            //           icon: const Icon(Icons.refresh_rounded, size: 19),
 
-                      const SizedBox(width: 14),
+            //           label: const Text(
+            //             "Refresh",
+            //             style: TextStyle(fontWeight: FontWeight.w700),
+            //           ),
 
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Leave Summary",
-                            style: TextStyle(
-                              color: Color(0xFF17133A),
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
+            //           style: ElevatedButton.styleFrom(
+            //             backgroundColor: const Color(0xFF6D28D9),
+            //             foregroundColor: Colors.white,
+            //             elevation: 0,
+            //             minimumSize: const Size(0, 48),
 
-                          SizedBox(height: 3),
+            //             shape: RoundedRectangleBorder(
+            //               borderRadius: BorderRadius.circular(14),
+            //             ),
+            //           ),
+            //         ),
+            //       ),
 
-                          Text(
-                            "Employee leave balance",
-                            style: TextStyle(
-                              color: Color(0xFF8A8FA3),
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 14),
+            //       const SizedBox(width: 12),
 
-                      Container(
-                        width: 1,
-                        height: 42,
-                        color: const Color(0xFFE5E7EB),
-                      ),
-                      const SizedBox(width: 14),
+            //       // ------------------------------------------------------
+            //       // ATTENDANCE
+            //       // ------------------------------------------------------
+            //       Expanded(
+            //         child: ElevatedButton.icon(
+            //           onPressed: () {
+            //             Navigator.push(
+            //               context,
+            //               MaterialPageRoute(
+            //                 builder: (_) =>
+            //                     AdminAttendanceScreen(selectedUid: selectedUid),
+            //               ),
+            //             );
+            //           },
 
-                      _buildSummaryItem(
-                        title: "Used",
-                        value: "$usedLeave",
-                        color: const Color(0xFFF59E0B),
-                      ),
-                      const SizedBox(width: 14),
+            //           icon: const Icon(Icons.access_time_rounded, size: 19),
 
-                      Container(
-                        width: 1,
-                        height: 42,
-                        color: const Color(0xFFE5E7EB),
-                      ),
-                      const SizedBox(width: 14),
+            //           label: const Text(
+            //             "Attendance",
+            //             style: TextStyle(fontWeight: FontWeight.w700),
+            //           ),
 
-                      _buildSummaryItem(
-                        title: "Remaining",
-                        value: "$remainingLeave",
-                        color: const Color(0xFF16A34A),
-                      ),
-                    ],
-                  ),
+            //           style: ElevatedButton.styleFrom(
+            //             backgroundColor: const Color(0xFF5B21E8),
+            //             foregroundColor: Colors.white,
+            //             elevation: 0,
+            //             minimumSize: const Size(0, 48),
 
-                  const SizedBox(height: 14),
+            //             shape: RoundedRectangleBorder(
+            //               borderRadius: BorderRadius.circular(14),
+            //             ),
+            //           ),
+            //         ),
+            //       ),
+            //     ],
+            //   ),
+            // ),
+            const SizedBox(height: 8),
 
-                  // ----------------------------------------------------
-                  // SUMMARY VALUES
-                  // ----------------------------------------------------
-                  // Row(
-                  //   children: [
-                  //     // Expanded(
-                  //     //   child: _buildSummaryItem(
-                  //     //     title: "Total",
-                  //     //     value: formatLeave(clLeave + slLeave + coffLeave),
+            // ==========================================================
+            // LEAVE REQUESTS
+            // ==========================================================
+            Column(
+              children: [
+                StreamBuilder(
+                  stream: selectedUid == null
+                      ? FirebaseFirestore.instance
+                            .collection('leave_requests')
+                            .orderBy('createdAt', descending: true)
+                            .snapshots()
+                      : FirebaseFirestore.instance
+                            .collection('leave_requests')
+                            .where('uid', isEqualTo: selectedUid)
+                            .orderBy('createdAt', descending: true)
+                            .snapshots(),
 
-                  //     //     color: const Color(0xFF6D28D9),
-                  //     //   ),
-                  //     // ),
-                  //     Container(
-                  //       width: 1,
-                  //       height: 42,
-                  //       color: const Color(0xFFE5E7EB),
-                  //     ),
-
-                  //     Expanded(
-                  //       child: _buildSummaryItem(
-                  //         title: "Used",
-                  //         value: "$usedLeave",
-                  //         color: const Color(0xFFF59E0B),
-                  //       ),
-                  //     ),
-
-                  //     Container(
-                  //       width: 1,
-                  //       height: 42,
-                  //       color: const Color(0xFFE5E7EB),
-                  //     ),
-
-                  //     Expanded(
-                  //       child: _buildSummaryItem(
-                  //         title: "Remaining",
-                  //         value: "$remainingLeave",
-                  //         color: const Color(0xFF16A34A),
-                  //       ),
-                  //     ),
-                  //   ],
-                  // ),
-                  // const SizedBox(height: 15),
-
-                  // ----------------------------------------------------
-                  // CL / SL
-                  // ----------------------------------------------------
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 11,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF7F5FF),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.info_outline_rounded,
-                          size: 17,
-                          color: Color(0xFF6D28D9),
-                        ),
-
-                        const SizedBox(width: 8),
-
-                        Text(
-                          "$clLeave CL",
-                          style: const TextStyle(
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const Padding(
+                        padding: EdgeInsets.all(40),
+                        child: Center(
+                          child: CircularProgressIndicator(
                             color: Color(0xFF6D28D9),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
                           ),
                         ),
+                      );
+                    }
 
-                        const SizedBox(width: 8),
+                    final docs = snapshot.data!.docs;
 
-                        const Text(
-                          "•",
-                          style: TextStyle(color: Color(0xFF9CA3AF)),
-                        ),
-
-                        const SizedBox(width: 8),
-
-                        Text(
-                          "$slLeave SL",
-                          style: const TextStyle(
-                            color: Color(0xFF6D28D9),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          "•",
-                          style: TextStyle(color: Color(0xFF9CA3AF)),
-                        ),
-
-                        const SizedBox(width: 8),
-                        Text(
-                          "$coffLeave COFF",
-                          style: const TextStyle(
-                            color: Color(0xFF6D28D9),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-
-                        const Spacer(),
-                        const Text(
-                          "Available",
-                          style: TextStyle(
-                            color: Color(0xFF16A34A),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // Padding(
-          //   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-          //   child: Container(
-          //     width: double.infinity,
-          //     padding: const EdgeInsets.all(12),
-          //     decoration: BoxDecoration(
-          //       color: Colors.white,
-          //       borderRadius: BorderRadius.circular(22),
-          //       boxShadow: [
-          //         BoxShadow(
-          //           color: Colors.black.withOpacity(.035),
-          //           blurRadius: 15,
-          //           offset: const Offset(0, 5),
-          //         ),
-          //       ],
-          //     ),
-          //     child: leaveCalendar(),
-          //   ),
-          // ),
-
-          // ==========================================================
-          // REFRESH + ATTENDANCE
-          // ==========================================================
-          // Padding(
-          //   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-          //   child: Row(
-          //     children: [
-          //       // ------------------------------------------------------
-          //       // REFRESH
-          //       // ------------------------------------------------------
-          //       Expanded(
-          //         child: ElevatedButton.icon(
-          //           onPressed: () {
-          //             if (selectedUid == null) {
-          //               ScaffoldMessenger.of(context).showSnackBar(
-          //                 const SnackBar(
-          //                   content: Text("Please select an employee first"),
-          //                 ),
-          //               );
-          //               return;
-          //             }
-
-          //             getLeaveData(selectedUid!);
-          //           },
-
-          //           icon: const Icon(Icons.refresh_rounded, size: 19),
-
-          //           label: const Text(
-          //             "Refresh",
-          //             style: TextStyle(fontWeight: FontWeight.w700),
-          //           ),
-
-          //           style: ElevatedButton.styleFrom(
-          //             backgroundColor: const Color(0xFF6D28D9),
-          //             foregroundColor: Colors.white,
-          //             elevation: 0,
-          //             minimumSize: const Size(0, 48),
-
-          //             shape: RoundedRectangleBorder(
-          //               borderRadius: BorderRadius.circular(14),
-          //             ),
-          //           ),
-          //         ),
-          //       ),
-
-          //       const SizedBox(width: 12),
-
-          //       // ------------------------------------------------------
-          //       // ATTENDANCE
-          //       // ------------------------------------------------------
-          //       Expanded(
-          //         child: ElevatedButton.icon(
-          //           onPressed: () {
-          //             Navigator.push(
-          //               context,
-          //               MaterialPageRoute(
-          //                 builder: (_) =>
-          //                     AdminAttendanceScreen(selectedUid: selectedUid),
-          //               ),
-          //             );
-          //           },
-
-          //           icon: const Icon(Icons.access_time_rounded, size: 19),
-
-          //           label: const Text(
-          //             "Attendance",
-          //             style: TextStyle(fontWeight: FontWeight.w700),
-          //           ),
-
-          //           style: ElevatedButton.styleFrom(
-          //             backgroundColor: const Color(0xFF5B21E8),
-          //             foregroundColor: Colors.white,
-          //             elevation: 0,
-          //             minimumSize: const Size(0, 48),
-
-          //             shape: RoundedRectangleBorder(
-          //               borderRadius: BorderRadius.circular(14),
-          //             ),
-          //           ),
-          //         ),
-          //       ),
-          //     ],
-          //   ),
-          // ),
-          const SizedBox(height: 8),
-
-          // ==========================================================
-          // LEAVE REQUESTS
-          // ==========================================================
-          Expanded(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-
-              child: Column(
-                children: [
-                  StreamBuilder(
-                    stream: selectedUid == null
-                        ? FirebaseFirestore.instance
-                              .collection('leave_requests')
-                              .orderBy('createdAt', descending: true)
-                              .snapshots()
-                        : FirebaseFirestore.instance
-                              .collection('leave_requests')
-                              .where('uid', isEqualTo: selectedUid)
-                              .orderBy('createdAt', descending: true)
-                              .snapshots(),
-
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
-                        return const Padding(
-                          padding: EdgeInsets.all(40),
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              color: Color(0xFF6D28D9),
+                    if (docs.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.all(40),
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 70,
+                              height: 70,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF0E9FF),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: const Icon(
+                                Icons.inbox_rounded,
+                                color: Color(0xFF6D28D9),
+                                size: 34,
+                              ),
                             ),
+
+                            const SizedBox(height: 14),
+
+                            const Text(
+                              "No Requests Found",
+                              style: TextStyle(
+                                color: Color(0xFF17133A),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+
+                            const SizedBox(height: 5),
+
+                            const Text(
+                              "There are no leave requests to display.",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Color(0xFF8A8FA3),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+
+                      itemCount: docs.length,
+
+                      itemBuilder: (context, index) {
+                        var data = docs[index];
+
+                        DateTime fromDate = (data['fromDate'] as Timestamp)
+                            .toDate();
+
+                        bool isOldLeave = fromDate.isBefore(
+                          DateTime(
+                            DateTime.now().year,
+                            DateTime.now().month,
+                            DateTime.now().day,
                           ),
                         );
-                      }
 
-                      final docs = snapshot.data!.docs;
+                        final String status = data['status']?.toString() ?? "";
 
-                      if (docs.isEmpty) {
-                        return Padding(
-                          padding: const EdgeInsets.all(40),
-                          child: Column(
-                            children: [
-                              Container(
-                                width: 70,
-                                height: 70,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF0E9FF),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: const Icon(
-                                  Icons.inbox_rounded,
-                                  color: Color(0xFF6D28D9),
-                                  size: 34,
-                                ),
-                              ),
+                        final bool isApproved = status == "Approved";
 
-                              const SizedBox(height: 14),
+                        final bool isRejected = status == "Rejected";
+                        print("11111111111111111111111$status");
+                        print("11111111111111111111111$isApproved");
+                        print("111111111111111111111111111111111$isRejected");
+                        // ------------------------------------------------
+                        // STATUS COLORS
+                        // ------------------------------------------------
+                        Color statusColor;
 
-                              const Text(
-                                "No Requests Found",
-                                style: TextStyle(
-                                  color: Color(0xFF17133A),
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
+                        Color statusBackground;
 
-                              const SizedBox(height: 5),
+                        IconData statusIcon;
 
-                              const Text(
-                                "There are no leave requests to display.",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Color(0xFF8A8FA3),
-                                  fontSize: 12,
-                                ),
+                        if (isApproved) {
+                          statusColor = const Color(0xFF15803D);
+
+                          statusBackground = const Color(0xFFDCFCE7);
+
+                          statusIcon = Icons.check_circle_rounded;
+                        } else if (isRejected) {
+                          statusColor = const Color(0xFFDC2626);
+
+                          statusBackground = const Color(0xFFFEE2E2);
+
+                          statusIcon = Icons.cancel_rounded;
+                        } else {
+                          statusColor = const Color(0xFFD97706);
+
+                          statusBackground = const Color(0xFFFEF3C7);
+
+                          statusIcon = Icons.pending_rounded;
+                        }
+
+                        return Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.fromLTRB(18, 6, 18, 10),
+
+                          padding: const EdgeInsets.all(17),
+
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(.035),
+                                blurRadius: 14,
+                                offset: const Offset(0, 5),
                               ),
                             ],
                           ),
-                        );
-                      }
 
-                      return ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
 
-                        itemCount: docs.length,
+                            children: [
+                              // ==========================================
+                              // EMPLOYEE + STATUS
+                              // ==========================================
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
 
-                        itemBuilder: (context, index) {
-                          var data = docs[index];
+                                children: [
+                                  Container(
+                                    width: 46,
+                                    height: 46,
 
-                          DateTime fromDate = (data['fromDate'] as Timestamp)
-                              .toDate();
-
-                          bool isOldLeave = fromDate.isBefore(
-                            DateTime(
-                              DateTime.now().year,
-                              DateTime.now().month,
-                              DateTime.now().day,
-                            ),
-                          );
-
-                          final String status =
-                              data['status']?.toString() ?? "";
-
-                          final bool isApproved = status == "Approved";
-
-                          final bool isRejected = status == "Rejected";
-                          print("11111111111111111111111$status");
-                          print("11111111111111111111111$isApproved");
-                          print("111111111111111111111111111111111$isRejected");
-                          // ------------------------------------------------
-                          // STATUS COLORS
-                          // ------------------------------------------------
-                          Color statusColor;
-
-                          Color statusBackground;
-
-                          IconData statusIcon;
-
-                          if (isApproved) {
-                            statusColor = const Color(0xFF15803D);
-
-                            statusBackground = const Color(0xFFDCFCE7);
-
-                            statusIcon = Icons.check_circle_rounded;
-                          } else if (isRejected) {
-                            statusColor = const Color(0xFFDC2626);
-
-                            statusBackground = const Color(0xFFFEE2E2);
-
-                            statusIcon = Icons.cancel_rounded;
-                          } else {
-                            statusColor = const Color(0xFFD97706);
-
-                            statusBackground = const Color(0xFFFEF3C7);
-
-                            statusIcon = Icons.pending_rounded;
-                          }
-
-                          return Container(
-                            width: double.infinity,
-                            margin: const EdgeInsets.fromLTRB(18, 6, 18, 10),
-
-                            padding: const EdgeInsets.all(17),
-
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(.035),
-                                  blurRadius: 14,
-                                  offset: const Offset(0, 5),
-                                ),
-                              ],
-                            ),
-
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-
-                              children: [
-                                // ==========================================
-                                // EMPLOYEE + STATUS
-                                // ==========================================
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-
-                                  children: [
-                                    Container(
-                                      width: 46,
-                                      height: 46,
-
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFF0E9FF),
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
-
-                                      child: const Icon(
-                                        Icons.person_rounded,
-                                        color: Color(0xFF6D28D9),
-                                        size: 24,
-                                      ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF0E9FF),
+                                      borderRadius: BorderRadius.circular(14),
                                     ),
 
-                                    const SizedBox(width: 12),
+                                    child: const Icon(
+                                      Icons.person_rounded,
+                                      color: Color(0xFF6D28D9),
+                                      size: 24,
+                                    ),
+                                  ),
 
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                  const SizedBox(width: 12),
 
-                                        children: [
-                                          Text(
-                                            data['employeeName'].toString(),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
 
-                                            maxLines: 1,
+                                      children: [
+                                        Text(
+                                          data['employeeName'].toString(),
 
-                                            overflow: TextOverflow.ellipsis,
+                                          maxLines: 1,
 
-                                            style: const TextStyle(
-                                              color: Color(0xFF17133A),
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w800,
-                                            ),
+                                          overflow: TextOverflow.ellipsis,
+
+                                          style: const TextStyle(
+                                            color: Color(0xFF17133A),
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w800,
                                           ),
+                                        ),
 
-                                          const SizedBox(height: 3),
+                                        const SizedBox(height: 3),
 
-                                          Text(
-                                            data['employeeEmail'].toString(),
+                                        Text(
+                                          data['employeeEmail'].toString(),
 
-                                            maxLines: 1,
+                                          maxLines: 1,
 
-                                            overflow: TextOverflow.ellipsis,
+                                          overflow: TextOverflow.ellipsis,
 
-                                            style: const TextStyle(
-                                              color: Color(0xFF8A8FA3),
-                                              fontSize: 11,
-                                            ),
+                                          style: const TextStyle(
+                                            color: Color(0xFF8A8FA3),
+                                            fontSize: 11,
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                  const SizedBox(width: 8),
+
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 9,
+                                      vertical: 6,
                                     ),
 
-                                    const SizedBox(width: 8),
+                                    decoration: BoxDecoration(
+                                      color: statusBackground,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
 
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 9,
-                                        vertical: 6,
-                                      ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
 
-                                      decoration: BoxDecoration(
-                                        color: statusBackground,
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
+                                      children: [
+                                        Icon(
+                                          statusIcon,
+                                          color: statusColor,
+                                          size: 14,
+                                        ),
 
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
+                                        const SizedBox(width: 4),
 
-                                        children: [
-                                          Icon(
-                                            statusIcon,
+                                        Text(
+                                          status,
+                                          style: TextStyle(
                                             color: statusColor,
-                                            size: 14,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w800,
                                           ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
 
-                                          const SizedBox(width: 4),
+                              const SizedBox(height: 16),
 
-                                          Text(
-                                            status,
-                                            style: TextStyle(
-                                              color: statusColor,
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w800,
+                              // ==========================================
+                              // LEAVE DETAILS
+                              // ==========================================
+                              Container(
+                                padding: const EdgeInsets.all(13),
+
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8F7FC),
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: _buildLeaveDetail(
+                                            icon: Icons.category_outlined,
+                                            title: "Leave Type",
+                                            value: data['leaveType'].toString(),
+                                          ),
+                                        ),
+
+                                        Expanded(
+                                          child: _buildLeaveDetail(
+                                            icon: Icons.calendar_today_rounded,
+                                            title: "Days",
+                                            value: data['days'].toString(),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Icon(
+                                          Icons.calendar_month_rounded,
+                                          size: 17,
+                                          color: Color(0xFF6D28D9),
+                                        ),
+
+                                        const SizedBox(width: 8),
+
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              const Text(
+                                                "Leave Date",
+                                                style: TextStyle(
+                                                  color: Color(0xFF8A8FA3),
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+
+                                              const SizedBox(height: 3),
+
+                                              Text(
+                                                formatLeaveDate(
+                                                  data['fromDate'],
+                                                  data['toDate'],
+                                                ),
+                                                style: const TextStyle(
+                                                  color: Color(0xFF374151),
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+
+                                              const SizedBox(height: 2),
+
+                                              Text(
+                                                "${data['days'] ?? 0} Days • ${data['leaveDuration'] ?? ''}",
+                                                style: const TextStyle(
+                                                  color: Color(0xFF6D28D9),
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+
+                                    const SizedBox(height: 12),
+
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+
+                                      children: [
+                                        const Icon(
+                                          Icons.description_outlined,
+                                          size: 17,
+                                          color: Color(0xFF6D28D9),
+                                        ),
+
+                                        const SizedBox(width: 8),
+
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              const Text(
+                                                "Reason",
+                                                style: TextStyle(
+                                                  color: Color(0xFF8A8FA3),
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+
+                                              const SizedBox(height: 2),
+
+                                              Text(
+                                                data['reason'].toString(),
+
+                                                style: const TextStyle(
+                                                  color: Color(0xFF374151),
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(height: 15),
+
+                              // ==========================================
+                              // APPROVE / REJECT
+                              // ==========================================
+                              if (!isApproved)
+                                Row(
+                                  children: [
+                                    // ============================================================
+                                    // APPROVE BUTTON
+                                    // ============================================================
+                                    Expanded(
+                                      child: ElevatedButton.icon(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color.fromARGB(
+                                            255,
+                                            108,
+                                            229,
+                                            153,
+                                          ),
+                                          foregroundColor: Colors.white,
+                                          elevation: 0,
+                                          disabledBackgroundColor: const Color(
+                                            0xFFD1D5DB,
+                                          ),
+                                          disabledForegroundColor:
+                                              Colors.white70,
+                                          minimumSize: const Size(0, 46),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              13,
                                             ),
                                           ),
-                                        ],
+                                        ),
+
+                                        onPressed: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (dialogContext) {
+                                              return AlertDialog(
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(18),
+                                                ),
+
+                                                title: const Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons
+                                                          .check_circle_outline_rounded,
+                                                      color: Color(0xFF16A34A),
+                                                    ),
+                                                    SizedBox(width: 10),
+                                                    Text("Confirm Approval"),
+                                                  ],
+                                                ),
+
+                                                content: const Text(
+                                                  "Are you sure you want to approve this leave?",
+                                                ),
+
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.pop(
+                                                        dialogContext,
+                                                      );
+                                                    },
+                                                    child: const Text(
+                                                      "Cancel",
+                                                      style: TextStyle(
+                                                        color: Color(
+                                                          0xFF6B7280,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+
+                                                  ElevatedButton(
+                                                    style:
+                                                        ElevatedButton.styleFrom(
+                                                          backgroundColor:
+                                                              const Color(
+                                                                0xFF16A34A,
+                                                              ),
+                                                          foregroundColor:
+                                                              Colors.white,
+                                                        ),
+
+                                                    onPressed: () async {
+                                                      // CLOSE DIALOG FIRST
+                                                      Navigator.pop(
+                                                        dialogContext,
+                                                      );
+
+                                                      // THEN APPROVE
+                                                      await approveLeave(
+                                                        data.id,
+                                                        data['uid'],
+                                                        data['leaveType'],
+                                                        double.parse(
+                                                          data['days']
+                                                              .toString(),
+                                                        ),
+                                                        data['status'],
+                                                      );
+                                                    },
+
+                                                    child: const Text(
+                                                      "Approve",
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          );
+                                        },
+
+                                        icon: const Icon(
+                                          Icons.check_circle_outline_rounded,
+                                          size: 18,
+                                          // color: Colors.black,
+                                        ),
+
+                                        label: const Text(
+                                          "Approve",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            // color: Colors.black,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+
+                                    const SizedBox(width: 10),
+
+                                    // ============================================================
+                                    // REJECT BUTTON
+                                    // ============================================================
+                                    Expanded(
+                                      child: ElevatedButton.icon(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color.fromARGB(
+                                            255,
+                                            206,
+                                            83,
+                                            83,
+                                          ),
+                                          foregroundColor: Colors.white,
+                                          elevation: 0,
+                                          disabledBackgroundColor: const Color(
+                                            0xFFD1D5DB,
+                                          ),
+                                          disabledForegroundColor:
+                                              Colors.white70,
+                                          minimumSize: const Size(0, 46),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              13,
+                                            ),
+                                          ),
+                                        ),
+
+                                        onPressed: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (dialogContext) {
+                                              return AlertDialog(
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(18),
+                                                ),
+
+                                                title: const Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.cancel_outlined,
+                                                      color: Color(0xFFDC2626),
+                                                    ),
+                                                    SizedBox(width: 10),
+                                                    Text("Reject Leave"),
+                                                  ],
+                                                ),
+
+                                                content: const Text(
+                                                  "Are you sure you want to reject this leave?",
+                                                ),
+
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.pop(
+                                                        dialogContext,
+                                                      );
+                                                    },
+                                                    child: const Text(
+                                                      "Cancel",
+                                                      style: TextStyle(
+                                                        color: Color(
+                                                          0xFF6B7280,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+
+                                                  ElevatedButton(
+                                                    style:
+                                                        ElevatedButton.styleFrom(
+                                                          backgroundColor:
+                                                              const Color(
+                                                                0xFFDC2626,
+                                                              ),
+                                                          foregroundColor:
+                                                              Colors.white,
+                                                        ),
+
+                                                    onPressed: () async {
+                                                      // Close confirmation popup
+                                                      Navigator.pop(
+                                                        dialogContext,
+                                                      );
+
+                                                      // Reject leave
+                                                      await rejectLeave(
+                                                        data.id,
+                                                        data['uid'],
+                                                        data['leaveType'],
+                                                        double.parse(
+                                                          data['days']
+                                                              .toString(),
+                                                        ),
+                                                        data['status'],
+                                                      );
+                                                    },
+
+                                                    child: const Text(
+                                                      "Reject",
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          );
+                                        },
+
+                                        icon: const Icon(
+                                          Icons.cancel_outlined,
+                                          size: 18,
+                                        ),
+
+                                        label: const Text(
+                                          "Reject",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ],
                                 ),
 
-                                const SizedBox(height: 16),
+                              // ==========================================
+                              // OLD LEAVE MESSAGE
+                              // ==========================================
+                              if (isOldLeave) ...[
+                                const SizedBox(height: 9),
 
-                                // ==========================================
-                                // LEAVE DETAILS
-                                // ==========================================
-                                Container(
-                                  padding: const EdgeInsets.all(13),
+                                Row(
+                                  children: const [
+                                    Icon(
+                                      Icons.info_outline_rounded,
+                                      size: 14,
+                                      color: Color(0xFFD97706),
+                                    ),
 
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF8F7FC),
-                                    borderRadius: BorderRadius.circular(15),
-                                  ),
+                                    SizedBox(width: 5),
 
-                                  child: Column(
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: _buildLeaveDetail(
-                                              icon: Icons.category_outlined,
-                                              title: "Leave Type",
-                                              value: data['leaveType']
-                                                  .toString(),
-                                            ),
-                                          ),
-
-                                          Expanded(
-                                            child: _buildLeaveDetail(
-                                              icon:
-                                                  Icons.calendar_today_rounded,
-                                              title: "Days",
-                                              value: data['days'].toString(),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Icon(
-                                            Icons.calendar_month_rounded,
-                                            size: 17,
-                                            color: Color(0xFF6D28D9),
-                                          ),
-
-                                          const SizedBox(width: 8),
-
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                const Text(
-                                                  "Leave Date",
-                                                  style: TextStyle(
-                                                    color: Color(0xFF8A8FA3),
-                                                    fontSize: 10,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-
-                                                const SizedBox(height: 3),
-
-                                                Text(
-                                                  formatLeaveDate(
-                                                    data['fromDate'],
-                                                    data['toDate'],
-                                                  ),
-                                                  style: const TextStyle(
-                                                    color: Color(0xFF374151),
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w700,
-                                                  ),
-                                                ),
-
-                                                const SizedBox(height: 2),
-
-                                                Text(
-                                                  "${data['days'] ?? 0} Days • ${data['leaveDuration'] ?? ''}",
-                                                  style: const TextStyle(
-                                                    color: Color(0xFF6D28D9),
-                                                    fontSize: 11,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-
-                                      const SizedBox(height: 12),
-
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-
-                                        children: [
-                                          const Icon(
-                                            Icons.description_outlined,
-                                            size: 17,
-                                            color: Color(0xFF6D28D9),
-                                          ),
-
-                                          const SizedBox(width: 8),
-
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                const Text(
-                                                  "Reason",
-                                                  style: TextStyle(
-                                                    color: Color(0xFF8A8FA3),
-                                                    fontSize: 10,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-
-                                                const SizedBox(height: 2),
-
-                                                Text(
-                                                  data['reason'].toString(),
-
-                                                  style: const TextStyle(
-                                                    color: Color(0xFF374151),
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                const SizedBox(height: 15),
-
-                                // ==========================================
-                                // APPROVE / REJECT
-                                // ==========================================
-                                if (!isApproved)
-                                  Row(
-                                    children: [
-                                      // ============================================================
-                                      // APPROVE BUTTON
-                                      // ============================================================
-                                      Expanded(
-                                        child: ElevatedButton.icon(
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor:
-                                                const Color.fromARGB(
-                                                  255,
-                                                  108,
-                                                  229,
-                                                  153,
-                                                ),
-                                            foregroundColor: Colors.white,
-                                            elevation: 0,
-                                            disabledBackgroundColor:
-                                                const Color(0xFFD1D5DB),
-                                            disabledForegroundColor:
-                                                Colors.white70,
-                                            minimumSize: const Size(0, 46),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(13),
-                                            ),
-                                          ),
-
-                                          onPressed: () {
-                                            showDialog(
-                                              context: context,
-                                              builder: (dialogContext) {
-                                                return AlertDialog(
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          18,
-                                                        ),
-                                                  ),
-
-                                                  title: const Row(
-                                                    children: [
-                                                      Icon(
-                                                        Icons
-                                                            .check_circle_outline_rounded,
-                                                        color: Color(
-                                                          0xFF16A34A,
-                                                        ),
-                                                      ),
-                                                      SizedBox(width: 10),
-                                                      Text("Confirm Approval"),
-                                                    ],
-                                                  ),
-
-                                                  content: const Text(
-                                                    "Are you sure you want to approve this leave?",
-                                                  ),
-
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () {
-                                                        Navigator.pop(
-                                                          dialogContext,
-                                                        );
-                                                      },
-                                                      child: const Text(
-                                                        "Cancel",
-                                                        style: TextStyle(
-                                                          color: Color(
-                                                            0xFF6B7280,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-
-                                                    ElevatedButton(
-                                                      style:
-                                                          ElevatedButton.styleFrom(
-                                                            backgroundColor:
-                                                                const Color(
-                                                                  0xFF16A34A,
-                                                                ),
-                                                            foregroundColor:
-                                                                Colors.white,
-                                                          ),
-
-                                                      onPressed: () async {
-                                                        // CLOSE DIALOG FIRST
-                                                        Navigator.pop(
-                                                          dialogContext,
-                                                        );
-
-                                                        // THEN APPROVE
-                                                        await approveLeave(
-                                                          data.id,
-                                                          data['uid'],
-                                                          data['leaveType'],
-                                                          double.parse(
-                                                            data['days']
-                                                                .toString(),
-                                                          ),
-                                                          data['status'],
-                                                        );
-                                                      },
-
-                                                      child: const Text(
-                                                        "Approve",
-                                                        style: TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.w700,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                );
-                                              },
-                                            );
-                                          },
-
-                                          icon: const Icon(
-                                            Icons.check_circle_outline_rounded,
-                                            size: 18,
-                                            // color: Colors.black,
-                                          ),
-
-                                          label: const Text(
-                                            "Approve",
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w700,
-                                              // color: Colors.black,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-
-                                      const SizedBox(width: 10),
-
-                                      // ============================================================
-                                      // REJECT BUTTON
-                                      // ============================================================
-                                      Expanded(
-                                        child: ElevatedButton.icon(
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor:
-                                                const Color.fromARGB(
-                                                  255,
-                                                  206,
-                                                  83,
-                                                  83,
-                                                ),
-                                            foregroundColor: Colors.white,
-                                            elevation: 0,
-                                            disabledBackgroundColor:
-                                                const Color(0xFFD1D5DB),
-                                            disabledForegroundColor:
-                                                Colors.white70,
-                                            minimumSize: const Size(0, 46),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(13),
-                                            ),
-                                          ),
-
-                                          onPressed: () {
-                                            showDialog(
-                                              context: context,
-                                              builder: (dialogContext) {
-                                                return AlertDialog(
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          18,
-                                                        ),
-                                                  ),
-
-                                                  title: const Row(
-                                                    children: [
-                                                      Icon(
-                                                        Icons.cancel_outlined,
-                                                        color: Color(
-                                                          0xFFDC2626,
-                                                        ),
-                                                      ),
-                                                      SizedBox(width: 10),
-                                                      Text("Reject Leave"),
-                                                    ],
-                                                  ),
-
-                                                  content: const Text(
-                                                    "Are you sure you want to reject this leave?",
-                                                  ),
-
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () {
-                                                        Navigator.pop(
-                                                          dialogContext,
-                                                        );
-                                                      },
-                                                      child: const Text(
-                                                        "Cancel",
-                                                        style: TextStyle(
-                                                          color: Color(
-                                                            0xFF6B7280,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-
-                                                    ElevatedButton(
-                                                      style:
-                                                          ElevatedButton.styleFrom(
-                                                            backgroundColor:
-                                                                const Color(
-                                                                  0xFFDC2626,
-                                                                ),
-                                                            foregroundColor:
-                                                                Colors.white,
-                                                          ),
-
-                                                      onPressed: () async {
-                                                        // Close confirmation popup
-                                                        Navigator.pop(
-                                                          dialogContext,
-                                                        );
-
-                                                        // Reject leave
-                                                        await rejectLeave(
-                                                          data.id,
-                                                          data['uid'],
-                                                          data['leaveType'],
-                                                          double.parse(
-                                                            data['days']
-                                                                .toString(),
-                                                          ),
-                                                          data['status'],
-                                                        );
-                                                      },
-
-                                                      child: const Text(
-                                                        "Reject",
-                                                        style: TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.w700,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                );
-                                              },
-                                            );
-                                          },
-
-                                          icon: const Icon(
-                                            Icons.cancel_outlined,
-                                            size: 18,
-                                          ),
-
-                                          label: const Text(
-                                            "Reject",
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-
-                                // ==========================================
-                                // OLD LEAVE MESSAGE
-                                // ==========================================
-                                if (isOldLeave) ...[
-                                  const SizedBox(height: 9),
-
-                                  Row(
-                                    children: const [
-                                      Icon(
-                                        Icons.info_outline_rounded,
-                                        size: 14,
-                                        color: Color(0xFFD97706),
-                                      ),
-
-                                      SizedBox(width: 5),
-
-                                      Expanded(
-                                        child: Text(
-                                          "This leave request is from a previous date.",
-                                          style: TextStyle(
-                                            color: Color(0xFFD97706),
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 10),
-
-                                  SizedBox(
-                                    width: double.infinity,
-                                    height: 44,
-                                    child: OutlinedButton.icon(
-                                      onPressed: () {
-                                        deleteLeaveRequest(
-                                          data.id,
-                                          data['status']?.toString() ?? '',
-                                        );
-                                      },
-                                      icon: const Icon(
-                                        Icons.delete_outline_rounded,
-                                        color: Colors.red,
-                                      ),
-                                      label: const Text(
-                                        "Delete Request",
+                                    Expanded(
+                                      child: Text(
+                                        "This leave request is from a previous date.",
                                         style: TextStyle(
-                                          color: Colors.red,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                      style: OutlinedButton.styleFrom(
-                                        side: const BorderSide(
-                                          color: Color(0xFFFECACA),
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
+                                          color: Color(0xFFD97706),
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
                                     ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 44,
+                                  child: OutlinedButton.icon(
+                                    onPressed: () {
+                                      deleteLeaveRequest(
+                                        data.id,
+                                        data['status']?.toString() ?? '',
+                                      );
+                                    },
+                                    icon: const Icon(
+                                      Icons.delete_outline_rounded,
+                                      color: Colors.red,
+                                    ),
+                                    label: const Text(
+                                      "Delete Request",
+                                      style: TextStyle(
+                                        color: Colors.red,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    style: OutlinedButton.styleFrom(
+                                      side: const BorderSide(
+                                        color: Color(0xFFFECACA),
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
                                   ),
-                                ],
+                                ),
                               ],
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ],
-              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

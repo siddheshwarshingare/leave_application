@@ -716,19 +716,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
             // ======================================================
             // PROFILE
             // ======================================================
-            _drawerItem(
-              context,
-              icon: Icons.person_outline_rounded,
-              title: 'My Profile',
-              onTap: () {
-                Navigator.pop(context);
+            // _drawerItem(
+            //   context,
+            //   icon: Icons.person_outline_rounded,
+            //   title: 'My Profile',
+            //   onTap: () {
+            //     Navigator.pop(context);
 
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ProfileScreen()),
-                );
-              },
-            ),
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(builder: (_) => const ProfileScreen()),
+            //     );
+            //   },
+            // ),
 
             // ======================================================
             // ATTENDANCE
@@ -755,35 +755,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
             _drawerItem(
               context,
               icon: Icons.history_rounded,
-              title: 'Attendance',
+              title: 'C-OFF History',
               onTap: () {
                 Navigator.pop(context);
-
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const EmployeeAttendanceScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const CoffHistoryScreen()),
                 );
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(
+                //     builder: (_) => const EmployeeAttendanceScreen(),
+                //   ),
+                // );
               },
             ),
 
-            _drawerItem(
-              context,
-              icon: Icons.history_rounded,
-              title: 'Admin Attendace',
-              onTap: () {
-                employeeController.fetchEmployees();
-                Navigator.pop(context);
+            // _drawerItem(
+            //   context,
+            //   icon: Icons.history_rounded,
+            //   title: 'Admin Attendace',
+            //   onTap: () {
+            //     employeeController.fetchEmployees();
+            //     Navigator.pop(context);
 
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const AdminAttendanceScreen(),
-                  ),
-                );
-              },
-            ),
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(
+            //         builder: (_) => const AdminAttendanceScreen(),
+            //       ),
+            //     );
+            //   },
+            // ),
 
             // ======================================================
             // APPLY LEAVE
@@ -1807,18 +1810,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   title: "Leave Balance",
                   subtitle: "Your current leave overview",
                   onViewAll: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const CoffHistoryScreen(),
-                      ),
-                    );
                     // Navigator.push(
                     //   context,
                     //   MaterialPageRoute(
-                    //     builder: (_) => const LeaveHistoryScreen(),
+                    //     builder: (_) => const CoffHistoryScreen(),
                     //   ),
                     // );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const LeaveHistoryScreen(),
+                      ),
+                    );
                   },
                 ),
 

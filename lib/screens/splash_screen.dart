@@ -254,68 +254,41 @@ class _SplashScreenState extends State<SplashScreen> {
   // ============================================================
   // OPEN PLAY STORE
   // ============================================================
-
   Future<void> _openPlayStore() async {
-    // ----------------------------------------------------------
-    // PLAY STORE APP URL
-    // ----------------------------------------------------------
-
-    final Uri playStoreAppUrl = Uri.parse('market://details?id=$packageName');
-
-    // ----------------------------------------------------------
-    // PLAY STORE WEB URL
-    // ----------------------------------------------------------
-
-    final Uri playStoreWebUrl = Uri.parse(
-      'https://play.google.com/store/apps/details?id=$packageName',
-    );
-
     try {
-      // First try opening Google Play app
-      final bool openedPlayStore = await launchUrl(
-        playStoreAppUrl,
+      final packageInfo = await PackageInfo.fromPlatform();
+      final packageName = packageInfo.packageName;
+
+      debugPrint('Installed package name: $packageName');
+
+      final Uri playStoreUrl = Uri.https(
+        'play.google.com',
+        '/store/apps/details',
+        {'id': packageName},
+      );
+
+      debugPrint('Play Store URL: $playStoreUrl');
+
+      final bool launched = await launchUrl(
+        playStoreUrl,
         mode: LaunchMode.externalApplication,
       );
 
-      if (openedPlayStore) {
-        debugPrint('Opened Google Play Store app');
-
-        return;
+      if (!launched) {
+        throw Exception('Unable to launch Play Store URL');
       }
     } catch (e) {
-      debugPrint('Could not open Play Store app: $e');
-    }
+      debugPrint('Error opening Play Store: $e');
 
-    // ----------------------------------------------------------
-    // FALLBACK TO BROWSER
-    // ----------------------------------------------------------
+      if (!mounted) return;
 
-    try {
-      final bool openedBrowser = await launchUrl(
-        playStoreWebUrl,
-        mode: LaunchMode.externalApplication,
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to open the update page. Please try again.'),
+        ),
       );
-
-      if (openedBrowser) {
-        debugPrint('Opened Google Play Store in browser');
-
-        return;
-      }
-    } catch (e) {
-      debugPrint('Could not open Play Store web: $e');
     }
-
-    // ----------------------------------------------------------
-    // NOTHING WORKED
-    // ----------------------------------------------------------
-
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Unable to open Google Play Store.')),
-    );
   }
-
   // ============================================================
   // NORMAL NAVIGATION
   // ============================================================
