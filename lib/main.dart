@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:leave_application/machine_api/screen/admin/admin_leave_screen_pend_request.dart';
 import 'package:leave_application/screens/dashboard_screen.dart';
 import 'package:leave_application/screens/login_screen.dart';
 import 'package:leave_application/screens/splash_screen.dart';
@@ -29,7 +30,7 @@ Future<Widget> checkLogin() async {
         String role = userDoc['role'].toString().toLowerCase();
 
         if (role == "admin") {
-          return const AdminLeaveScreen();
+          return const AdminLeaveRequestScreen();
         }
 
         return const DashboardScreen();

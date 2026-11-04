@@ -1386,9 +1386,9 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: _bottomNavigationBar(),
+      // bottomNavigationBar: _bottomNavigationBar(),
       backgroundColor: const Color(0xFFF7F8FC),
-      drawer: _buildDrawer(context),
+      //  drawer: _buildDrawer(context),
 
       // ============================================================
       // APP BAR

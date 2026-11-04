@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emailjs/emailjs.dart' as emailjs;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:leave_application/machine_api/screen/admin/admin_leave_screen.dart';
 import 'package:leave_application/screens/admin_attedance_screen.dart';
 
 import 'package:leave_application/screens/hr_coff_screen.dart';
@@ -19,14 +20,14 @@ import 'admin_attendance_screen.dart';
 import 'admin_calendar_screen.dart';
 import 'admin_notification_screen.dart';
 
-class AdminLeaveScreen extends StatefulWidget {
-  const AdminLeaveScreen({super.key});
+class AdminLeaveRequestScreen extends StatefulWidget {
+  const AdminLeaveRequestScreen({super.key});
 
   @override
-  State<AdminLeaveScreen> createState() => _AdminLeaveScreenState();
+  State<AdminLeaveRequestScreen> createState() => _AdminLeaveScreenState();
 }
 
-class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
+class _AdminLeaveScreenState extends State<AdminLeaveRequestScreen> {
   String? selectedUid;
   List users = [];
   int totalLeave = 13;
@@ -215,7 +216,18 @@ class _AdminLeaveScreenState extends State<AdminLeaveScreen> {
                 );
               },
             ),
-
+            _drawerItem(
+              context,
+              icon: Icons.history_rounded,
+              title: 'LEave History',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AdminLeaveScreen()),
+                );
+              },
+            ),
             // ======================================================
             // NOTIFICATIONS
             // ======================================================

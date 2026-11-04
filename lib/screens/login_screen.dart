@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:leave_application/machine_api/screen/admin/admin_leave_screen_pend_request.dart';
 import 'package:leave_application/screens/dashboard_screen.dart';
 import 'package:leave_application/screens/signup_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -194,7 +195,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (role == 'admin') {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const AdminLeaveScreen()),
+          MaterialPageRoute(builder: (_) => const AdminLeaveRequestScreen()),
         );
       } else {
         Navigator.pushReplacement(
